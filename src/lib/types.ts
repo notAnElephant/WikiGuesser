@@ -126,5 +126,4 @@ export interface GuessRoundResult {
   revealedClues: PlayableClue[];
   remainingClues: number;
   score: number;
-  guessFeedback: string | null;
 }
