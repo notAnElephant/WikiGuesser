@@ -1,4 +1,5 @@
 import { categoryDefinitions } from "@/src/lib/content/category-definitions";
+import { fetchWikimediaJson } from "@/src/lib/content/wikimedia-fetch";
 import type { EntityCategory, SourceClaimValue, SourceEntity } from "@/src/lib/types";
 
 interface WikidataLabelEntity {
@@ -13,20 +14,10 @@ function buildDiscoveryQuery(rawQuery: string, limit: number): string {
   return rawQuery.replace("__LIMIT__", String(limit));
 }
 
-async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(input, init);
-
-  if (!response.ok) {
-    throw new Error(`Wikimedia request failed: ${response.status} ${response.statusText}`);
-  }
-
-  return (await response.json()) as T;
-}
-
 export async function discoverCategoryQids(category: EntityCategory, limit = 50): Promise<string[]> {
   const query = buildDiscoveryQuery(categoryDefinitions[category].discovery.query, limit);
   const body = new URLSearchParams({ query, format: "json" });
-  const data = await fetchJson<{ results: { bindings: Array<{ item: { value: string } }> } }>(
+  const data = await fetchWikimediaJson<{ results: { bindings: Array<{ item: { value: string } }> } }>(
     "https://query.wikidata.org/sparql",
     {
       method: "POST",
@@ -44,7 +35,7 @@ export async function discoverCategoryQids(category: EntityCategory, limit = 50)
 }
 
 async function fetchRawEntity(qid: string): Promise<any> {
-  const data = await fetchJson<{ entities: Record<string, any> }>(
+  const data = await fetchWikimediaJson<{ entities: Record<string, any> }>(
     `https://www.wikidata.org/wiki/Special:EntityData/${qid}.json`,
   );
 
@@ -68,7 +59,7 @@ async function fetchEntityLabels(ids: string[]): Promise<Record<string, string>>
       languages: "en",
       origin: "*",
     });
-    const data = await fetchJson<{ entities: Record<string, WikidataLabelEntity> }>(
+    const data = await fetchWikimediaJson<{ entities: Record<string, WikidataLabelEntity> }>(
       `https://www.wikidata.org/w/api.php?${params.toString()}`,
     );
 

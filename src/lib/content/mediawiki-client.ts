@@ -1,3 +1,5 @@
+import { fetchWikimediaJson } from "@/src/lib/content/wikimedia-fetch";
+
 interface RedirectResponse {
   query?: {
     pages?: Record<
@@ -20,13 +22,7 @@ export async function fetchRedirectAliases(title: string): Promise<string[]> {
     format: "json",
     origin: "*",
   });
-  const response = await fetch(`https://en.wikipedia.org/w/api.php?${params.toString()}`);
-
-  if (!response.ok) {
-    throw new Error(`MediaWiki redirect request failed: ${response.status}`);
-  }
-
-  const data = (await response.json()) as RedirectResponse;
+  const data = await fetchWikimediaJson<RedirectResponse>(`https://en.wikipedia.org/w/api.php?${params.toString()}`);
   const pages = Object.values(data.query?.pages ?? {});
 
   return pages.flatMap((page) => page.redirects?.map((redirect) => redirect.title) ?? []);
