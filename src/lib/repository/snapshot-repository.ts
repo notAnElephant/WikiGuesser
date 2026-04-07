@@ -72,19 +72,19 @@ export async function listCategorySummaries(): Promise<CategorySummary[]> {
     {
       id: "countries",
       label: "Countries",
-      description: "Geo rounds from structured country facts and late-reveal capitals.",
+      description: "Flags, geography, and national facts before the answer becomes clear.",
       entityCount: snapshot.entities.filter((entity) => entity.category === "countries").length,
     },
     {
       id: "cities",
       label: "Cities",
-      description: "Population, region, and elevation clues before the city name becomes obvious.",
+      description: "Major places revealed through landmarks, region, and city facts.",
       entityCount: snapshot.entities.filter((entity) => entity.category === "cities").length,
     },
     {
       id: "people",
       label: "People",
-      description: "Occupation and field-first rounds with strict spoiler filtering.",
+      description: "Famous figures revealed through achievements, roles, and biography clues.",
       entityCount: snapshot.entities.filter((entity) => entity.category === "people").length,
     },
   ];

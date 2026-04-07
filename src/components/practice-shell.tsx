@@ -38,7 +38,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
-  const [message, setMessage] = useState("Pick a category from the menu, then launch a round.");
+  const [message, setMessage] = useState("Choose a category and start playing.");
   const [score, setScore] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
   const isCountryRound = round?.category === "countries";
@@ -64,13 +64,13 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
       });
 
       if (!response.ok) {
-        setMessage("Round start failed. Check the snapshot or API logs.");
+        setMessage("Couldn't start a round. Please try again.");
         return;
       }
 
       const data = (await response.json()) as StartRoundResult;
       setRound(data);
-      setMessage("Round live. Lock a guess when you want the next reveal to depend on your call.");
+      setMessage("Round started. Submit a guess whenever you're ready.");
     });
   }
 
@@ -80,7 +80,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
     }
 
     if (isCountryRound && !isCountryGuessValid) {
-      setMessage("Choose a country from the list before locking your guess.");
+      setMessage("Choose a country from the suggestions before submitting.");
       return;
     }
 
@@ -97,7 +97,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
       });
 
       if (!response.ok) {
-        setMessage("Guess submission failed. Try starting a new round.");
+        setMessage("Couldn't submit that guess. Try again or start a new round.");
         return;
       }
 
@@ -138,7 +138,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         revealedClues: data.revealedClues,
         remainingClues: data.remainingClues,
       });
-      setMessage("Not yet. One more clue unlocked.");
+      setMessage("Not this time. Here's another clue.");
     });
   }
 
@@ -152,7 +152,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
     setResult(null);
     setGuess("");
     setScore(null);
-    setMessage("Pick a category and start a fresh round.");
+    setMessage("Choose a category and start playing.");
   }
 
   const displayedClues = round?.revealedClues ?? result?.revealedClues ?? [];
@@ -167,23 +167,23 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         <header className="grid gap-4 rounded-[30px] border border-black/10 bg-[radial-gradient(circle_at_top_left,rgba(249,214,129,0.35),transparent_28%),linear-gradient(180deg,rgba(255,251,245,0.97),rgba(255,247,238,0.9))] p-5 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl sm:p-7">
           <div className="grid gap-3 sm:grid-cols-[1.3fr_0.7fr] sm:items-end">
             <div>
-              <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">Main menu</p>
+              <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">Play now</p>
               <h1 className="m-0 max-w-[10ch] font-serif-display text-[clamp(2.3rem,8vw,4.3rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17]">
                 WikiGuesser
               </h1>
               <p className="m-0 mt-4 max-w-2xl leading-7 text-[#6b6259]">
-                Choose a lane, then drop into a focused round screen with clues, guessing, and result handling kept separate from the menu.
+                Pick a category, read the clues, and see how quickly you can name the answer before it becomes obvious.
               </p>
             </div>
             <div className="grid gap-3 rounded-[26px] border border-[rgba(17,94,89,0.08)] bg-white/80 p-4">
-              <span className="text-sm uppercase tracking-[0.18em] text-[#115e59]">Current setup</span>
+              <span className="text-sm uppercase tracking-[0.18em] text-[#115e59]">Next round</span>
               <strong className="font-serif-display text-[clamp(1.2rem,3vw,1.7rem)] leading-[1.05] text-[#1f1b17]">
                 {selectedCategoryLabel}
               </strong>
               <span className="text-sm leading-6 text-[#6b6259]">
                 {selectedCategory === "random"
-                  ? "Pull from any available category in the loaded snapshot."
-                  : selectedCategoryMeta?.description ?? "Use the selected category for the next round."}
+                  ? "Get a surprise challenge from anywhere in the game."
+                  : selectedCategoryMeta?.description ?? "Use this category for the next round."}
               </span>
             </div>
           </div>
@@ -194,7 +194,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
             <div>
               <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">Choose a category</p>
               <h2 className="m-0 font-serif-display text-[clamp(1.75rem,5vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#1f1b17]">
-                Launch from the menu.
+                Find your next challenge.
               </h2>
             </div>
             <button className={launchButtonClass} disabled={isPending} onClick={startRound} type="button">
@@ -212,9 +212,9 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
               onClick={() => setSelectedCategory("random")}
               type="button"
             >
-              <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">Random</span>
+              <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">Wildcard</span>
               <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17]">Mixed deck</strong>
-              <span className="leading-6 text-[#6b6259]">Pull from all loaded categories and let the round pick the target.</span>
+              <span className="leading-6 text-[#6b6259]">A surprise mix pulled from every category.</span>
             </button>
             {categories.map((category) => (
               <button
@@ -227,7 +227,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                 onClick={() => setSelectedCategory(category.id)}
                 type="button"
               >
-                <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">{category.entityCount} loaded</span>
+                <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">Category</span>
                 <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17]">{category.label}</strong>
                 <span className="leading-6 text-[#6b6259]">{category.description}</span>
               </button>
@@ -245,10 +245,10 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
       <header className="flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">
-            {view === "round" ? "Round screen" : "Round result"}
+            {view === "round" ? "Now playing" : "Round complete"}
           </p>
           <h1 className="m-0 max-w-[10ch] font-serif-display text-[clamp(2.1rem,7vw,3.7rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17] sm:max-w-none">
-            {view === "round" ? "Stay inside the round." : "Round closed."}
+            {view === "round" ? "Name it before the clues give it away." : "Here's how that round ended."}
           </h1>
         </div>
         <div className="scrollbar-hidden flex gap-3 overflow-x-auto">
@@ -263,17 +263,17 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">
-              {round ? "Live clues" : "Resolved answer"}
+              {round ? "Clues so far" : "Answer revealed"}
             </p>
             <h2 className="m-0 max-w-[12ch] font-serif-display text-[clamp(1.75rem,5vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#1f1b17]">
               {round
-                ? "Guess before the next clue drops."
-                : "Review the answer, then choose your next move."}
+                ? "Make your guess before the next reveal."
+                : "Take a look, then jump into another round."}
             </h2>
           </div>
           {round ? (
             <button className={launchButtonClass} disabled={isPending} onClick={startRound} type="button">
-              Restart round
+              New round
             </button>
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -302,9 +302,9 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           ))}
           {displayedClues.length === 0 && (
             <li className="grid min-h-45 content-center gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4">
-              <small className="text-sm text-[#6b6259]">Round idle</small>
+              <small className="text-sm text-[#6b6259]">Ready when you are</small>
               <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17]">Pick a category and start.</strong>
-              <span className="text-[#6b6259]">The interface stays lean once the round begins.</span>
+              <span className="text-[#6b6259]">Your clues will appear here as soon as the round begins.</span>
             </li>
           )}
         </ol>
@@ -325,11 +325,11 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
               />
               {isCountryRound ? (
                 <span className="text-sm text-[#6b6259]">
-                  Search the country list and choose one of the valid loaded countries.
+                  Start typing and pick a country from the suggestions.
                 </span>
               ) : null}
               {isCountryRound && hasGuess && !isCountryGuessValid ? (
-                <span className="text-sm text-[#b45309]">Select one of the listed countries to submit this guess.</span>
+                <span className="text-sm text-[#b45309]">Pick one of the suggested countries to submit this guess.</span>
               ) : null}
             </label>
             <button
@@ -337,7 +337,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
               disabled={!round || isPending || !hasGuess || !isCountryGuessValid}
               type="submit"
             >
-              Lock guess
+              Submit guess
             </button>
           </form>
         ) : null}
@@ -350,10 +350,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         ) : null}
 
         <div className="flex flex-col gap-3 text-sm text-[#115e59] sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-3">
-            <span>Remaining clues: {round?.remainingClues ?? 0}</span>
-            <span>{selectedCategoryMeta?.entityCount ?? categories.length} entities loaded</span>
-          </div>
+          <span>Remaining clues: {round?.remainingClues ?? 0}</span>
           <button className={secondaryButtonClass} disabled={isPending} onClick={clearForCategoryChoice} type="button">
             Back to menu
           </button>
