@@ -1,4 +1,5 @@
 import { categoryDefinitions } from "@/src/lib/content/category-definitions";
+import { fetchSimpleWikipediaCountryQids } from "@/src/lib/content/mediawiki-client";
 import { fetchWikimediaJson } from "@/src/lib/content/wikimedia-fetch";
 import type { EntityCategory, SourceClaimValue, SourceEntity } from "@/src/lib/types";
 
@@ -14,8 +15,12 @@ function buildDiscoveryQuery(rawQuery: string, limit: number): string {
   return rawQuery.replace("__LIMIT__", String(limit));
 }
 
-export async function discoverCategoryQids(category: EntityCategory, limit = 50): Promise<string[]> {
-  const query = buildDiscoveryQuery(categoryDefinitions[category].discovery.query, limit);
+export async function discoverCategoryQids(category: EntityCategory, limit?: number): Promise<string[]> {
+  if (category === "countries") {
+    return fetchSimpleWikipediaCountryQids(limit);
+  }
+
+  const query = buildDiscoveryQuery(categoryDefinitions[category].discovery.query, limit ?? 50);
   const body = new URLSearchParams({ query, format: "json" });
   const data = await fetchWikimediaJson<{ results: { bindings: Array<{ item: { value: string } }> } }>(
     "https://query.wikidata.org/sparql",

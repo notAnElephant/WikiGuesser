@@ -6,7 +6,8 @@ import { getArgValue, getNumericArgValue } from "@/src/scripts/cli-args";
 
 async function main() {
   const categoryArg = getArgValue("category") as EntityCategory | undefined;
-  const limit = getNumericArgValue("limit", 50);
+  const rawLimit = getArgValue("limit");
+  const limit = rawLimit ? getNumericArgValue("limit", 50) : undefined;
   const categories = categoryArg ? [categoryArg] : allCategoryDefinitions.map((definition) => definition.id);
 
   for (const category of categories) {
