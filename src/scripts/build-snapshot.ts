@@ -1,3 +1,4 @@
+import "@/src/scripts/load-env";
 import { buildSnapshotFromSources } from "@/src/lib/content/build-snapshot";
 import { allCategoryDefinitions } from "@/src/lib/content/category-definitions";
 import { getGeneratedPath, readGeneratedJson, writeGeneratedJson } from "@/src/lib/content/generated-io";
