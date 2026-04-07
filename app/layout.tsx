@@ -1,5 +1,6 @@
+import Link from "next/link";
 import type { Metadata } from "next";
-import { ClerkProvider, Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { ClerkProvider, Show, UserButton } from "@clerk/nextjs";
 
 import "./globals.css";
 
@@ -16,16 +17,18 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <header className="fixed inset-x-0 top-0 z-40 flex justify-end p-3 sm:p-4">
             <div className="flex items-center gap-2 rounded-full border border-black/10 bg-white/80 p-2 shadow-[0_18px_40px_rgba(53,36,22,0.12)] backdrop-blur-xl">
               <Show when="signed-out">
-                <SignInButton mode="modal">
-                  <button className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#1f1b17] transition hover:-translate-y-0.5">
-                    Sign in
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button className="inline-flex items-center justify-center rounded-full bg-[#0f766e] px-4 py-2 text-sm font-medium text-white transition hover:-translate-y-0.5">
-                    Sign up
-                  </button>
-                </SignUpButton>
+                <Link
+                  className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#1f1b17] transition hover:-translate-y-0.5"
+                  href="/sign-in"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  className="inline-flex items-center justify-center rounded-full bg-[#0f766e] px-4 py-2 text-sm font-medium text-white transition hover:-translate-y-0.5"
+                  href="/sign-up"
+                >
+                  Sign up
+                </Link>
               </Show>
               <Show when="signed-in">
                 <UserButton />

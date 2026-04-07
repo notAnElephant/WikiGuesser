@@ -1,6 +1,5 @@
 "use client";
 
-import { Show, SignUpButton, UserButton } from "@clerk/nextjs";
 import type { FormEvent } from "react";
 import { useState, useTransition } from "react";
 
@@ -26,7 +25,6 @@ const pillButtonBase =
   "inline-flex flex-none items-center justify-center rounded-full px-4 py-3 text-sm font-medium transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
 const primaryButtonClass = `${pillButtonBase} bg-[#0f766e] text-white`;
 const secondaryButtonClass = `${pillButtonBase} bg-[rgba(15,118,110,0.14)] text-[#115e59]`;
-const ghostButtonClass = `${pillButtonBase} border border-black/10 bg-white/75 text-[#1f1b17]`;
 
 function categoryChipClass(isActive: boolean): string {
   return `${pillButtonBase} ${isActive ? "bg-[#0f766e] text-white" : "bg-white/75 text-[#1f1b17]"}`;
@@ -179,7 +177,7 @@ export function PracticeShell({ categories }: PracticeShellProps) {
         ))}
       </div>
 
-      <section className="relative grid flex-1 gap-4 rounded-[24px] border border-black/10 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,247,238,0.86))] p-4 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl sm:rounded-[30px] sm:p-[1.15rem]">
+      <section className="relative grid flex-1 gap-4 rounded-3xl border border-black/10 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,247,238,0.86))] p-4 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl sm:rounded-[30px] sm:p-[1.15rem]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">
@@ -193,7 +191,7 @@ export function PracticeShell({ categories }: PracticeShellProps) {
                   : "A single screen, tuned for quick rounds."}
             </h2>
           </div>
-          <button className={ghostButtonClass} disabled={isPending} onClick={startRound} type="button">
+          <button disabled={isPending} onClick={startRound} type="button">
             {round ? "Restart" : result ? "Replay" : "Start"}
           </button>
         </div>
@@ -203,7 +201,7 @@ export function PracticeShell({ categories }: PracticeShellProps) {
         <ol className="grid gap-3 p-0 m-0 list-none">
           {displayedClues.map((clue, index) => (
             <li
-              className="grid gap-1 rounded-[24px] border border-[rgba(17,94,89,0.08)] bg-white/85 p-4"
+              className="grid gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4"
               key={clue.key}
             >
               <small className="text-sm text-[#6b6259]">Clue {index + 1}</small>
@@ -212,7 +210,7 @@ export function PracticeShell({ categories }: PracticeShellProps) {
             </li>
           ))}
           {displayedClues.length === 0 && (
-            <li className="grid min-h-[180px] content-center gap-1 rounded-[24px] border border-[rgba(17,94,89,0.08)] bg-white/85 p-4">
+            <li className="grid min-h-45 content-center gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4">
               <small className="text-sm text-[#6b6259]">Round idle</small>
               <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17]">Pick a category and start.</strong>
               <span className="text-[#6b6259]">The interface stays lean once the round begins.</span>
@@ -252,7 +250,7 @@ export function PracticeShell({ categories }: PracticeShellProps) {
       {result && (
         <div className="fixed inset-0 grid place-items-end bg-[rgba(18,16,12,0.48)] p-4 backdrop-blur-md sm:place-items-center">
           <section
-            className={`w-full max-w-[520px] rounded-[28px] p-6 shadow-[0_34px_90px_rgba(17,16,12,0.24)] ${
+            className={`w-full max-w-130 rounded-[28px] p-6 shadow-[0_34px_90px_rgba(17,16,12,0.24)] ${
               result.status === "win"
                 ? "bg-[radial-gradient(circle_at_top_left,rgba(250,204,21,0.28),transparent_35%),linear-gradient(160deg,#fef7dc_0%,#fffaf0_100%)]"
                 : "bg-[radial-gradient(circle_at_top_left,rgba(190,24,93,0.18),transparent_32%),linear-gradient(160deg,#fff0ec_0%,#fff9f7_100%)]"
@@ -277,7 +275,7 @@ export function PracticeShell({ categories }: PracticeShellProps) {
             <p className="mb-5 mt-4 leading-7 text-[#6b6259]">
               {result.status === "win"
                 ? "Keep the momentum and run another round from the same lane or switch categories."
-                : "Reset fast, change the category, or get ready for saved streaks once login lands."}
+                : "Reset fast, change the category, or queue the next round immediately."}
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <button className={`${primaryButtonClass} w-full sm:w-auto`} disabled={isPending} onClick={startRound} type="button">
@@ -286,18 +284,6 @@ export function PracticeShell({ categories }: PracticeShellProps) {
               <button className={`${secondaryButtonClass} w-full sm:w-auto`} disabled={isPending} onClick={clearForCategoryChoice} type="button">
                 Another category
               </button>
-              <Show when="signed-out">
-                <SignUpButton mode="modal">
-                  <button className={`${ghostButtonClass} w-full sm:w-auto`} type="button">
-                    Log in for streaks
-                  </button>
-                </SignUpButton>
-              </Show>
-              <Show when="signed-in">
-                <div className="flex w-full items-center justify-center sm:w-auto">
-                  <UserButton />
-                </div>
-              </Show>
             </div>
           </section>
         </div>

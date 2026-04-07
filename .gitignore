@@ -20,6 +20,10 @@ yarn-debug.log*
 yarn-error.log*
 /.pnp
 .pnp.js
+.idea/
+.agents/
+.next-stale-*
+skills-lock.json
 
 .vscode/*
 .vercel

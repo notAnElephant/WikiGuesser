@@ -28,7 +28,7 @@ function getRevealedClues(entity: NormalizedEntity, revealCount: number) {
   return entity.clues.slice(0, revealCount);
 }
 
-export async function startRound(input: StartRoundInput = {}): Promise<StartRoundResult> {
+export async function startRound(input: StartRoundInput = {}, userId: string): Promise<StartRoundResult> {
   const snapshot = await getLatestSnapshot();
   const allowedCategories = input.category && input.category !== "random" ? [input.category] : (["countries", "cities", "people"] as const);
   const availableEntities = snapshot.entities.filter((entity) =>
@@ -42,6 +42,7 @@ export async function startRound(input: StartRoundInput = {}): Promise<StartRoun
   const seed = input.seed ?? randomUUID();
   const entity = pickEntity(availableEntities, seed);
   const roundState = createRoundState({
+    userId,
     entityId: entity.id,
     category: entity.category,
     revealCount: 1,
@@ -58,10 +59,14 @@ export async function startRound(input: StartRoundInput = {}): Promise<StartRoun
   };
 }
 
-export async function submitGuess(input: GuessRoundInput): Promise<GuessRoundResult> {
+export async function submitGuess(input: GuessRoundInput, userId: string): Promise<GuessRoundResult> {
   const snapshot = await getLatestSnapshot();
   const roundState = parseRoundState(input.token);
   const entity = snapshot.entities.find((candidate) => candidate.id === roundState.entityId);
+
+  if (roundState.userId !== userId) {
+    throw new Error("Round token does not belong to the authenticated user.");
+  }
 
   if (!entity) {
     throw new Error("Round entity no longer exists in the current snapshot.");

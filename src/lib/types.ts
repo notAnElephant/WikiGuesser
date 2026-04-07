@@ -94,6 +94,7 @@ export interface StartRoundInput {
 
 export interface RoundState {
   roundId: string;
+  userId: string;
   entityId: string;
   category: EntityCategory;
   seed: string;
