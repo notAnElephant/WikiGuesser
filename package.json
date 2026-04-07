@@ -11,16 +11,21 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prisma:generate": "prisma generate",
-    "ingest:discover": "tsx src/scripts/discover.ts",
-    "ingest:hydrate": "tsx src/scripts/hydrate.ts",
-    "ingest:build-snapshot": "tsx src/scripts/build-snapshot.ts"
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:status": "prisma migrate status",
+    "ingest:discover": "tsx src/scripts/discover.ts -- --category countries",
+    "ingest:hydrate": "tsx src/scripts/hydrate.ts -- --category countries",
+    "ingest:build-snapshot": "tsx src/scripts/build-snapshot.ts -- --category countries"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.11",
+    "@neondatabase/serverless": "^1.0.2",
+    "@prisma/adapter-neon": "^7.7.0",
     "@prisma/client": "^7.6.0",
     "next": "^16.2.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "ws": "^8.20.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -28,6 +33,7 @@
     "@types/node": "^25.5.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/ws": "^8.18.1",
     "dotenv": "^17.4.1",
     "postcss": "^8.5.8",
     "prisma": "^7.6.0",
