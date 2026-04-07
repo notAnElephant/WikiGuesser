@@ -51,10 +51,10 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
       query: countriesQuery,
     },
     requiredMinimumClues: 5,
-    allowedProperties: ["P2046", "P1082", "P421", "P37", "P36", "P625"],
+    allowedProperties: ["P30", "P2046", "P1082", "P38", "P36", "P625"],
     lateRevealProperties: ["P36"],
     bannedProperties: ["P41", "P94"],
-    clueOrder: ["P2046", "P1082", "P421", "P37", "P36"],
+    clueOrder: ["P30", "P2046", "P1082", "P38", "P36"],
     aliasStrategy: {
       includeWikipediaTitle: true,
       includeRedirects: true,
@@ -69,10 +69,10 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
         minimumClues: 5,
         redirectAliases: options?.redirectAliases,
         clues: [
-          createClue("area", "Area", formatAreaSquareKilometers(getFirstQuantity(source, "P2046")), 1),
-          createClue("population", "Population", formatPopulation(getFirstQuantity(source, "P1082")), 2),
-          createClue("timezone", "Time zone", formatList(getEntityLabels(source, "P421")), 3),
-          createClue("language", "Official language", formatList(getEntityLabels(source, "P37")), 4),
+          createClue("continent", "Continent", formatList(getEntityLabels(source, "P30"), 1), 1),
+          createClue("area", "Area", formatAreaSquareKilometers(getFirstQuantity(source, "P2046")), 2),
+          createClue("population", "Population", formatPopulation(getFirstQuantity(source, "P1082")), 3),
+          createClue("currency", "Currency", formatList(getEntityLabels(source, "P38"), 1), 4),
           createClue("capital", "Capital", formatList(getEntityLabels(source, "P36"), 1), 5, "late"),
         ],
         metadata: {
