@@ -136,6 +136,13 @@ function toClaimValue(claim: any, labelMap: Record<string, string>): SourceClaim
         value: datavalue.value.time,
         precision: datavalue.value.precision ?? null,
       };
+    case "globecoordinate":
+      return {
+        type: "coordinate",
+        latitude: datavalue.value.latitude,
+        longitude: datavalue.value.longitude,
+        precision: datavalue.value.precision ?? null,
+      };
     case "monolingualtext":
       return {
         type: "monolingualtext",

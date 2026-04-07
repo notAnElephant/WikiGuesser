@@ -9,6 +9,7 @@ import {
   formatPopulation,
   formatYear,
   getEntityLabels,
+  getFirstCoordinate,
   getFirstQuantity,
   getFirstTimeValue,
 } from "@/src/lib/content/source-helpers";
@@ -50,16 +51,18 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
       query: countriesQuery,
     },
     requiredMinimumClues: 5,
-    allowedProperties: ["P2046", "P1082", "P38", "P421", "P37", "P36"],
+    allowedProperties: ["P2046", "P1082", "P421", "P37", "P36", "P625"],
     lateRevealProperties: ["P36"],
     bannedProperties: ["P41", "P94"],
-    clueOrder: ["P2046", "P1082", "P38", "P421", "P37", "P36"],
+    clueOrder: ["P2046", "P1082", "P421", "P37", "P36"],
     aliasStrategy: {
       includeWikipediaTitle: true,
       includeRedirects: true,
       stripParenthetical: true,
     },
     normalize(source, options) {
+      const coordinate = getFirstCoordinate(source, "P625");
+
       return buildNormalizedEntity({
         source,
         category: "countries",
@@ -68,11 +71,14 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
         clues: [
           createClue("area", "Area", formatAreaSquareKilometers(getFirstQuantity(source, "P2046")), 1),
           createClue("population", "Population", formatPopulation(getFirstQuantity(source, "P1082")), 2),
-          createClue("currency", "Currency", formatList(getEntityLabels(source, "P38")), 3),
-          createClue("timezone", "Time zone", formatList(getEntityLabels(source, "P421")), 4),
-          createClue("language", "Official language", formatList(getEntityLabels(source, "P37")), 5),
-          createClue("capital", "Capital", formatList(getEntityLabels(source, "P36"), 1), 6, "late"),
+          createClue("timezone", "Time zone", formatList(getEntityLabels(source, "P421")), 3),
+          createClue("language", "Official language", formatList(getEntityLabels(source, "P37")), 4),
+          createClue("capital", "Capital", formatList(getEntityLabels(source, "P36"), 1), 5, "late"),
         ],
+        metadata: {
+          centroidLatitude: coordinate?.latitude ?? null,
+          centroidLongitude: coordinate?.longitude ?? null,
+        },
       });
     },
   },

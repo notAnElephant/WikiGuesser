@@ -40,6 +40,24 @@ export function getFirstTimeValue(entity: SourceEntity, propertyId: string): str
   return match?.value ?? null;
 }
 
+export function getFirstCoordinate(
+  entity: SourceEntity,
+  propertyId: string,
+): { latitude: number; longitude: number } | null {
+  const match = getClaims(entity, propertyId).find(
+    (claim): claim is Extract<SourceClaimValue, { type: "coordinate" }> => claim.type === "coordinate",
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    latitude: match.latitude,
+    longitude: match.longitude,
+  };
+}
+
 export function formatList(values: string[], limit = 3): string | null {
   const uniqueValues = [...new Set(values.filter(Boolean))].slice(0, limit);
 

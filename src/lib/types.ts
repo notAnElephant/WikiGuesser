@@ -49,6 +49,7 @@ export type SourceClaimValue =
   | { type: "string"; value: string }
   | { type: "quantity"; amount: number; unit: string | null }
   | { type: "time"; value: string; precision: number | null }
+  | { type: "coordinate"; latitude: number; longitude: number; precision: number | null }
   | { type: "monolingualtext"; text: string; language: string | null };
 
 export interface SourceEntity {
@@ -125,4 +126,5 @@ export interface GuessRoundResult {
   revealedClues: PlayableClue[];
   remainingClues: number;
   score: number;
+  guessFeedback: string | null;
 }

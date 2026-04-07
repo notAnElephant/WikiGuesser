@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
+import { matchesEntityGuess, normalizeGuess } from "@/src/lib/game/answer-matching";
 import { createRoundState, parseRoundState, serializeRoundState } from "@/src/lib/game/round-token";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
@@ -14,6 +14,7 @@ import type {
 import { hashString } from "@/src/lib/utils/hash";
 
 const SCORE_BY_REVEAL_INDEX = [100, 80, 60, 40, 20, 10];
+const EARTH_RADIUS_KM = 6371;
 
 function getScoreForRevealCount(revealCount: number): number {
   return SCORE_BY_REVEAL_INDEX[Math.min(revealCount - 1, SCORE_BY_REVEAL_INDEX.length - 1)] ?? 10;
@@ -26,6 +27,41 @@ function pickEntity(entities: NormalizedEntity[], seed: string): NormalizedEntit
 
 function getRevealedClues(entity: NormalizedEntity, revealCount: number) {
   return entity.clues.slice(0, revealCount);
+}
+
+function toRadians(value: number): number {
+  return (value * Math.PI) / 180;
+}
+
+function getCountryCoordinates(entity: NormalizedEntity): { latitude: number; longitude: number } | null {
+  const latitude = entity.metadata.centroidLatitude;
+  const longitude = entity.metadata.centroidLongitude;
+
+  if (typeof latitude !== "number" || typeof longitude !== "number") {
+    return null;
+  }
+
+  return { latitude, longitude };
+}
+
+function formatCountryDistanceFeedback(actualEntity: NormalizedEntity, guessedEntity: NormalizedEntity): string | null {
+  const actualCoordinates = getCountryCoordinates(actualEntity);
+  const guessedCoordinates = getCountryCoordinates(guessedEntity);
+
+  if (!actualCoordinates || !guessedCoordinates) {
+    return null;
+  }
+
+  const latitudeDelta = toRadians(actualCoordinates.latitude - guessedCoordinates.latitude);
+  const longitudeDelta = toRadians(actualCoordinates.longitude - guessedCoordinates.longitude);
+  const startLatitude = toRadians(guessedCoordinates.latitude);
+  const endLatitude = toRadians(actualCoordinates.latitude);
+  const haversine =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(startLatitude) * Math.cos(endLatitude) * Math.sin(longitudeDelta / 2) ** 2;
+  const distance = 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(Math.min(1, haversine)));
+
+  return `${guessedEntity.canonicalAnswer} is ${Math.round(distance).toLocaleString("en-US")} km away.`;
 }
 
 export async function startRound(input: StartRoundInput = {}, userId: string): Promise<StartRoundResult> {
@@ -73,6 +109,14 @@ export async function submitGuess(input: GuessRoundInput, userId: string): Promi
   }
 
   const isCorrect = matchesEntityGuess(entity, input.guess);
+  const guessedCountry =
+    entity.category === "countries"
+      ? snapshot.entities.find(
+          (candidate) =>
+            candidate.category === "countries" &&
+            candidate.acceptedAnswers.some((answer) => answer.normalized === normalizeGuess(input.guess)),
+        ) ?? null
+      : null;
 
   if (isCorrect) {
     return {
@@ -85,6 +129,7 @@ export async function submitGuess(input: GuessRoundInput, userId: string): Promi
       revealedClues: getRevealedClues(entity, roundState.revealCount),
       remainingClues: Math.max(entity.clues.length - roundState.revealCount, 0),
       score: getScoreForRevealCount(roundState.revealCount),
+      guessFeedback: null,
     };
   }
 
@@ -105,5 +150,7 @@ export async function submitGuess(input: GuessRoundInput, userId: string): Promi
     revealedClues: getRevealedClues(entity, nextRevealCount),
     remainingClues: Math.max(entity.clues.length - nextRevealCount, 0),
     score: 0,
+    guessFeedback:
+      entity.category === "countries" && guessedCountry ? formatCountryDistanceFeedback(entity, guessedCountry) : null,
   };
 }

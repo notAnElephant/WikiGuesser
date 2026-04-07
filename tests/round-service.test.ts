@@ -15,14 +15,17 @@ describe("round service", () => {
 
   it("reveals the next clue after an incorrect guess", async () => {
     const round = await startRound({ category: "countries", seed: "alpha" }, "user_test_alpha");
+    const roundState = parseRoundState(round.token);
+    const wrongCountry = roundState.entityId.includes("france") ? "Japan" : "France";
     const result = await submitGuess({
       token: round.token,
-      guess: "wrong answer",
+      guess: wrongCountry,
     }, "user_test_alpha");
 
     expect(result.isCorrect).toBe(false);
     expect(result.isComplete).toBe(false);
     expect(result.revealedClues).toHaveLength(2);
+    expect(result.guessFeedback).toContain("km away");
   });
 
   it("awards score for a correct guess", async () => {
@@ -38,6 +41,7 @@ describe("round service", () => {
     expect(result.isCorrect).toBe(true);
     expect(result.score).toBe(100);
     expect(result.canonicalAnswer).toBe(correctAnswer);
+    expect(result.guessFeedback).toBeNull();
   });
 
   it("rejects guesses for a different authenticated user", async () => {

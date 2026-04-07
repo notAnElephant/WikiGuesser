@@ -7,8 +7,10 @@ describe("category normalization", () => {
   it("builds a playable country entity", () => {
     const entity = categoryDefinitions.countries.normalize(countrySourceFixture);
     expect(entity?.canonicalAnswer).toBe("France");
-    expect(entity?.clues).toHaveLength(6);
+    expect(entity?.clues).toHaveLength(5);
     expect(entity?.clues.at(-1)?.label).toBe("Capital");
+    expect(entity?.clues.some((clue) => clue.label === "Currency")).toBe(false);
+    expect(entity?.metadata.centroidLatitude).toBe(46.2276);
   });
 
   it("builds a playable city entity", () => {

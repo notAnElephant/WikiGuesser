@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import type { FormEvent } from "react";
 import { useState, useTransition } from "react";
 
@@ -7,6 +8,7 @@ import type { CategorySummary, GuessRoundResult, PlayableClue, StartRoundResult 
 
 interface PracticeShellProps {
   categories: CategorySummary[];
+  countryOptions: string[];
 }
 
 interface ActiveRound extends StartRoundResult {
@@ -30,7 +32,7 @@ function categoryChipClass(isActive: boolean): string {
   return `${pillButtonBase} ${isActive ? "bg-[#0f766e] text-white" : "bg-white/75 text-[#1f1b17]"}`;
 }
 
-export function PracticeShell({ categories }: PracticeShellProps) {
+export function PracticeShell({ categories, countryOptions }: PracticeShellProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("random");
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
@@ -38,6 +40,10 @@ export function PracticeShell({ categories }: PracticeShellProps) {
   const [message, setMessage] = useState("Tap start and stay with the clues. The screen stays focused on the round.");
   const [score, setScore] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
+  const isCountryRound = round?.category === "countries";
+  const validCountryLookup = new Map(countryOptions.map((option) => [normalizeGuess(option), option]));
+  const hasGuess = guess.trim().length > 0;
+  const isCountryGuessValid = !isCountryRound || validCountryLookup.has(normalizeGuess(guess));
 
   function startRound() {
     setGuess("");
@@ -68,6 +74,11 @@ export function PracticeShell({ categories }: PracticeShellProps) {
 
   function submitGuess() {
     if (!round || !guess.trim()) {
+      return;
+    }
+
+    if (isCountryRound && !isCountryGuessValid) {
+      setMessage("Choose a country from the list before locking your guess.");
       return;
     }
 
@@ -114,7 +125,9 @@ export function PracticeShell({ categories }: PracticeShellProps) {
           category: data.category,
           revealedClues: data.revealedClues,
         });
-        setMessage(`Out of clues. The answer was ${data.canonicalAnswer}.`);
+        setMessage(
+          `${data.guessFeedback ? `${data.guessFeedback} ` : ""}Out of clues. The answer was ${data.canonicalAnswer}.`,
+        );
         return;
       }
 
@@ -125,7 +138,7 @@ export function PracticeShell({ categories }: PracticeShellProps) {
         revealedClues: data.revealedClues,
         remainingClues: data.remainingClues,
       });
-      setMessage("Not yet. One more clue unlocked.");
+      setMessage(data.guessFeedback ? `${data.guessFeedback} One more clue unlocked.` : "Not yet. One more clue unlocked.");
     });
   }
 
@@ -224,17 +237,39 @@ export function PracticeShell({ categories }: PracticeShellProps) {
             <input
               aria-label="Submit your entity guess"
               className="w-full rounded-[18px] border border-black/10 bg-white/85 px-4 py-4 text-[#1f1b17] outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-[rgba(15,118,110,0.22)]"
+              list={isCountryRound ? "country-guess-options" : undefined}
               disabled={!round || isPending}
               onChange={(event) => setGuess(event.target.value)}
-              placeholder={round ? "Type your answer" : "Start a round to unlock guessing"}
+              placeholder={
+                !round ? "Start a round to unlock guessing" : isCountryRound ? "Search countries" : "Type your answer"
+              }
               type="text"
               value={guess}
             />
+            {isCountryRound ? (
+              <span className="text-sm text-[#6b6259]">
+                Search the country list and choose one of the valid loaded countries.
+              </span>
+            ) : null}
+            {isCountryRound && hasGuess && !isCountryGuessValid ? (
+              <span className="text-sm text-[#b45309]">Select one of the listed countries to submit this guess.</span>
+            ) : null}
           </label>
-          <button className={`${primaryButtonClass} sm:min-w-36`} disabled={!round || isPending || !guess.trim()} type="submit">
+          <button
+            className={`${primaryButtonClass} sm:min-w-36`}
+            disabled={!round || isPending || !hasGuess || !isCountryGuessValid}
+            type="submit"
+          >
             Lock guess
           </button>
         </form>
+        {isCountryRound ? (
+          <datalist id="country-guess-options">
+            {countryOptions.map((option) => (
+              <option key={option} value={option} />
+            ))}
+          </datalist>
+        ) : null}
 
         <div className="flex flex-col gap-3 text-sm text-[#115e59] sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap gap-3">
