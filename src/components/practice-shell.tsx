@@ -27,6 +27,7 @@ const pillButtonBase =
   "inline-flex flex-none items-center justify-center rounded-full px-4 py-3 text-sm font-medium transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
 const primaryButtonClass = `${pillButtonBase} bg-[#0f766e] text-white`;
 const secondaryButtonClass = `${pillButtonBase} bg-[rgba(15,118,110,0.14)] text-[#115e59]`;
+const launchButtonClass = `${pillButtonBase} border border-[rgba(17,94,89,0.16)] bg-[linear-gradient(135deg,#fffaf2_0%,#f8ecce_46%,#f2d680_100%)] px-5 text-[#1f1b17] shadow-[0_14px_36px_rgba(83,58,20,0.16)] hover:shadow-[0_18px_42px_rgba(83,58,20,0.22)]`;
 
 function categoryChipClass(isActive: boolean): string {
   return `${pillButtonBase} ${isActive ? "bg-[#0f766e] text-white" : "bg-white/75 text-[#1f1b17]"}`;
@@ -204,7 +205,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                   : "A single screen, tuned for quick rounds."}
             </h2>
           </div>
-          <button disabled={isPending} onClick={startRound} type="button">
+          <button className={launchButtonClass} disabled={isPending} onClick={startRound} type="button">
             {round ? "Restart" : result ? "Replay" : "Start"}
           </button>
         </div>
