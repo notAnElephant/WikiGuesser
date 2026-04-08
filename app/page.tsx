@@ -1,4 +1,4 @@
-import { PracticeShell } from "@/src/components/practice-shell";
+import { GameShell } from "@/src/components/game-shell";
 import { getLatestSnapshot, listCategorySummaries } from "@/src/lib/repository/snapshot-repository";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto min-h-screen w-full px-2 pb-2 pt-20 sm:px-3 sm:pb-3 sm:pt-24">
-      <PracticeShell categories={categories} countryOptions={countryOptions} />
+      <GameShell categories={categories} countryOptions={countryOptions} />
     </main>
   );
 }

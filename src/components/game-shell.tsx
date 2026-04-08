@@ -17,7 +17,7 @@ import type {
   StartRoundResult,
 } from "@/src/lib/types";
 
-interface PracticeShellProps {
+interface GameShellProps {
   categories: CategorySummary[];
   countryOptions: string[];
 }
@@ -158,7 +158,7 @@ function useViewportSize() {
   return viewport;
 }
 
-export function PracticeShell({ categories, countryOptions }: PracticeShellProps) {
+export function GameShell({ categories, countryOptions }: GameShellProps) {
   const defaultCategory = categories[0]?.id ?? null;
   const [selectedCategory, setSelectedCategory] = useState<string | null>(defaultCategory);
   const [selectedMode, setSelectedMode] = useState<GameMode | null>("classic");
