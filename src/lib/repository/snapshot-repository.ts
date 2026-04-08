@@ -104,9 +104,7 @@ export async function getLatestSnapshot(): Promise<MaterializedSnapshot> {
   return demoSnapshot;
 }
 
-export async function listCategorySummaries(): Promise<CategorySummary[]> {
-  const snapshot = await getLatestSnapshot();
-
+export function buildCategorySummaries(snapshot: MaterializedSnapshot): CategorySummary[] {
   return [
     {
       id: "countries",
@@ -127,6 +125,11 @@ export async function listCategorySummaries(): Promise<CategorySummary[]> {
       entityCount: snapshot.entities.filter((entity) => entity.category === "people").length,
     },
   ];
+}
+
+export async function listCategorySummaries(): Promise<CategorySummary[]> {
+  const snapshot = await getLatestSnapshot();
+  return buildCategorySummaries(snapshot);
 }
 
 export async function persistSnapshot(snapshot: MaterializedSnapshot): Promise<void> {

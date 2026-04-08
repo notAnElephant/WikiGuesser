@@ -1,10 +1,11 @@
 import { GameShell } from "@/src/components/game-shell";
-import { getLatestSnapshot, listCategorySummaries } from "@/src/lib/repository/snapshot-repository";
+import { buildCategorySummaries, getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [allCategories, snapshot] = await Promise.all([listCategorySummaries(), getLatestSnapshot()]);
+  const snapshot = await getLatestSnapshot();
+  const allCategories = buildCategorySummaries(snapshot);
   const categories = allCategories.filter((category) => category.id === "countries");
   const countryOptions = [...new Set(
     snapshot.entities.filter((entity) => entity.category === "countries").map((entity) => entity.canonicalAnswer),
