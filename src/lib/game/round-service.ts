@@ -5,18 +5,25 @@ import { createRoundState, parseRoundState, serializeRoundState } from "@/src/li
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
   EntityCategory,
+  GameMode,
   GuessRoundInput,
   GuessRoundResult,
   NormalizedEntity,
+  RevealClueInput,
+  RevealClueResult,
+  RoundClue,
+  RoundState,
   StartRoundInput,
   StartRoundResult,
 } from "@/src/lib/types";
 import { hashString } from "@/src/lib/utils/hash";
 
 const SCORE_BY_REVEAL_INDEX = [100, 80, 60, 40, 20, 10];
+const DEFAULT_GAME_MODE: GameMode = "classic";
 
 function getScoreForRevealCount(revealCount: number): number {
-  return SCORE_BY_REVEAL_INDEX[Math.min(revealCount - 1, SCORE_BY_REVEAL_INDEX.length - 1)] ?? 10;
+  const normalizedRevealCount = Math.max(revealCount, 1);
+  return SCORE_BY_REVEAL_INDEX[Math.min(normalizedRevealCount - 1, SCORE_BY_REVEAL_INDEX.length - 1)] ?? 10;
 }
 
 function pickEntity(entities: NormalizedEntity[], seed: string): NormalizedEntity {
@@ -24,8 +31,84 @@ function pickEntity(entities: NormalizedEntity[], seed: string): NormalizedEntit
   return entities[index]!;
 }
 
-function getRevealedClues(entity: NormalizedEntity, revealCount: number) {
-  return entity.clues.slice(0, revealCount);
+function getRevealedClues(entity: NormalizedEntity, revealedClueKeys: string[]) {
+  const revealedClueSet = new Set(revealedClueKeys);
+  return entity.clues.filter((clue) => revealedClueSet.has(clue.key));
+}
+
+function getClues(entity: NormalizedEntity, revealedClueKeys: string[], options?: { revealAll?: boolean }): RoundClue[] {
+  const revealedClueSet = new Set(revealedClueKeys);
+
+  return entity.clues.map((clue) => {
+    const isRevealed = options?.revealAll || revealedClueSet.has(clue.key);
+
+    return {
+      key: clue.key,
+      label: clue.label,
+      value: isRevealed ? clue.value : null,
+      prefetchedValue: clue.value,
+      isRevealed,
+      difficulty: clue.difficulty,
+      spoilerLevel: clue.spoilerLevel,
+    };
+  });
+}
+
+function getRemainingClues(entity: NormalizedEntity, revealedClueKeys: string[]): number {
+  return Math.max(entity.clues.length - revealedClueKeys.length, 0);
+}
+
+function hasHiddenSafeClues(entity: NormalizedEntity, revealedClueKeys: string[]): boolean {
+  const revealedClueSet = new Set(revealedClueKeys);
+  return entity.clues.some((clue) => clue.spoilerLevel === "safe" && !revealedClueSet.has(clue.key));
+}
+
+function getNextClassicClueKey(entity: NormalizedEntity, roundState: RoundState): string | null {
+  const revealedClueSet = new Set(roundState.revealedClueKeys);
+  return entity.clues.find((clue) => !revealedClueSet.has(clue.key))?.key ?? null;
+}
+
+function buildRoundProgress(
+  entity: NormalizedEntity,
+  roundState: RoundState,
+  options?: { revealAll?: boolean },
+) {
+  return {
+    category: entity.category,
+    mode: roundState.mode,
+    clues: getClues(entity, roundState.revealedClueKeys, options),
+    revealedClues: getRevealedClues(entity, roundState.revealedClueKeys),
+    remainingClues: getRemainingClues(entity, roundState.revealedClueKeys),
+    canGuess: roundState.canGuess,
+  };
+}
+
+function buildTokenizedRoundResult(entity: NormalizedEntity, roundState: RoundState): StartRoundResult | RevealClueResult {
+  return {
+    roundId: roundState.roundId,
+    token: serializeRoundState(roundState),
+    ...buildRoundProgress(entity, roundState),
+  };
+}
+
+async function getRoundEntity(roundToken: string, userId: string) {
+  const snapshot = await getLatestSnapshot();
+  const roundState = parseRoundState(roundToken);
+
+  if (roundState.userId !== userId) {
+    throw new Error("Round token does not belong to the authenticated user.");
+  }
+
+  const entity = snapshot.entities.find((candidate) => candidate.id === roundState.entityId);
+
+  if (!entity) {
+    throw new Error("Round entity no longer exists in the current snapshot.");
+  }
+
+  return {
+    entity,
+    roundState,
+  };
 }
 
 export async function startRound(input: StartRoundInput = {}, userId: string): Promise<StartRoundResult> {
@@ -41,69 +124,128 @@ export async function startRound(input: StartRoundInput = {}, userId: string): P
 
   const seed = input.seed ?? randomUUID();
   const entity = pickEntity(availableEntities, seed);
+  const mode = input.mode ?? DEFAULT_GAME_MODE;
+  const revealedClueKeys = mode === "classic" && entity.clues[0] ? [entity.clues[0].key] : [];
   const roundState = createRoundState({
     userId,
     entityId: entity.id,
     category: entity.category,
-    revealCount: 1,
+    mode,
     seed,
+    revealedClueKeys,
+    canGuess: mode === "classic",
     totalClues: entity.clues.length,
   });
 
-  return {
-    roundId: roundState.roundId,
-    token: serializeRoundState(roundState),
-    category: entity.category,
-    revealedClues: getRevealedClues(entity, roundState.revealCount),
-    remainingClues: Math.max(entity.clues.length - roundState.revealCount, 0),
+  return buildTokenizedRoundResult(entity, roundState);
+}
+
+export async function revealClue(input: RevealClueInput, userId: string): Promise<RevealClueResult> {
+  const { entity, roundState } = await getRoundEntity(input.token, userId);
+
+  if (roundState.mode !== "blurred-lines") {
+    throw new Error("Manual clue reveals are only available in blurred lines mode.");
+  }
+
+  const selectedClue = entity.clues.find((clue) => clue.key === input.clueKey);
+
+  if (!selectedClue) {
+    throw new Error("That clue does not exist for this round.");
+  }
+
+  if (roundState.revealedClueKeys.includes(selectedClue.key)) {
+    throw new Error("That clue is already revealed.");
+  }
+
+  if (selectedClue.spoilerLevel === "late" && hasHiddenSafeClues(entity, roundState.revealedClueKeys)) {
+    throw new Error("That field is still locked.");
+  }
+
+  const nextState = {
+    ...roundState,
+    revealedClueKeys: [...roundState.revealedClueKeys, selectedClue.key],
+    canGuess: true,
   };
+
+  return buildTokenizedRoundResult(entity, nextState);
 }
 
 export async function submitGuess(input: GuessRoundInput, userId: string): Promise<GuessRoundResult> {
-  const snapshot = await getLatestSnapshot();
-  const roundState = parseRoundState(input.token);
-  const entity = snapshot.entities.find((candidate) => candidate.id === roundState.entityId);
-
-  if (roundState.userId !== userId) {
-    throw new Error("Round token does not belong to the authenticated user.");
-  }
-
-  if (!entity) {
-    throw new Error("Round entity no longer exists in the current snapshot.");
-  }
-
+  const { entity, roundState } = await getRoundEntity(input.token, userId);
   const isCorrect = matchesEntityGuess(entity, input.guess);
+
+  if (roundState.mode === "blurred-lines" && !roundState.canGuess) {
+    throw new Error("Reveal a clue before guessing.");
+  }
 
   if (isCorrect) {
     return {
       roundId: roundState.roundId,
       token: null,
-      category: entity.category,
+      ...buildRoundProgress(entity, roundState, { revealAll: true }),
       isCorrect: true,
       isComplete: true,
       canonicalAnswer: entity.canonicalAnswer,
-      revealedClues: getRevealedClues(entity, roundState.revealCount),
-      remainingClues: Math.max(entity.clues.length - roundState.revealCount, 0),
-      score: getScoreForRevealCount(roundState.revealCount),
+      score: getScoreForRevealCount(roundState.revealedClueKeys.length),
     };
   }
 
-  const nextRevealCount = Math.min(roundState.revealCount + 1, entity.clues.length);
-  const isComplete = nextRevealCount >= entity.clues.length;
-  const nextState = {
-    ...roundState,
-    revealCount: nextRevealCount,
-  };
+  if (roundState.mode === "blurred-lines") {
+    if (roundState.revealedClueKeys.length < entity.clues.length) {
+      const nextState = {
+        ...roundState,
+        canGuess: false,
+      };
+
+      return {
+        roundId: roundState.roundId,
+        token: serializeRoundState(nextState),
+        ...buildRoundProgress(entity, nextState),
+        isCorrect: false,
+        isComplete: false,
+        canonicalAnswer: null,
+        score: 0,
+      };
+    }
+
+    return {
+      roundId: roundState.roundId,
+      token: null,
+      ...buildRoundProgress(entity, roundState, { revealAll: true }),
+      isCorrect: false,
+      isComplete: true,
+      canonicalAnswer: entity.canonicalAnswer,
+      score: 0,
+    };
+  }
+
+  const nextClassicClueKey = getNextClassicClueKey(entity, roundState);
+
+  if (nextClassicClueKey) {
+    const nextState = {
+      ...roundState,
+      revealedClueKeys: [...roundState.revealedClueKeys, nextClassicClueKey],
+      canGuess: true,
+    };
+
+    return {
+      roundId: roundState.roundId,
+      token: serializeRoundState(nextState),
+      ...buildRoundProgress(entity, nextState),
+      isCorrect: false,
+      isComplete: false,
+      canonicalAnswer: null,
+      score: 0,
+    };
+  }
 
   return {
     roundId: roundState.roundId,
-    token: isComplete ? null : serializeRoundState(nextState),
-    category: entity.category,
+    token: null,
+    ...buildRoundProgress(entity, roundState, { revealAll: true }),
     isCorrect: false,
-    isComplete,
-    canonicalAnswer: isComplete ? entity.canonicalAnswer : null,
-    revealedClues: getRevealedClues(entity, nextRevealCount),
-    remainingClues: Math.max(entity.clues.length - nextRevealCount, 0),
+    isComplete: true,
+    canonicalAnswer: entity.canonicalAnswer,
     score: 0,
   };
 }

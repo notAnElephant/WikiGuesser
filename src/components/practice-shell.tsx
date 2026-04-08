@@ -4,24 +4,55 @@ import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import type { FormEvent } from "react";
 import { useState, useTransition } from "react";
 
-import type { CategorySummary, EntityCategory, GuessRoundResult, PlayableClue, StartRoundResult } from "@/src/lib/types";
+import type {
+  CategorySummary,
+  EntityCategory,
+  GameMode,
+  GuessRoundResult,
+  RevealClueResult,
+  PlayableClue,
+  RoundClue,
+  StartRoundResult,
+} from "@/src/lib/types";
 
 interface PracticeShellProps {
   categories: CategorySummary[];
   countryOptions: string[];
 }
 
-interface ActiveRound extends StartRoundResult {
-  revealedClues: PlayableClue[];
-}
+type ActiveRound = StartRoundResult | RevealClueResult;
 
 interface RoundOutcome {
   status: "win" | "loss";
   canonicalAnswer: string;
   score: number;
   category: EntityCategory;
-  revealedClues: PlayableClue[];
+  mode: GameMode;
+  clues: RoundClue[];
 }
+
+const GAME_MODE_OPTIONS: Array<{
+  id: GameMode;
+  label: string;
+  eyebrow: string;
+  description: string;
+  detail: string;
+}> = [
+  {
+    id: "classic",
+    label: "Classic",
+    eyebrow: "Sequential reveals",
+    description: "Miss a guess and the next clue appears automatically.",
+    detail: "Best if you want the original one-clue-at-a-time pacing.",
+  },
+  {
+    id: "blurred-lines",
+    label: "Blurred lines",
+    eyebrow: "Player-controlled reveals",
+    description: "See every hint label in a wiki table and unblur the values in any order.",
+    detail: "Each reveal unlocks one guess, so choose your next field carefully.",
+  },
+];
 
 const pillButtonBase =
   "inline-flex flex-none items-center justify-center rounded-full px-4 py-3 text-sm font-medium transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
@@ -29,28 +60,101 @@ const primaryButtonClass = `${pillButtonBase} bg-[#0f766e] text-white`;
 const secondaryButtonClass = `${pillButtonBase} bg-[rgba(15,118,110,0.14)] text-[#115e59]`;
 const launchButtonClass = `${pillButtonBase} border border-[rgba(17,94,89,0.16)] bg-[linear-gradient(135deg,#fffaf2_0%,#f8ecce_46%,#f2d680_100%)] px-5 text-[#1f1b17] shadow-[0_14px_36px_rgba(83,58,20,0.16)] hover:shadow-[0_18px_42px_rgba(83,58,20,0.22)]`;
 
-function categoryChipClass(isActive: boolean): string {
-  return `${pillButtonBase} ${isActive ? "bg-[#0f766e] text-white" : "bg-white/75 text-[#1f1b17]"}`;
+function selectionCardClass(isActive: boolean, isDisabled = false): string {
+  return `grid gap-3 rounded-[26px] border p-4 text-left transition ${
+    isDisabled
+      ? "cursor-not-allowed border-black/5 bg-[rgba(255,255,255,0.56)] opacity-55"
+      : isActive
+        ? "border-[#0f766e] bg-[linear-gradient(160deg,rgba(15,118,110,0.14),rgba(255,255,255,0.92))] shadow-[0_18px_44px_rgba(15,118,110,0.12)]"
+        : "border-black/10 bg-white/85 hover:-translate-y-0.5"
+  }`;
+}
+
+function getMenuMessage(category: string | null, mode: GameMode | null): string {
+  if (!category) {
+    return "Choose a category to continue.";
+  }
+
+  if (!mode) {
+    return "Choose a game mode for that category.";
+  }
+
+  return "Start a round when you're ready.";
+}
+
+function hasHiddenSafeClues(clues: RoundClue[]): boolean {
+  return clues.some((clue) => clue.spoilerLevel === "safe" && !clue.isRevealed);
+}
+
+function isClueLocked(clues: RoundClue[], clue: RoundClue): boolean {
+  return clue.spoilerLevel === "late" && hasHiddenSafeClues(clues);
+}
+
+function toPlayableClues(clues: RoundClue[]): PlayableClue[] {
+  return clues
+    .filter((clue) => clue.isRevealed)
+    .map((clue) => ({
+      key: clue.key,
+      label: clue.label,
+      value: clue.value ?? clue.prefetchedValue,
+      difficulty: clue.difficulty,
+      spoilerLevel: clue.spoilerLevel,
+    }));
 }
 
 export function PracticeShell({ categories, countryOptions }: PracticeShellProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("random");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
-  const [message, setMessage] = useState("Choose a category and start playing.");
+  const [message, setMessage] = useState(getMenuMessage(null, null));
   const [score, setScore] = useState<number | null>(null);
+  const [isSyncingReveal, setIsSyncingReveal] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const isCountryRound = round?.category === "countries";
   const validCountryLookup = new Map(countryOptions.map((option) => [normalizeGuess(option), option]));
+  const view = round ? "round" : result ? "result" : "menu";
+  const currentMode = round?.mode ?? result?.mode ?? selectedMode;
+  const currentClues = round?.clues ?? result?.clues ?? [];
+  const visibleClassicClues = currentClues.filter((clue) => clue.isRevealed);
+  const isCountryRound = round?.category === "countries";
   const hasGuess = guess.trim().length > 0;
   const isCountryGuessValid = !isCountryRound || validCountryLookup.has(normalizeGuess(guess));
-  const view = round ? "round" : result ? "result" : "menu";
+  const canSubmitGuess = Boolean(round && round.canGuess && hasGuess && isCountryGuessValid && !isPending && !isSyncingReveal);
+  const selectedCategoryMeta = categories.find((category) => category.id === selectedCategory);
+  const selectedCategoryLabel = selectedCategory === "random" ? "Random mix" : selectedCategoryMeta?.label ?? "Choose a category";
+  const selectedModeMeta = GAME_MODE_OPTIONS.find((mode) => mode.id === selectedMode);
+  const currentCategory = round?.category ?? result?.category ?? selectedCategory;
+  const currentCategoryMeta = categories.find((category) => category.id === currentCategory);
+  const currentCategoryLabel = currentCategoryMeta?.label ?? (currentCategory === "random" ? "Random mix" : selectedCategoryLabel);
+  const currentModeLabel = GAME_MODE_OPTIONS.find((mode) => mode.id === currentMode)?.label ?? "Mode pending";
+  const canStartRound = Boolean(selectedCategory && selectedMode && !isPending);
+
+  function handleCategorySelect(categoryId: string) {
+    setSelectedCategory(categoryId);
+    setMessage(getMenuMessage(categoryId, selectedMode));
+  }
+
+  function handleModeSelect(mode: GameMode) {
+    if (!selectedCategory) {
+      setMessage("Choose a category before you pick a game mode.");
+      return;
+    }
+
+    setSelectedMode(mode);
+    setMessage(getMenuMessage(selectedCategory, mode));
+  }
 
   function startRound() {
+    if (!selectedCategory || !selectedMode) {
+      setMessage(getMenuMessage(selectedCategory, selectedMode));
+      return;
+    }
+
     setGuess("");
     setScore(null);
     setResult(null);
+    setIsSyncingReveal(false);
 
     startTransition(async () => {
       const response = await fetch("/api/rounds/start", {
@@ -60,6 +164,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         },
         body: JSON.stringify({
           category: selectedCategory,
+          mode: selectedMode,
         }),
       });
 
@@ -70,7 +175,77 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
 
       const data = (await response.json()) as StartRoundResult;
       setRound(data);
-      setMessage("Round started. Submit a guess whenever you're ready.");
+      setMessage(
+        data.mode === "blurred-lines"
+          ? "Round started. Unblur a field to unlock your first guess."
+          : "Round started. Submit a guess whenever you're ready.",
+      );
+    });
+  }
+
+  function revealClue(clueKey: string) {
+    if (!round || isSyncingReveal) {
+      return;
+    }
+
+    const clue = round.clues.find((entry) => entry.key === clueKey);
+
+    if (!clue || clue.isRevealed || isClueLocked(round.clues, clue)) {
+      return;
+    }
+
+    const previousRound = round;
+    const optimisticClues = round.clues.map((entry) =>
+      entry.key === clueKey
+        ? {
+            ...entry,
+            isRevealed: true,
+            value: entry.prefetchedValue,
+          }
+        : entry,
+    );
+
+    setRound({
+      ...round,
+      clues: optimisticClues,
+      revealedClues: toPlayableClues(optimisticClues),
+      remainingClues: Math.max(round.remainingClues - 1, 0),
+      canGuess: true,
+    });
+    setIsSyncingReveal(true);
+
+    startTransition(async () => {
+      try {
+        const response = await fetch(`/api/rounds/${round.roundId}/reveal`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: round.token,
+            clueKey,
+          }),
+        });
+
+        if (!response.ok) {
+          setRound(previousRound);
+          setMessage("Couldn't reveal that field. Try another row.");
+          return;
+        }
+
+        const data = (await response.json()) as RevealClueResult;
+        setRound(data);
+        setMessage(
+          data.remainingClues === 0
+            ? "Last field revealed. You have one final guess."
+            : "Field revealed. Take a guess or unblur another row.",
+        );
+      } catch {
+        setRound(previousRound);
+        setMessage("Couldn't reveal that field. Try another row.");
+      } finally {
+        setIsSyncingReveal(false);
+      }
     });
   }
 
@@ -81,6 +256,15 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
 
     if (isCountryRound && !isCountryGuessValid) {
       setMessage("Choose a country from the suggestions before submitting.");
+      return;
+    }
+
+    if (!round.canGuess) {
+      setMessage(
+        round.mode === "blurred-lines"
+          ? "Unblur a field before your next guess."
+          : "Wait for the next clue before guessing again.",
+      );
       return;
     }
 
@@ -112,7 +296,8 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           canonicalAnswer: data.canonicalAnswer ?? "Unknown",
           score: data.score,
           category: data.category,
-          revealedClues: data.revealedClues,
+          mode: data.mode,
+          clues: data.clues,
         });
         setMessage(`Correct. ${data.canonicalAnswer} for ${data.score} points.`);
         return;
@@ -125,7 +310,8 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           canonicalAnswer: data.canonicalAnswer ?? "Unknown",
           score: 0,
           category: data.category,
-          revealedClues: data.revealedClues,
+          mode: data.mode,
+          clues: data.clues,
         });
         setMessage(`Out of clues. The answer was ${data.canonicalAnswer}.`);
         return;
@@ -135,10 +321,20 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         roundId: data.roundId,
         token: data.token!,
         category: data.category,
+        mode: data.mode,
+        clues: data.clues,
         revealedClues: data.revealedClues,
         remainingClues: data.remainingClues,
+        canGuess: data.canGuess,
       });
-      setMessage("Not this time. Here's another clue.");
+
+      setMessage(
+        data.mode === "blurred-lines"
+          ? "Not this time. Unblur another field to earn the next guess."
+          : data.remainingClues === 0
+            ? "Not this time. That was the last clue, so you get one final guess."
+            : "Not this time. Here's another clue.",
+      );
     });
   }
 
@@ -152,14 +348,9 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
     setResult(null);
     setGuess("");
     setScore(null);
-    setMessage("Choose a category and start playing.");
+    setIsSyncingReveal(false);
+    setMessage(getMenuMessage(selectedCategory, selectedMode));
   }
-
-  const displayedClues = round?.revealedClues ?? result?.revealedClues ?? [];
-  const selectedCategoryMeta = categories.find((category) => category.id === selectedCategory);
-  const selectedCategoryLabel = selectedCategory === "random" ? "Random mix" : selectedCategoryMeta?.label ?? selectedCategory;
-  const currentCategory = round?.category ?? result?.category ?? selectedCategory;
-  const currentCategoryMeta = categories.find((category) => category.id === currentCategory);
 
   if (view === "menu") {
     return (
@@ -172,7 +363,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                 WikiGuesser
               </h1>
               <p className="m-0 mt-4 max-w-2xl leading-7 text-[#6b6259]">
-                Pick a category, read the clues, and see how quickly you can name the answer before it becomes obvious.
+                Pick a category first, then choose whether you want classic pacing or a player-controlled clue table.
               </p>
             </div>
             <div className="grid gap-3 rounded-[26px] border border-[rgba(17,94,89,0.08)] bg-white/80 p-4">
@@ -181,50 +372,33 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                 {selectedCategoryLabel}
               </strong>
               <span className="text-sm leading-6 text-[#6b6259]">
-                {selectedCategory === "random"
-                  ? "Get a surprise challenge from anywhere in the game."
-                  : selectedCategoryMeta?.description ?? "Use this category for the next round."}
+                {selectedModeMeta?.label ?? "Choose a mode once your category is locked in."}
               </span>
             </div>
           </div>
         </header>
 
-        <section className="grid gap-4 rounded-[30px] border border-black/10 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,247,238,0.86))] p-5 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl sm:p-6">
+        <section className="grid gap-5 rounded-[30px] border border-black/10 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,247,238,0.86))] p-5 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">Choose a category</p>
+              <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">Step 1</p>
               <h2 className="m-0 font-serif-display text-[clamp(1.75rem,5vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#1f1b17]">
-                Find your next challenge.
+                Choose a category.
               </h2>
             </div>
-            <button className={launchButtonClass} disabled={isPending} onClick={startRound} type="button">
-              Start round
-            </button>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <button
-              className={`grid gap-3 rounded-[26px] border p-4 text-left transition ${
-                selectedCategory === "random"
-                  ? "border-[#0f766e] bg-[linear-gradient(160deg,rgba(15,118,110,0.14),rgba(255,255,255,0.92))] shadow-[0_18px_44px_rgba(15,118,110,0.12)]"
-                  : "border-black/10 bg-white/85 hover:-translate-y-0.5"
-              }`}
-              onClick={() => setSelectedCategory("random")}
-              type="button"
-            >
+            <button className={selectionCardClass(selectedCategory === "random")} onClick={() => handleCategorySelect("random")} type="button">
               <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">Wildcard</span>
               <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17]">Mixed deck</strong>
               <span className="leading-6 text-[#6b6259]">A surprise mix pulled from every category.</span>
             </button>
             {categories.map((category) => (
               <button
-                className={`grid gap-3 rounded-[26px] border p-4 text-left transition ${
-                  selectedCategory === category.id
-                    ? "border-[#0f766e] bg-[linear-gradient(160deg,rgba(15,118,110,0.14),rgba(255,255,255,0.92))] shadow-[0_18px_44px_rgba(15,118,110,0.12)]"
-                    : "border-black/10 bg-white/85 hover:-translate-y-0.5"
-                }`}
+                className={selectionCardClass(selectedCategory === category.id)}
                 key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => handleCategorySelect(category.id)}
                 type="button"
               >
                 <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">Category</span>
@@ -232,6 +406,41 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                 <span className="leading-6 text-[#6b6259]">{category.description}</span>
               </button>
             ))}
+          </div>
+
+          <div className="grid gap-4 rounded-[26px] border border-[rgba(17,94,89,0.08)] bg-white/70 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">Step 2</p>
+                <h3 className="m-0 font-serif-display text-[clamp(1.4rem,4vw,2.2rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-[#1f1b17]">
+                  Choose a game mode.
+                </h3>
+              </div>
+              <button className={launchButtonClass} disabled={!canStartRound} onClick={startRound} type="button">
+                Start round
+              </button>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-2">
+              {GAME_MODE_OPTIONS.map((mode) => {
+                const isDisabled = !selectedCategory;
+
+                return (
+                  <button
+                    className={selectionCardClass(selectedMode === mode.id, isDisabled)}
+                    disabled={isDisabled}
+                    key={mode.id}
+                    onClick={() => handleModeSelect(mode.id)}
+                    type="button"
+                  >
+                    <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">{mode.eyebrow}</span>
+                    <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17]">{mode.label}</strong>
+                    <span className="leading-6 text-[#6b6259]">{mode.description}</span>
+                    <span className="text-sm leading-6 text-[#8a8278]">{mode.detail}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <p className="m-0 text-sm leading-6 text-[#6b6259]">{message}</p>
@@ -247,14 +456,19 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">
             {view === "round" ? "Now playing" : "Round complete"}
           </p>
-          <h1 className="m-0 max-w-[10ch] font-serif-display text-[clamp(2.1rem,7vw,3.7rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17] sm:max-w-none">
-            {view === "round" ? "Name it before the clues give it away." : "Here's how that round ended."}
+          <h1 className="m-0 max-w-[11ch] font-serif-display text-[clamp(2.1rem,7vw,3.7rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17] sm:max-w-none">
+            {currentMode === "blurred-lines"
+              ? view === "round"
+                ? "Lift the blur only where you need it."
+                : "The dossier is open. Review every field."
+              : view === "round"
+                ? "Name it before the clues give it away."
+                : "Here's how that round ended."}
           </h1>
         </div>
         <div className="scrollbar-hidden flex gap-3 overflow-x-auto">
-          <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59]">
-            {currentCategoryMeta?.label ?? selectedCategoryLabel}
-          </span>
+          <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59]">{currentCategoryLabel}</span>
+          <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59]">{currentModeLabel}</span>
           <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59]">{score ?? 0} pts</span>
         </div>
       </header>
@@ -263,11 +477,13 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">
-              {round ? "Clues so far" : "Answer revealed"}
+              {round ? (currentMode === "blurred-lines" ? "Wikipedia dossier" : "Clues so far") : "Answer revealed"}
             </p>
-            <h2 className="m-0 max-w-[12ch] font-serif-display text-[clamp(1.75rem,5vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#1f1b17]">
+            <h2 className="m-0 max-w-[13ch] font-serif-display text-[clamp(1.75rem,5vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#1f1b17]">
               {round
-                ? "Make your guess before the next reveal."
+                ? currentMode === "blurred-lines"
+                  ? "Reveal only the rows you want to spend."
+                  : "Make your guess before the next reveal."
                 : "Take a look, then jump into another round."}
             </h2>
           </div>
@@ -289,25 +505,79 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
 
         <p className="m-0 leading-7 text-[#6b6259]">{message}</p>
 
-        <ol className="grid gap-3 p-0 m-0 list-none">
-          {displayedClues.map((clue, index) => (
-            <li
-              className="grid gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4"
-              key={clue.key}
-            >
-              <small className="text-sm text-[#6b6259]">Clue {index + 1}</small>
-              <span className="text-[#6b6259]">{clue.label}</span>
-              <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17]">{clue.value}</strong>
-            </li>
-          ))}
-          {displayedClues.length === 0 && (
-            <li className="grid min-h-45 content-center gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4">
-              <small className="text-sm text-[#6b6259]">Ready when you are</small>
-              <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17]">Pick a category and start.</strong>
-              <span className="text-[#6b6259]">Your clues will appear here as soon as the round begins.</span>
-            </li>
-          )}
-        </ol>
+        {currentMode === "blurred-lines" ? (
+          <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-[28px] border border-[#a2a9b1] bg-[#f8f9fa] shadow-[0_18px_38px_rgba(60,64,67,0.08)]">
+            <table className="w-full border-collapse text-left text-sm text-[#202122]">
+              <caption className="border-b border-[#c8ccd1] bg-[#eaecf0] px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-[#54595d]">
+                Clue dossier
+              </caption>
+              <thead>
+                <tr className="bg-white text-xs uppercase tracking-[0.16em] text-[#54595d]">
+                  <th className="w-[36%] border-b border-r border-[#c8ccd1] px-4 py-3 font-semibold">Field</th>
+                  <th className="border-b border-[#c8ccd1] px-4 py-3 font-semibold">Data</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentClues.map((clue, index) => {
+                  const isLocked = Boolean(round) && isClueLocked(currentClues, clue);
+
+                  return (
+                    <tr
+                      className={`${index % 2 === 0 ? "bg-white" : "bg-[#f8f9fa]"} ${isLocked ? "opacity-55" : ""}`}
+                      key={clue.key}
+                    >
+                      <th className="border-r border-t border-[#c8ccd1] px-4 py-3 align-top font-semibold text-[#202122]">
+                        <span>{clue.label}</span>
+                      </th>
+                      <td className="border-t border-[#c8ccd1] px-4 py-3 align-top">
+                        {clue.isRevealed ? (
+                          <span className="text-[1.02rem] leading-7 text-[#202122]">{clue.value}</span>
+                        ) : round ? (
+                          isLocked ? (
+                            <div className="rounded-lg bg-[linear-gradient(90deg,rgba(162,169,177,0.12),rgba(162,169,177,0.22),rgba(162,169,177,0.12))] px-4 py-3 text-transparent blur-[1.2px] select-none">
+                              Hidden until revealed
+                            </div>
+                          ) : (
+                            <button
+                              aria-label={`Reveal ${clue.label}`}
+                              className="block w-full rounded-lg bg-transparent p-0 text-left transition hover:bg-[rgba(234,236,240,0.72)] disabled:cursor-not-allowed"
+                              disabled={isSyncingReveal || isPending}
+                              onClick={() => revealClue(clue.key)}
+                              type="button"
+                            >
+                              <span className="block rounded-lg bg-[linear-gradient(90deg,rgba(162,169,177,0.18),rgba(162,169,177,0.32),rgba(162,169,177,0.18))] px-4 py-3 text-transparent blur-[1.2px] select-none">
+                                Hidden until revealed
+                              </span>
+                            </button>
+                          )
+                        ) : (
+                          <span className="text-[1.02rem] leading-7 text-[#202122]">{clue.value}</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <ol className="m-0 grid list-none gap-3 p-0">
+            {visibleClassicClues.map((clue, index) => (
+              <li className="grid gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4" key={clue.key}>
+                <small className="text-sm text-[#6b6259]">Clue {index + 1}</small>
+                <span className="text-[#6b6259]">{clue.label}</span>
+                <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17]">{clue.value}</strong>
+              </li>
+            ))}
+            {visibleClassicClues.length === 0 ? (
+              <li className="grid min-h-45 content-center gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4">
+                <small className="text-sm text-[#6b6259]">Ready when you are</small>
+                <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17]">Pick a category and start.</strong>
+                <span className="text-[#6b6259]">Your clues will appear here as soon as the round begins.</span>
+              </li>
+            ) : null}
+          </ol>
+        )}
 
         {round ? (
           <form className="flex flex-col gap-4 sm:flex-row sm:items-end" onSubmit={handleGuessSubmit}>
@@ -323,24 +593,25 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                 type="text"
                 value={guess}
               />
-              {isCountryRound ? (
+              {round.mode === "blurred-lines" ? (
                 <span className="text-sm text-[#6b6259]">
-                  Start typing and pick a country from the suggestions.
+                  {round.canGuess
+                    ? "You can guess now or keep revealing rows before you commit."
+                    : "Unblur a row to unlock the next guess."}
                 </span>
+              ) : isCountryRound ? (
+                <span className="text-sm text-[#6b6259]">Start typing and pick a country from the suggestions.</span>
               ) : null}
               {isCountryRound && hasGuess && !isCountryGuessValid ? (
                 <span className="text-sm text-[#b45309]">Pick one of the suggested countries to submit this guess.</span>
               ) : null}
             </label>
-            <button
-              className={`${primaryButtonClass} sm:min-w-36`}
-              disabled={!round || isPending || !hasGuess || !isCountryGuessValid}
-              type="submit"
-            >
+            <button className={`${primaryButtonClass} sm:min-w-36`} disabled={!canSubmitGuess} type="submit">
               Submit guess
             </button>
           </form>
         ) : null}
+
         {isCountryRound ? (
           <datalist id="country-guess-options">
             {countryOptions.map((option) => (

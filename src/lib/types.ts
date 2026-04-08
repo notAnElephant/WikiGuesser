@@ -1,6 +1,8 @@
 export const ENTITY_CATEGORIES = ["countries", "cities", "people"] as const;
+export const GAME_MODES = ["classic", "blurred-lines"] as const;
 
 export type EntityCategory = (typeof ENTITY_CATEGORIES)[number];
+export type GameMode = (typeof GAME_MODES)[number];
 
 export interface AcceptedAnswer {
   kind: "canonical" | "alias" | "wikipedia-title" | "redirect";
@@ -12,6 +14,16 @@ export interface PlayableClue {
   key: string;
   label: string;
   value: string;
+  difficulty: number;
+  spoilerLevel: "safe" | "late";
+}
+
+export interface RoundClue {
+  key: string;
+  label: string;
+  value: string | null;
+  prefetchedValue: string;
+  isRevealed: boolean;
   difficulty: number;
   spoilerLevel: "safe" | "late";
 }
@@ -90,6 +102,7 @@ export interface CategoryDefinition {
 
 export interface StartRoundInput {
   category?: EntityCategory | "random";
+  mode?: GameMode;
   seed?: string;
 }
 
@@ -98,8 +111,10 @@ export interface RoundState {
   userId: string;
   entityId: string;
   category: EntityCategory;
+  mode: GameMode;
   seed: string;
-  revealCount: number;
+  revealedClueKeys: string[];
+  canGuess: boolean;
   totalClues: number;
 }
 
@@ -107,8 +122,11 @@ export interface StartRoundResult {
   roundId: string;
   token: string;
   category: EntityCategory;
+  mode: GameMode;
+  clues: RoundClue[];
   revealedClues: PlayableClue[];
   remainingClues: number;
+  canGuess: boolean;
 }
 
 export interface GuessRoundInput {
@@ -116,14 +134,33 @@ export interface GuessRoundInput {
   guess: string;
 }
 
+export interface RevealClueInput {
+  token: string;
+  clueKey: string;
+}
+
+export interface RevealClueResult {
+  roundId: string;
+  token: string;
+  category: EntityCategory;
+  mode: GameMode;
+  clues: RoundClue[];
+  revealedClues: PlayableClue[];
+  remainingClues: number;
+  canGuess: boolean;
+}
+
 export interface GuessRoundResult {
   roundId: string;
   token: string | null;
   category: EntityCategory;
+  mode: GameMode;
   isCorrect: boolean;
   isComplete: boolean;
   canonicalAnswer: string | null;
+  clues: RoundClue[];
   revealedClues: PlayableClue[];
   remainingClues: number;
+  canGuess: boolean;
   score: number;
 }
