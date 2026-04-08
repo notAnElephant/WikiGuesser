@@ -165,6 +165,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
+  const [guessedEntities, setGuessedEntities] = useState<string[]>([]);
   const [message, setMessage] = useState(getMenuMessage(defaultCategory, "classic"));
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
@@ -178,8 +179,14 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
   const visibleClassicClues = currentClues.filter((clue) => clue.isRevealed);
   const isCountryRound = round?.category === "countries";
   const hasGuess = guess.trim().length > 0;
-  const isCountryGuessValid = !isCountryRound || validCountryLookup.has(normalizeGuess(guess));
-  const canSubmitGuess = Boolean(round && round.canGuess && hasGuess && isCountryGuessValid && !isPending && !isSyncingReveal);
+  const normalizedGuess = normalizeGuess(guess);
+  const normalizedGuessedEntities = new Set(guessedEntities.map((entry) => normalizeGuess(entry)));
+  const isCountryGuessValid = !isCountryRound || validCountryLookup.has(normalizedGuess);
+  const isAlreadyGuessed = hasGuess && normalizedGuessedEntities.has(normalizedGuess);
+  const availableCountryOptions = countryOptions.filter((option) => !normalizedGuessedEntities.has(normalizeGuess(option)));
+  const canSubmitGuess = Boolean(
+    round && round.canGuess && hasGuess && isCountryGuessValid && !isAlreadyGuessed && !isPending && !isSyncingReveal,
+  );
   const selectedCategoryMeta = categories.find((category) => category.id === selectedCategory);
   const selectedCategoryLabel = selectedCategory === "random" ? "Random mix" : selectedCategoryMeta?.label ?? "Choose a category";
   const selectedModeMeta = GAME_MODE_OPTIONS.find((mode) => mode.id === selectedMode);
@@ -211,6 +218,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
     }
 
     setGuess("");
+    setGuessedEntities([]);
     setScore(null);
     setResult(null);
     setIsSyncingReveal(false);
@@ -327,6 +335,13 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
       return;
     }
 
+    if (isAlreadyGuessed) {
+      setMessage("You already tried that one. Pick a new entity.");
+      return;
+    }
+
+    const submittedGuess = isCountryRound ? (validCountryLookup.get(normalizedGuess) ?? guess.trim()) : guess.trim();
+
     startTransition(async () => {
       const response = await fetch(`/api/rounds/${round.roundId}/guess`, {
         method: "POST",
@@ -335,7 +350,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         },
         body: JSON.stringify({
           token: round.token,
-          guess,
+          guess: submittedGuess,
         }),
       });
 
@@ -345,6 +360,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
       }
 
       const data = (await response.json()) as GuessRoundResult;
+      setGuessedEntities((current) => [...current, submittedGuess]);
       setScore(data.score || null);
       setGuess("");
 
@@ -406,6 +422,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
     setRound(null);
     setResult(null);
     setGuess("");
+    setGuessedEntities([]);
     setScore(null);
     setIsSyncingReveal(false);
     setMessage(getMenuMessage(selectedCategory, selectedMode));
@@ -672,8 +689,25 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
               ) : isCountryRound ? (
                 <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Start typing and pick a country from the suggestions.</span>
               ) : null}
+              {guessedEntities.length > 0 ? (
+                <>
+                  <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Already guessed</span>
+                  <div className="flex flex-wrap gap-2">
+                    {guessedEntities.map((entity) => (
+                      <span
+                        className="rounded-full border border-black/8 bg-white/70 px-3 py-1 text-xs font-medium text-[#6b6259] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb]"
+                        key={entity}
+                      >
+                        {entity}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              ) : null}
               {isCountryRound && hasGuess && !isCountryGuessValid ? (
                 <span className="text-sm text-[#b45309]">Pick one of the suggested countries to submit this guess.</span>
+              ) : isAlreadyGuessed ? (
+                <span className="text-sm text-[#b45309]">You already guessed that entity in this round.</span>
               ) : null}
             </label>
             <button className={`${primaryButtonClass} sm:min-w-36`} disabled={!canSubmitGuess} type="submit">
@@ -684,7 +718,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
 
         {isCountryRound ? (
           <datalist id="country-guess-options">
-            {countryOptions.map((option) => (
+            {availableCountryOptions.map((option) => (
               <option key={option} value={option} />
             ))}
           </datalist>
