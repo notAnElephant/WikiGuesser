@@ -128,11 +128,11 @@ function useViewportSize() {
 export function PracticeShell({ categories, countryOptions }: PracticeShellProps) {
   const defaultCategory = categories[0]?.id ?? null;
   const [selectedCategory, setSelectedCategory] = useState<string | null>(defaultCategory);
-  const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
+  const [selectedMode, setSelectedMode] = useState<GameMode | null>("classic");
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
-  const [message, setMessage] = useState(getMenuMessage(defaultCategory, null));
+  const [message, setMessage] = useState(getMenuMessage(defaultCategory, "classic"));
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -400,7 +400,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                 {selectedCategoryLabel}
               </strong>
               <span className="text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
-                {selectedModeMeta?.label ?? "Choose a mode once your category is locked in."}
+                {selectedModeMeta?.label ?? "Classic is selected by default."}
               </span>
             </div>
           </div>
@@ -439,16 +439,11 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           </div>
 
           <div className="grid gap-4 rounded-[26px] border border-[rgba(17,94,89,0.08)] bg-white/70 p-4 dark:border-white/10 dark:bg-[rgba(255,255,255,0.05)]">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">Step 2</p>
-                <h3 className="m-0 font-serif-display text-[clamp(1.4rem,4vw,2.2rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                  Choose a game mode.
-                </h3>
-              </div>
-              <button className={launchButtonClass} disabled={!canStartRound} onClick={startRound} type="button">
-                Start round
-              </button>
+            <div>
+              <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">Step 2</p>
+              <h3 className="m-0 font-serif-display text-[clamp(1.4rem,4vw,2.2rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
+                Choose a game mode.
+              </h3>
             </div>
 
             <div className="grid gap-3 lg:grid-cols-2">
@@ -470,6 +465,18 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                   </button>
                 );
               })}
+            </div>
+
+            <div className="grid gap-3 rounded-[22px] border border-[rgba(17,94,89,0.08)] bg-[rgba(15,118,110,0.04)] p-4 dark:border-white/10 dark:bg-[rgba(36,212,194,0.06)]">
+              <div>
+                <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">Step 3</p>
+                <h3 className="m-0 font-serif-display text-[clamp(1.25rem,3vw,1.8rem)] font-semibold leading-[1] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
+                  Start the round.
+                </h3>
+              </div>
+              <button className={launchButtonClass} disabled={!canStartRound} onClick={startRound} type="button">
+                Start round
+              </button>
             </div>
           </div>
 
