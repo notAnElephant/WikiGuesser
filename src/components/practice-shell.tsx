@@ -1,8 +1,9 @@
 "use client";
 
+import Confetti from "react-confetti";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import type { FormEvent } from "react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import type {
   CategorySummary,
@@ -102,18 +103,43 @@ function toPlayableClues(clues: RoundClue[]): PlayableClue[] {
     }));
 }
 
+function useViewportSize() {
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    function updateViewport() {
+      setViewport({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+
+    return () => {
+      window.removeEventListener("resize", updateViewport);
+    };
+  }, []);
+
+  return viewport;
+}
+
 export function PracticeShell({ categories, countryOptions }: PracticeShellProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const defaultCategory = categories[0]?.id ?? null;
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(defaultCategory);
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
-  const [message, setMessage] = useState(getMenuMessage(null, null));
+  const [message, setMessage] = useState(getMenuMessage(defaultCategory, null));
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const { width: viewportWidth, height: viewportHeight } = useViewportSize();
   const validCountryLookup = new Map(countryOptions.map((option) => [normalizeGuess(option), option]));
   const view = round ? "round" : result ? "result" : "menu";
+  const showRandomMix = categories.length > 1;
   const currentMode = round?.mode ?? result?.mode ?? selectedMode;
   const currentClues = round?.clues ?? result?.clues ?? [];
   const visibleClassicClues = currentClues.filter((clue) => clue.isRevealed);
@@ -363,7 +389,9 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                 WikiGuesser
               </h1>
               <p className="m-0 mt-4 max-w-2xl leading-7 text-[#6b6259]">
-                Pick a category first, then choose whether you want classic pacing or a player-controlled clue table.
+                {showRandomMix
+                  ? "Pick a category first, then choose whether you want classic pacing or a player-controlled clue table."
+                  : "Countries are the only live category right now, so choose a mode and jump straight in."}
               </p>
             </div>
             <div className="grid gap-3 rounded-[26px] border border-[rgba(17,94,89,0.08)] bg-white/80 p-4">
@@ -389,11 +417,13 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <button className={selectionCardClass(selectedCategory === "random")} onClick={() => handleCategorySelect("random")} type="button">
-              <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">Wildcard</span>
-              <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17]">Mixed deck</strong>
-              <span className="leading-6 text-[#6b6259]">A surprise mix pulled from every category.</span>
-            </button>
+            {showRandomMix ? (
+              <button className={selectionCardClass(selectedCategory === "random")} onClick={() => handleCategorySelect("random")} type="button">
+                <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">Wildcard</span>
+                <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17]">Mixed deck</strong>
+                <span className="leading-6 text-[#6b6259]">A surprise mix pulled from every category.</span>
+              </button>
+            ) : null}
             {categories.map((category) => (
               <button
                 className={selectionCardClass(selectedCategory === category.id)}
@@ -627,6 +657,71 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           </button>
         </div>
       </section>
+
+      {result ? (
+        <>
+          {result.status === "win" && viewportWidth > 0 && viewportHeight > 0 ? (
+            <Confetti
+              gravity={0.16}
+              height={viewportHeight}
+              numberOfPieces={320}
+              recycle={false}
+              style={{ inset: 0, pointerEvents: "none", position: "fixed", zIndex: 60 }}
+              width={viewportWidth}
+            />
+          ) : null}
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,20,14,0.46)] p-4 backdrop-blur-sm">
+            <div
+              aria-labelledby="round-result-title"
+              aria-modal="true"
+              className="w-full max-w-lg rounded-[32px] border border-[rgba(17,94,89,0.14)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(255,247,238,0.95))] p-6 shadow-[0_30px_80px_rgba(29,22,14,0.26)] sm:p-7"
+              role="dialog"
+            >
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bg-[rgba(15,118,110,0.12)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#115e59]">
+                  {result.status === "win" ? "Solved" : "Round over"}
+                </span>
+                <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#6b6259]">
+                  {currentModeLabel}
+                </span>
+              </div>
+
+              <h2
+                className="mt-4 font-serif-display text-[clamp(2rem,7vw,3.2rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17]"
+                id="round-result-title"
+              >
+                {result.status === "win" ? result.canonicalAnswer : `The answer was ${result.canonicalAnswer}`}
+              </h2>
+
+              <p className="m-0 mt-4 leading-7 text-[#6b6259]">
+                {result.status === "win"
+                  ? `You locked it in with ${result.score} points on the board.`
+                  : "You ran out of runway this time, but the full dossier is still visible behind the dialog."}
+              </p>
+
+              <div className="mt-5 grid gap-3 rounded-[24px] border border-[rgba(17,94,89,0.08)] bg-white/78 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm uppercase tracking-[0.18em] text-[#115e59]">Category</span>
+                  <strong className="text-[#1f1b17]">{currentCategoryLabel}</strong>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm uppercase tracking-[0.18em] text-[#115e59]">Score</span>
+                  <strong className="text-[#1f1b17]">{result.score} pts</strong>
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <button className={`${primaryButtonClass} flex-1`} disabled={isPending} onClick={startRound} type="button">
+                  Play again
+                </button>
+                <button className={`${secondaryButtonClass} flex-1`} disabled={isPending} onClick={clearForCategoryChoice} type="button">
+                  Back to menu
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

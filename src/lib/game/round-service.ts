@@ -20,6 +20,7 @@ import { hashString } from "@/src/lib/utils/hash";
 
 const SCORE_BY_REVEAL_INDEX = [100, 80, 60, 40, 20, 10];
 const DEFAULT_GAME_MODE: GameMode = "classic";
+const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = ["countries"];
 
 function getScoreForRevealCount(revealCount: number): number {
   const normalizedRevealCount = Math.max(revealCount, 1);
@@ -113,7 +114,12 @@ async function getRoundEntity(roundToken: string, userId: string) {
 
 export async function startRound(input: StartRoundInput = {}, userId: string): Promise<StartRoundResult> {
   const snapshot = await getLatestSnapshot();
-  const allowedCategories = input.category && input.category !== "random" ? [input.category] : (["countries", "cities", "people"] as const);
+
+  if (input.category && input.category !== "random" && !ACTIVE_GAME_CATEGORIES.includes(input.category)) {
+    throw new Error("That category is temporarily unavailable.");
+  }
+
+  const allowedCategories = input.category && input.category !== "random" ? [input.category] : ACTIVE_GAME_CATEGORIES;
   const availableEntities = snapshot.entities.filter((entity) =>
     allowedCategories.includes(entity.category as EntityCategory),
   );

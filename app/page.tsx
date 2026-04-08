@@ -2,7 +2,8 @@ import { PracticeShell } from "@/src/components/practice-shell";
 import { getLatestSnapshot, listCategorySummaries } from "@/src/lib/repository/snapshot-repository";
 
 export default async function HomePage() {
-  const [categories, snapshot] = await Promise.all([listCategorySummaries(), getLatestSnapshot()]);
+  const [allCategories, snapshot] = await Promise.all([listCategorySummaries(), getLatestSnapshot()]);
+  const categories = allCategories.filter((category) => category.id === "countries");
   const countryOptions = [...new Set(
     snapshot.entities.filter((entity) => entity.category === "countries").map((entity) => entity.canonicalAnswer),
   )].sort((left, right) => left.localeCompare(right));

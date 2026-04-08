@@ -16,6 +16,12 @@ describe("round service", () => {
     expect(firstRound.canGuess).toBe(true);
   });
 
+  it("rejects temporarily disabled categories", async () => {
+    await expect(startRound({ category: "cities", seed: "alpha" }, "user_test_alpha")).rejects.toThrow(
+      "That category is temporarily unavailable.",
+    );
+  });
+
   it("reveals the next clue after an incorrect classic guess", async () => {
     const round = await startRound({ category: "countries", seed: "alpha" }, "user_test_alpha");
     const roundState = parseRoundState(round.token);
