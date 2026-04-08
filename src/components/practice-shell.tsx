@@ -2,7 +2,8 @@
 
 import Confetti from "react-confetti";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
-import type { FormEvent } from "react";
+import { splitCurrencyRevealSegments } from "@/src/lib/game/currency-censor";
+import type { FormEvent, ReactNode } from "react";
 import { useEffect, useState, useTransition } from "react";
 
 import type {
@@ -101,6 +102,38 @@ function toPlayableClues(clues: RoundClue[]): PlayableClue[] {
       difficulty: clue.difficulty,
       spoilerLevel: clue.spoilerLevel,
     }));
+}
+
+function renderClueValue(clue: Pick<RoundClue, "key" | "value">): ReactNode {
+  if (!clue.value) {
+    return null;
+  }
+
+  if (clue.key !== "currency") {
+    return clue.value;
+  }
+
+  const segments = splitCurrencyRevealSegments(clue.value);
+
+  if (!segments.some((segment) => segment.isBlurred)) {
+    return clue.value;
+  }
+
+  return segments.map((segment, index) =>
+    segment.isBlurred ? (
+      <span className="inline-block align-baseline" key={`${segment.text}-${index}`}>
+        <span
+          aria-hidden="true"
+          className="select-none rounded-[0.45rem] bg-black/6 px-1 text-[transparent] [text-shadow:0_0_10px_rgba(31,27,23,0.88)] blur-[2.6px] dark:bg-white/10 dark:[text-shadow:0_0_10px_rgba(245,247,251,0.92)]"
+        >
+          {segment.text}
+        </span>
+        <span className="sr-only">country reference hidden</span>
+      </span>
+    ) : (
+      <span key={`${segment.text}-${index}`}>{segment.text}</span>
+    ),
+  );
 }
 
 function useViewportSize() {
@@ -568,7 +601,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                       </th>
                       <td className="border-t border-[#c8ccd1] px-4 py-3 align-top dark:border-white/10">
                         {clue.isRevealed ? (
-                          <span className="text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">{clue.value}</span>
+                          <span className="text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">{renderClueValue(clue)}</span>
                         ) : round ? (
                           isLocked ? (
                             <div className="rounded-lg bg-[linear-gradient(90deg,rgba(162,169,177,0.12),rgba(162,169,177,0.22),rgba(162,169,177,0.12))] px-4 py-3 text-transparent blur-[1.2px] select-none dark:bg-[linear-gradient(90deg,rgba(115,128,146,0.18),rgba(115,128,146,0.3),rgba(115,128,146,0.18))]">
@@ -588,7 +621,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                             </button>
                           )
                         ) : (
-                          <span className="text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">{clue.value}</span>
+                          <span className="text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">{renderClueValue(clue)}</span>
                         )}
                       </td>
                     </tr>
@@ -603,7 +636,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
               <li className="grid gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4 dark:border-white/10 dark:bg-[rgba(255,255,255,0.06)]" key={clue.key}>
                 <small className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Clue {index + 1}</small>
                 <span className="text-[#6b6259] dark:text-[#9aa9bb]">{clue.label}</span>
-                <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17] dark:text-[#f5f7fb]">{clue.value}</strong>
+                <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17] dark:text-[#f5f7fb]">{renderClueValue(clue)}</strong>
               </li>
             ))}
             {visibleClassicClues.length === 0 ? (
