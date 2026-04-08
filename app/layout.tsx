@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { ClerkProvider, Show, UserButton } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
 
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </div>
           </header>
           {children}
+          <Analytics />
         </ClerkProvider>
       </body>
     </html>
