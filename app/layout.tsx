@@ -23,9 +23,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <div className="flex items-center gap-2 rounded-[22px] border border-black/8 bg-white/72 px-3 py-2 shadow-[0_18px_40px_rgba(53,36,22,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgba(9,16,26,0.76)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.34)]">
                 <ThemeToggle />
                 <Show when="signed-out">
-                  <span className="hidden text-xs uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb] sm:inline">
-                    Account optional
-                  </span>
                   <Link
                     className="inline-flex items-center justify-center rounded-full px-3 py-2 text-sm font-medium text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
                     href="/sign-in"

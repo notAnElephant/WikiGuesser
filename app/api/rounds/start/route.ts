@@ -1,20 +1,15 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { getActorId } from "@/src/lib/auth/actor";
 import { startRoundSchema } from "@/src/lib/api-schemas";
 import { startRound } from "@/src/lib/game/round-service";
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-
-    if (!userId) {
-      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    }
-
+    const actorId = await getActorId();
     const body = await request.json();
     const input = startRoundSchema.parse(body);
-    const round = await startRound(input, userId);
+    const round = await startRound(input, actorId);
     return NextResponse.json(round);
   } catch (error) {
     return NextResponse.json(
