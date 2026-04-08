@@ -57,17 +57,17 @@ const GAME_MODE_OPTIONS: Array<{
 
 const pillButtonBase =
   "inline-flex flex-none items-center justify-center rounded-full px-4 py-3 text-sm font-medium transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0";
-const primaryButtonClass = `${pillButtonBase} bg-[#0f766e] text-white`;
-const secondaryButtonClass = `${pillButtonBase} bg-[rgba(15,118,110,0.14)] text-[#115e59]`;
-const launchButtonClass = `${pillButtonBase} border border-[rgba(17,94,89,0.16)] bg-[linear-gradient(135deg,#fffaf2_0%,#f8ecce_46%,#f2d680_100%)] px-5 text-[#1f1b17] shadow-[0_14px_36px_rgba(83,58,20,0.16)] hover:shadow-[0_18px_42px_rgba(83,58,20,0.22)]`;
+const primaryButtonClass = `${pillButtonBase} bg-[#0f766e] text-white dark:bg-[#24d4c2] dark:text-[#082825]`;
+const secondaryButtonClass = `${pillButtonBase} bg-[rgba(15,118,110,0.14)] text-[#115e59] dark:bg-[rgba(45,212,191,0.16)] dark:text-[#8ff4e7]`;
+const launchButtonClass = `${pillButtonBase} border border-[rgba(17,94,89,0.16)] bg-[linear-gradient(135deg,#fffaf2_0%,#f8ecce_46%,#f2d680_100%)] px-5 text-[#1f1b17] shadow-[0_14px_36px_rgba(83,58,20,0.16)] hover:shadow-[0_18px_42px_rgba(83,58,20,0.22)] dark:border-white/10 dark:bg-[linear-gradient(135deg,#172130_0%,#1c2a3c_46%,#274256_100%)] dark:text-[#f5f7fb] dark:shadow-[0_14px_36px_rgba(0,0,0,0.36)] dark:hover:shadow-[0_18px_42px_rgba(0,0,0,0.46)]`;
 
 function selectionCardClass(isActive: boolean, isDisabled = false): string {
   return `grid gap-3 rounded-[26px] border p-4 text-left transition ${
     isDisabled
-      ? "cursor-not-allowed border-black/5 bg-[rgba(255,255,255,0.56)] opacity-55"
+      ? "cursor-not-allowed border-black/5 bg-[rgba(255,255,255,0.56)] opacity-55 dark:border-white/8 dark:bg-white/6"
       : isActive
-        ? "border-[#0f766e] bg-[linear-gradient(160deg,rgba(15,118,110,0.14),rgba(255,255,255,0.92))] shadow-[0_18px_44px_rgba(15,118,110,0.12)]"
-        : "border-black/10 bg-white/85 hover:-translate-y-0.5"
+        ? "border-[#0f766e] bg-[linear-gradient(160deg,rgba(15,118,110,0.14),rgba(255,255,255,0.92))] shadow-[0_18px_44px_rgba(15,118,110,0.12)] dark:border-[#24d4c2]/60 dark:bg-[linear-gradient(160deg,rgba(36,212,194,0.14),rgba(17,24,39,0.92))] dark:shadow-[0_18px_44px_rgba(0,0,0,0.28)]"
+        : "border-black/10 bg-white/85 hover:-translate-y-0.5 dark:border-white/10 dark:bg-[rgba(13,21,32,0.84)]"
   }`;
 }
 
@@ -381,36 +381,36 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
   if (view === "menu") {
     return (
       <div className="flex min-h-[calc(100dvh-1rem)] flex-col gap-4 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
-        <header className="grid gap-4 rounded-[30px] border border-black/10 bg-[radial-gradient(circle_at_top_left,rgba(249,214,129,0.35),transparent_28%),linear-gradient(180deg,rgba(255,251,245,0.97),rgba(255,247,238,0.9))] p-5 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl sm:p-7">
+        <header className="grid gap-4 rounded-[30px] border border-black/10 bg-[radial-gradient(circle_at_top_left,rgba(249,214,129,0.35),transparent_28%),linear-gradient(180deg,rgba(255,251,245,0.97),rgba(255,247,238,0.9))] p-5 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_left,rgba(36,212,194,0.16),transparent_24%),linear-gradient(180deg,rgba(12,19,30,0.97),rgba(18,27,40,0.94))] dark:shadow-[0_24px_60px_rgba(0,0,0,0.34)] sm:p-7">
           <div className="grid gap-3 sm:grid-cols-[1.3fr_0.7fr] sm:items-end">
             <div>
-              <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">Play now</p>
-              <h1 className="m-0 max-w-[10ch] font-serif-display text-[clamp(2.3rem,8vw,4.3rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17]">
+              <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">Play now</p>
+              <h1 className="m-0 max-w-[10ch] font-serif-display text-[clamp(2.3rem,8vw,4.3rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17] dark:text-[#f5f7fb]">
                 WikiGuesser
               </h1>
-              <p className="m-0 mt-4 max-w-2xl leading-7 text-[#6b6259]">
+              <p className="m-0 mt-4 max-w-2xl leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
                 {showRandomMix
                   ? "Pick a category first, then choose whether you want classic pacing or a player-controlled clue table."
                   : "Countries are the only live category right now, so choose a mode and jump straight in."}
               </p>
             </div>
-            <div className="grid gap-3 rounded-[26px] border border-[rgba(17,94,89,0.08)] bg-white/80 p-4">
-              <span className="text-sm uppercase tracking-[0.18em] text-[#115e59]">Next round</span>
-              <strong className="font-serif-display text-[clamp(1.2rem,3vw,1.7rem)] leading-[1.05] text-[#1f1b17]">
+            <div className="grid gap-3 rounded-[26px] border border-[rgba(17,94,89,0.08)] bg-white/80 p-4 dark:border-white/10 dark:bg-[rgba(255,255,255,0.06)]">
+              <span className="text-sm uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">Next round</span>
+              <strong className="font-serif-display text-[clamp(1.2rem,3vw,1.7rem)] leading-[1.05] text-[#1f1b17] dark:text-[#f5f7fb]">
                 {selectedCategoryLabel}
               </strong>
-              <span className="text-sm leading-6 text-[#6b6259]">
+              <span className="text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
                 {selectedModeMeta?.label ?? "Choose a mode once your category is locked in."}
               </span>
             </div>
           </div>
         </header>
 
-        <section className="grid gap-5 rounded-[30px] border border-black/10 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,247,238,0.86))] p-5 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl sm:p-6">
+        <section className="grid gap-5 rounded-[30px] border border-black/10 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,247,238,0.86))] p-5 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(13,21,32,0.96),rgba(17,27,40,0.88))] dark:shadow-[0_24px_60px_rgba(0,0,0,0.34)] sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">Step 1</p>
-              <h2 className="m-0 font-serif-display text-[clamp(1.75rem,5vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#1f1b17]">
+              <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">Step 1</p>
+              <h2 className="m-0 font-serif-display text-[clamp(1.75rem,5vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#1f1b17] dark:text-[#f5f7fb]">
                 Choose a category.
               </h2>
             </div>
@@ -419,9 +419,9 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {showRandomMix ? (
               <button className={selectionCardClass(selectedCategory === "random")} onClick={() => handleCategorySelect("random")} type="button">
-                <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">Wildcard</span>
-                <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17]">Mixed deck</strong>
-                <span className="leading-6 text-[#6b6259]">A surprise mix pulled from every category.</span>
+                <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">Wildcard</span>
+                <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">Mixed deck</strong>
+                <span className="leading-6 text-[#6b6259] dark:text-[#9aa9bb]">A surprise mix pulled from every category.</span>
               </button>
             ) : null}
             {categories.map((category) => (
@@ -431,18 +431,18 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                 onClick={() => handleCategorySelect(category.id)}
                 type="button"
               >
-                <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">Category</span>
-                <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17]">{category.label}</strong>
-                <span className="leading-6 text-[#6b6259]">{category.description}</span>
+                <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">Category</span>
+                <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">{category.label}</strong>
+                <span className="leading-6 text-[#6b6259] dark:text-[#9aa9bb]">{category.description}</span>
               </button>
             ))}
           </div>
 
-          <div className="grid gap-4 rounded-[26px] border border-[rgba(17,94,89,0.08)] bg-white/70 p-4">
+          <div className="grid gap-4 rounded-[26px] border border-[rgba(17,94,89,0.08)] bg-white/70 p-4 dark:border-white/10 dark:bg-[rgba(255,255,255,0.05)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">Step 2</p>
-                <h3 className="m-0 font-serif-display text-[clamp(1.4rem,4vw,2.2rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-[#1f1b17]">
+                <p className="m-0 mb-2 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">Step 2</p>
+                <h3 className="m-0 font-serif-display text-[clamp(1.4rem,4vw,2.2rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
                   Choose a game mode.
                 </h3>
               </div>
@@ -463,17 +463,17 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                     onClick={() => handleModeSelect(mode.id)}
                     type="button"
                   >
-                    <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59]">{mode.eyebrow}</span>
-                    <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17]">{mode.label}</strong>
-                    <span className="leading-6 text-[#6b6259]">{mode.description}</span>
-                    <span className="text-sm leading-6 text-[#8a8278]">{mode.detail}</span>
+                    <span className="text-[0.74rem] font-bold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">{mode.eyebrow}</span>
+                    <strong className="font-serif-display text-2xl tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">{mode.label}</strong>
+                    <span className="leading-6 text-[#6b6259] dark:text-[#9aa9bb]">{mode.description}</span>
+                    <span className="text-sm leading-6 text-[#8a8278] dark:text-[#7f8fa3]">{mode.detail}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <p className="m-0 text-sm leading-6 text-[#6b6259]">{message}</p>
+          <p className="m-0 text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]">{message}</p>
         </section>
       </div>
     );
@@ -483,10 +483,10 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
     <div className="flex min-h-[calc(100dvh-1rem)] flex-col gap-2 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-3">
       <header className="flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">
+          <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">
             {view === "round" ? "Now playing" : "Round complete"}
           </p>
-          <h1 className="m-0 max-w-[11ch] font-serif-display text-[clamp(2.1rem,7vw,3.7rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17] sm:max-w-none">
+          <h1 className="m-0 max-w-[11ch] font-serif-display text-[clamp(2.1rem,7vw,3.7rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17] dark:text-[#f5f7fb] sm:max-w-none">
             {currentMode === "blurred-lines"
               ? view === "round"
                 ? "Lift the blur only where you need it."
@@ -497,19 +497,19 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           </h1>
         </div>
         <div className="scrollbar-hidden flex gap-3 overflow-x-auto">
-          <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59]">{currentCategoryLabel}</span>
-          <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59]">{currentModeLabel}</span>
-          <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59]">{score ?? 0} pts</span>
+          <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59] dark:bg-white/8 dark:text-[#8ff4e7]">{currentCategoryLabel}</span>
+          <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59] dark:bg-white/8 dark:text-[#8ff4e7]">{currentModeLabel}</span>
+          <span className="whitespace-nowrap rounded-full bg-white/75 px-4 py-2 text-sm text-[#115e59] dark:bg-white/8 dark:text-[#8ff4e7]">{score ?? 0} pts</span>
         </div>
       </header>
 
-      <section className="relative grid flex-1 gap-4 rounded-3xl border border-black/10 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,247,238,0.86))] p-4 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl sm:rounded-[30px] sm:p-[1.15rem]">
+      <section className="relative grid flex-1 gap-4 rounded-3xl border border-black/10 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,247,238,0.86))] p-4 shadow-[0_24px_60px_rgba(53,36,22,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(13,21,32,0.96),rgba(17,27,40,0.88))] dark:shadow-[0_24px_60px_rgba(0,0,0,0.34)] sm:rounded-[30px] sm:p-[1.15rem]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59]">
+            <p className="m-0 mb-3 text-[0.74rem] font-bold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">
               {round ? (currentMode === "blurred-lines" ? "Wikipedia dossier" : "Clues so far") : "Answer revealed"}
             </p>
-            <h2 className="m-0 max-w-[13ch] font-serif-display text-[clamp(1.75rem,5vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#1f1b17]">
+            <h2 className="m-0 max-w-[13ch] font-serif-display text-[clamp(1.75rem,5vw,2.8rem)] font-semibold leading-[0.95] tracking-[-0.05em] text-[#1f1b17] dark:text-[#f5f7fb]">
               {round
                 ? currentMode === "blurred-lines"
                   ? "Reveal only the rows you want to spend."
@@ -533,18 +533,18 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           )}
         </div>
 
-        <p className="m-0 leading-7 text-[#6b6259]">{message}</p>
+        <p className="m-0 leading-7 text-[#6b6259] dark:text-[#9aa9bb]">{message}</p>
 
         {currentMode === "blurred-lines" ? (
-          <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-[28px] border border-[#a2a9b1] bg-[#f8f9fa] shadow-[0_18px_38px_rgba(60,64,67,0.08)]">
-            <table className="w-full border-collapse text-left text-sm text-[#202122]">
-              <caption className="border-b border-[#c8ccd1] bg-[#eaecf0] px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-[#54595d]">
+          <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-[28px] border border-[#a2a9b1] bg-[#f8f9fa] shadow-[0_18px_38px_rgba(60,64,67,0.08)] dark:border-white/10 dark:bg-[#111a27] dark:shadow-[0_18px_38px_rgba(0,0,0,0.34)]">
+            <table className="w-full border-collapse text-left text-sm text-[#202122] dark:text-[#edf3fa]">
+              <caption className="border-b border-[#c8ccd1] bg-[#eaecf0] px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-[#54595d] dark:border-white/10 dark:bg-[#182231] dark:text-[#99a9bc]">
                 Clue dossier
               </caption>
               <thead>
-                <tr className="bg-white text-xs uppercase tracking-[0.16em] text-[#54595d]">
-                  <th className="w-[36%] border-b border-r border-[#c8ccd1] px-4 py-3 font-semibold">Field</th>
-                  <th className="border-b border-[#c8ccd1] px-4 py-3 font-semibold">Data</th>
+                <tr className="bg-white text-xs uppercase tracking-[0.16em] text-[#54595d] dark:bg-[#101926] dark:text-[#99a9bc]">
+                  <th className="w-[36%] border-b border-r border-[#c8ccd1] px-4 py-3 font-semibold dark:border-white/10">Field</th>
+                  <th className="border-b border-[#c8ccd1] px-4 py-3 font-semibold dark:border-white/10">Data</th>
                 </tr>
               </thead>
               <tbody>
@@ -553,35 +553,35 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
 
                   return (
                     <tr
-                      className={`${index % 2 === 0 ? "bg-white" : "bg-[#f8f9fa]"} ${isLocked ? "opacity-55" : ""}`}
+                      className={`${index % 2 === 0 ? "bg-white dark:bg-[#121c2a]" : "bg-[#f8f9fa] dark:bg-[#162231]"} ${isLocked ? "opacity-55" : ""}`}
                       key={clue.key}
                     >
-                      <th className="border-r border-t border-[#c8ccd1] px-4 py-3 align-top font-semibold text-[#202122]">
+                      <th className="border-r border-t border-[#c8ccd1] px-4 py-3 align-top font-semibold text-[#202122] dark:border-white/10 dark:text-[#edf3fa]">
                         <span>{clue.label}</span>
                       </th>
-                      <td className="border-t border-[#c8ccd1] px-4 py-3 align-top">
+                      <td className="border-t border-[#c8ccd1] px-4 py-3 align-top dark:border-white/10">
                         {clue.isRevealed ? (
-                          <span className="text-[1.02rem] leading-7 text-[#202122]">{clue.value}</span>
+                          <span className="text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">{clue.value}</span>
                         ) : round ? (
                           isLocked ? (
-                            <div className="rounded-lg bg-[linear-gradient(90deg,rgba(162,169,177,0.12),rgba(162,169,177,0.22),rgba(162,169,177,0.12))] px-4 py-3 text-transparent blur-[1.2px] select-none">
+                            <div className="rounded-lg bg-[linear-gradient(90deg,rgba(162,169,177,0.12),rgba(162,169,177,0.22),rgba(162,169,177,0.12))] px-4 py-3 text-transparent blur-[1.2px] select-none dark:bg-[linear-gradient(90deg,rgba(115,128,146,0.18),rgba(115,128,146,0.3),rgba(115,128,146,0.18))]">
                               Hidden until revealed
                             </div>
                           ) : (
                             <button
                               aria-label={`Reveal ${clue.label}`}
-                              className="block w-full rounded-lg bg-transparent p-0 text-left transition hover:bg-[rgba(234,236,240,0.72)] disabled:cursor-not-allowed"
+                              className="block w-full rounded-lg bg-transparent p-0 text-left transition hover:bg-[rgba(234,236,240,0.72)] disabled:cursor-not-allowed dark:hover:bg-white/6"
                               disabled={isSyncingReveal || isPending}
                               onClick={() => revealClue(clue.key)}
                               type="button"
                             >
-                              <span className="block rounded-lg bg-[linear-gradient(90deg,rgba(162,169,177,0.18),rgba(162,169,177,0.32),rgba(162,169,177,0.18))] px-4 py-3 text-transparent blur-[1.2px] select-none">
+                              <span className="block rounded-lg bg-[linear-gradient(90deg,rgba(162,169,177,0.18),rgba(162,169,177,0.32),rgba(162,169,177,0.18))] px-4 py-3 text-transparent blur-[1.2px] select-none dark:bg-[linear-gradient(90deg,rgba(115,128,146,0.22),rgba(115,128,146,0.36),rgba(115,128,146,0.22))]">
                                 Hidden until revealed
                               </span>
                             </button>
                           )
                         ) : (
-                          <span className="text-[1.02rem] leading-7 text-[#202122]">{clue.value}</span>
+                          <span className="text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">{clue.value}</span>
                         )}
                       </td>
                     </tr>
@@ -593,17 +593,17 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         ) : (
           <ol className="m-0 grid list-none gap-3 p-0">
             {visibleClassicClues.map((clue, index) => (
-              <li className="grid gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4" key={clue.key}>
-                <small className="text-sm text-[#6b6259]">Clue {index + 1}</small>
-                <span className="text-[#6b6259]">{clue.label}</span>
-                <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17]">{clue.value}</strong>
+              <li className="grid gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4 dark:border-white/10 dark:bg-[rgba(255,255,255,0.06)]" key={clue.key}>
+                <small className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Clue {index + 1}</small>
+                <span className="text-[#6b6259] dark:text-[#9aa9bb]">{clue.label}</span>
+                <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17] dark:text-[#f5f7fb]">{clue.value}</strong>
               </li>
             ))}
             {visibleClassicClues.length === 0 ? (
-              <li className="grid min-h-45 content-center gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4">
-                <small className="text-sm text-[#6b6259]">Ready when you are</small>
-                <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17]">Pick a category and start.</strong>
-                <span className="text-[#6b6259]">Your clues will appear here as soon as the round begins.</span>
+              <li className="grid min-h-45 content-center gap-1 rounded-3xl border border-[rgba(17,94,89,0.08)] bg-white/85 p-4 dark:border-white/10 dark:bg-[rgba(255,255,255,0.06)]">
+                <small className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Ready when you are</small>
+                <strong className="text-[clamp(1.2rem,4vw,1.7rem)] leading-[1.05] text-[#1f1b17] dark:text-[#f5f7fb]">Pick a category and start.</strong>
+                <span className="text-[#6b6259] dark:text-[#9aa9bb]">Your clues will appear here as soon as the round begins.</span>
               </li>
             ) : null}
           </ol>
@@ -612,10 +612,10 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
         {round ? (
           <form className="flex flex-col gap-4 sm:flex-row sm:items-end" onSubmit={handleGuessSubmit}>
             <label className="grid flex-1 gap-2">
-              <span className="text-sm text-[#6b6259]">Guess</span>
+              <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Guess</span>
               <input
                 aria-label="Submit your entity guess"
-                className="w-full rounded-[18px] border border-black/10 bg-white/85 px-4 py-4 text-[#1f1b17] outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-[rgba(15,118,110,0.22)]"
+                className="w-full rounded-[18px] border border-black/10 bg-white/85 px-4 py-4 text-[#1f1b17] outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-[rgba(15,118,110,0.22)] dark:border-white/10 dark:bg-[rgba(255,255,255,0.06)] dark:text-[#f5f7fb] dark:focus:border-[#24d4c2] dark:focus:ring-[rgba(36,212,194,0.22)]"
                 list={isCountryRound ? "country-guess-options" : undefined}
                 disabled={!round || isPending}
                 onChange={(event) => setGuess(event.target.value)}
@@ -624,13 +624,13 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
                 value={guess}
               />
               {round.mode === "blurred-lines" ? (
-                <span className="text-sm text-[#6b6259]">
+                <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
                   {round.canGuess
                     ? "You can guess now or keep revealing rows before you commit."
                     : "Unblur a row to unlock the next guess."}
                 </span>
               ) : isCountryRound ? (
-                <span className="text-sm text-[#6b6259]">Start typing and pick a country from the suggestions.</span>
+                <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Start typing and pick a country from the suggestions.</span>
               ) : null}
               {isCountryRound && hasGuess && !isCountryGuessValid ? (
                 <span className="text-sm text-[#b45309]">Pick one of the suggested countries to submit this guess.</span>
@@ -650,7 +650,7 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
           </datalist>
         ) : null}
 
-        <div className="flex flex-col gap-3 text-sm text-[#115e59] sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 text-sm text-[#115e59] dark:text-[#8ff4e7] sm:flex-row sm:items-center sm:justify-between">
           <span>Remaining clues: {round?.remainingClues ?? 0}</span>
           <button className={secondaryButtonClass} disabled={isPending} onClick={clearForCategoryChoice} type="button">
             Back to menu
@@ -670,43 +670,43 @@ export function PracticeShell({ categories, countryOptions }: PracticeShellProps
               width={viewportWidth}
             />
           ) : null}
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,20,14,0.46)] p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,20,14,0.46)] p-4 backdrop-blur-sm dark:bg-[rgba(3,7,14,0.62)]">
             <div
               aria-labelledby="round-result-title"
               aria-modal="true"
-              className="w-full max-w-lg rounded-[32px] border border-[rgba(17,94,89,0.14)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(255,247,238,0.95))] p-6 shadow-[0_30px_80px_rgba(29,22,14,0.26)] sm:p-7"
+              className="w-full max-w-lg rounded-[32px] border border-[rgba(17,94,89,0.14)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(255,247,238,0.95))] p-6 shadow-[0_30px_80px_rgba(29,22,14,0.26)] dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(14,22,34,0.98),rgba(19,29,43,0.95))] dark:shadow-[0_30px_80px_rgba(0,0,0,0.46)] sm:p-7"
               role="dialog"
             >
               <div className="flex flex-wrap gap-2">
-                <span className="rounded-full bg-[rgba(15,118,110,0.12)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#115e59]">
+                <span className="rounded-full bg-[rgba(15,118,110,0.12)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#115e59] dark:bg-[rgba(45,212,191,0.16)] dark:text-[#8ff4e7]">
                   {result.status === "win" ? "Solved" : "Round over"}
                 </span>
-                <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#6b6259]">
+                <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#6b6259] dark:bg-white/8 dark:text-[#9aa9bb]">
                   {currentModeLabel}
                 </span>
               </div>
 
               <h2
-                className="mt-4 font-serif-display text-[clamp(2rem,7vw,3.2rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17]"
+                className="mt-4 font-serif-display text-[clamp(2rem,7vw,3.2rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17] dark:text-[#f5f7fb]"
                 id="round-result-title"
               >
                 {result.status === "win" ? result.canonicalAnswer : `The answer was ${result.canonicalAnswer}`}
               </h2>
 
-              <p className="m-0 mt-4 leading-7 text-[#6b6259]">
+              <p className="m-0 mt-4 leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
                 {result.status === "win"
                   ? `You locked it in with ${result.score} points on the board.`
                   : "You ran out of runway this time, but the full dossier is still visible behind the dialog."}
               </p>
 
-              <div className="mt-5 grid gap-3 rounded-[24px] border border-[rgba(17,94,89,0.08)] bg-white/78 p-4">
+              <div className="mt-5 grid gap-3 rounded-[24px] border border-[rgba(17,94,89,0.08)] bg-white/78 p-4 dark:border-white/10 dark:bg-[rgba(255,255,255,0.05)]">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm uppercase tracking-[0.18em] text-[#115e59]">Category</span>
-                  <strong className="text-[#1f1b17]">{currentCategoryLabel}</strong>
+                  <span className="text-sm uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">Category</span>
+                  <strong className="text-[#1f1b17] dark:text-[#f5f7fb]">{currentCategoryLabel}</strong>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm uppercase tracking-[0.18em] text-[#115e59]">Score</span>
-                  <strong className="text-[#1f1b17]">{result.score} pts</strong>
+                  <span className="text-sm uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">Score</span>
+                  <strong className="text-[#1f1b17] dark:text-[#f5f7fb]">{result.score} pts</strong>
                 </div>
               </div>
 
