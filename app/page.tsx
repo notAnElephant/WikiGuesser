@@ -1,6 +1,8 @@
 import { PracticeShell } from "@/src/components/practice-shell";
 import { getLatestSnapshot, listCategorySummaries } from "@/src/lib/repository/snapshot-repository";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [allCategories, snapshot] = await Promise.all([listCategorySummaries(), getLatestSnapshot()]);
   const categories = allCategories.filter((category) => category.id === "countries");

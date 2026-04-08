@@ -28,14 +28,25 @@ function toNormalizedEntity(record: SnapshotEntity): NormalizedEntity {
 async function readGeneratedSnapshot(): Promise<MaterializedSnapshot | null> {
   try {
     const contents = await readFile(generatedSnapshotPath, "utf8");
-    return JSON.parse(contents) as MaterializedSnapshot;
-  } catch {
+    const snapshot = JSON.parse(contents) as MaterializedSnapshot;
+    console.info("[snapshot] loaded generated snapshot", {
+      key: snapshot.key,
+      entityCount: snapshot.entities.length,
+      path: generatedSnapshotPath,
+    });
+    return snapshot;
+  } catch (error) {
+    console.warn("[snapshot] generated snapshot unavailable", {
+      path: generatedSnapshotPath,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
 
 async function readPrismaSnapshot(): Promise<MaterializedSnapshot | null> {
   if (!env.databaseUrl) {
+    console.warn("[snapshot] DATABASE_URL missing, skipping Prisma snapshot");
     return null;
   }
 
@@ -47,22 +58,50 @@ async function readPrismaSnapshot(): Promise<MaterializedSnapshot | null> {
     });
 
     if (!latestSnapshot) {
+      console.warn("[snapshot] Prisma connected but no snapshot rows found");
       return null;
     }
 
-    return {
+    const snapshot = {
       key: latestSnapshot.key,
       sourceFingerprint: latestSnapshot.sourceFingerprint,
       createdAt: latestSnapshot.createdAt.toISOString(),
       entities: latestSnapshot.entities.map(toNormalizedEntity),
     };
-  } catch {
+
+    console.info("[snapshot] loaded Prisma snapshot", {
+      key: snapshot.key,
+      entityCount: snapshot.entities.length,
+      createdAt: snapshot.createdAt,
+    });
+
+    return snapshot;
+  } catch (error) {
+    console.error("[snapshot] Prisma snapshot load failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
 
 export async function getLatestSnapshot(): Promise<MaterializedSnapshot> {
-  return (await readPrismaSnapshot()) ?? (await readGeneratedSnapshot()) ?? demoSnapshot;
+  const prismaSnapshot = await readPrismaSnapshot();
+
+  if (prismaSnapshot) {
+    return prismaSnapshot;
+  }
+
+  const generatedSnapshot = await readGeneratedSnapshot();
+
+  if (generatedSnapshot) {
+    return generatedSnapshot;
+  }
+
+  console.warn("[snapshot] falling back to bundled demo snapshot", {
+    key: demoSnapshot.key,
+    entityCount: demoSnapshot.entities.length,
+  });
+  return demoSnapshot;
 }
 
 export async function listCategorySummaries(): Promise<CategorySummary[]> {
