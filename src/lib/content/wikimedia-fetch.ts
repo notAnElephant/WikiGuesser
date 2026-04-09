@@ -3,7 +3,8 @@ const DEFAULT_BASE_DELAY_MS = 1500;
 
 const wikimediaHeaders = {
   Accept: "application/json",
-  "User-Agent": "WikiGuesser/1.0 (https://wiki-guesser-nine.vercel.app; contact: project runtime)",
+  "User-Agent":
+    "WikiGuesser/1.0 (https://wiki-guesser-nine.vercel.app; contact: project runtime)",
 } as const;
 
 function sleep(ms: number): Promise<void> {
@@ -32,7 +33,10 @@ function shouldRetry(response: Response | null): boolean {
   return response.status === 429 || response.status >= 500;
 }
 
-export async function fetchWikimediaJson<T>(input: string, init?: RequestInit): Promise<T> {
+export async function fetchWikimediaJson<T>(
+  input: string,
+  init?: RequestInit,
+): Promise<T> {
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= DEFAULT_MAX_RETRIES; attempt += 1) {
@@ -51,9 +55,14 @@ export async function fetchWikimediaJson<T>(input: string, init?: RequestInit): 
         return (await response.json()) as T;
       }
 
-      lastError = new Error(`Wikimedia request failed: ${response.status} ${response.statusText}`);
+      lastError = new Error(
+        `Wikimedia request failed: ${response.status} ${response.statusText}`,
+      );
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error("Unknown Wikimedia request failure");
+      lastError =
+        error instanceof Error
+          ? error
+          : new Error("Unknown Wikimedia request failure");
     }
 
     if (attempt === DEFAULT_MAX_RETRIES || !shouldRetry(response)) {

@@ -19,7 +19,9 @@ export interface RecordCompletedRoundInput {
   totalClues: number;
 }
 
-export async function recordCompletedRound(input: RecordCompletedRoundInput): Promise<void> {
+export async function recordCompletedRound(
+  input: RecordCompletedRoundInput,
+): Promise<void> {
   const prisma = getPrismaClient();
   const completedAt = new Date();
 
@@ -102,5 +104,10 @@ export async function recordCompletedRound(input: RecordCompletedRoundInput): Pr
 
 export type UserCategoryModeStatsSnapshot = Pick<
   UserCategoryModeStats,
-  "roundsPlayed" | "roundsWon" | "totalScore" | "bestScore" | "currentStreak" | "bestStreak"
+  | "roundsPlayed"
+  | "roundsWon"
+  | "totalScore"
+  | "bestScore"
+  | "currentStreak"
+  | "bestStreak"
 >;

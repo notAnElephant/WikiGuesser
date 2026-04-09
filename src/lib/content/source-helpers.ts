@@ -1,4 +1,7 @@
-import { dedupeAcceptedAnswers, normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  dedupeAcceptedAnswers,
+  normalizeGuess,
+} from "@/src/lib/game/answer-matching";
 import type {
   AcceptedAnswer,
   EntityCategory,
@@ -11,30 +14,49 @@ import type {
 import { hashString, stableStringify } from "@/src/lib/utils/hash";
 
 const integerFormat = new Intl.NumberFormat("en-US");
-const decimalFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+const decimalFormat = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 1,
+});
 
-export function getClaims(entity: SourceEntity, propertyId: string): SourceClaimValue[] {
+export function getClaims(
+  entity: SourceEntity,
+  propertyId: string,
+): SourceClaimValue[] {
   return entity.claims[propertyId] ?? [];
 }
 
-export function getEntityLabels(entity: SourceEntity, propertyId: string): string[] {
+export function getEntityLabels(
+  entity: SourceEntity,
+  propertyId: string,
+): string[] {
   return getClaims(entity, propertyId)
-    .filter((claim): claim is Extract<SourceClaimValue, { type: "entity" }> => claim.type === "entity")
+    .filter(
+      (claim): claim is Extract<SourceClaimValue, { type: "entity" }> =>
+        claim.type === "entity",
+    )
     .map((claim) => claim.label ?? claim.id)
     .filter(Boolean);
 }
 
-export function getFirstQuantity(entity: SourceEntity, propertyId: string): number | null {
+export function getFirstQuantity(
+  entity: SourceEntity,
+  propertyId: string,
+): number | null {
   const match = getClaims(entity, propertyId).find(
-    (claim): claim is Extract<SourceClaimValue, { type: "quantity" }> => claim.type === "quantity",
+    (claim): claim is Extract<SourceClaimValue, { type: "quantity" }> =>
+      claim.type === "quantity",
   );
 
   return match?.amount ?? null;
 }
 
-export function getFirstTimeValue(entity: SourceEntity, propertyId: string): string | null {
+export function getFirstTimeValue(
+  entity: SourceEntity,
+  propertyId: string,
+): string | null {
   const match = getClaims(entity, propertyId).find(
-    (claim): claim is Extract<SourceClaimValue, { type: "time" }> => claim.type === "time",
+    (claim): claim is Extract<SourceClaimValue, { type: "time" }> =>
+      claim.type === "time",
   );
 
   return match?.value ?? null;
@@ -45,7 +67,8 @@ export function getFirstCoordinate(
   propertyId: string,
 ): { latitude: number; longitude: number } | null {
   const match = getClaims(entity, propertyId).find(
-    (claim): claim is Extract<SourceClaimValue, { type: "coordinate" }> => claim.type === "coordinate",
+    (claim): claim is Extract<SourceClaimValue, { type: "coordinate" }> =>
+      claim.type === "coordinate",
   );
 
   if (!match) {
@@ -84,7 +107,9 @@ export function formatPopulation(value: number | null): string | null {
   return integerFormat.format(value);
 }
 
-export function formatAreaSquareKilometers(value: number | null): string | null {
+export function formatAreaSquareKilometers(
+  value: number | null,
+): string | null {
   if (!value) {
     return null;
   }
@@ -156,7 +181,10 @@ export function formatBirthDecade(value: string | null): string | null {
 }
 
 function stripParenthetical(value: string): string {
-  return value.replace(/\s*\([^)]*\)\s*/g, " ").trim().replace(/\s+/g, " ");
+  return value
+    .replace(/\s*\([^)]*\)\s*/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 export function createAcceptedAnswers(
@@ -169,7 +197,10 @@ export function createAcceptedAnswers(
 ): AcceptedAnswer[] {
   const answers: AcceptedAnswer[] = [];
 
-  const pushAnswer = (kind: AcceptedAnswer["kind"], value: string | null | undefined) => {
+  const pushAnswer = (
+    kind: AcceptedAnswer["kind"],
+    value: string | null | undefined,
+  ) => {
     if (!value) {
       return;
     }
@@ -200,7 +231,9 @@ export function createAcceptedAnswers(
   }
 
   entity.aliases.forEach((alias) => pushAnswer("alias", alias));
-  options.redirectAliases?.forEach((redirect) => pushAnswer("redirect", redirect));
+  options.redirectAliases?.forEach((redirect) =>
+    pushAnswer("redirect", redirect),
+  );
 
   return dedupeAcceptedAnswers(answers);
 }
@@ -213,7 +246,9 @@ export function buildNormalizedEntity(params: {
   metadata?: Record<string, EntityMetadataValue>;
   redirectAliases?: string[];
 }): NormalizedEntity | null {
-  const clues = params.clues.filter((clue): clue is PlayableClue => clue !== null);
+  const clues = params.clues.filter(
+    (clue): clue is PlayableClue => clue !== null,
+  );
 
   if (clues.length < params.minimumClues) {
     return null;

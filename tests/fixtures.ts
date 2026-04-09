@@ -12,7 +12,14 @@ export const countrySourceFixture: SourceEntity = {
     P1082: [{ type: "quantity", amount: 68400000, unit: null }],
     P38: [{ type: "entity", id: "Q4917", label: "euro" }],
     P36: [{ type: "entity", id: "Q90", label: "Paris" }],
-    P625: [{ type: "coordinate", latitude: 46.2276, longitude: 2.2137, precision: 0.1 }],
+    P625: [
+      {
+        type: "coordinate",
+        latitude: 46.2276,
+        longitude: 2.2137,
+        precision: 0.1,
+      },
+    ],
   },
   raw: {},
 };

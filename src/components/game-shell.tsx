@@ -67,13 +67,20 @@ export function GameShell(props: GameShellProps) {
 
       {game.result ? (
         <>
-          {game.result.status === "win" && viewportWidth > 0 && viewportHeight > 0 ? (
+          {game.result.status === "win" &&
+          viewportWidth > 0 &&
+          viewportHeight > 0 ? (
             <Confetti
               gravity={0.16}
               height={viewportHeight}
               numberOfPieces={320}
               recycle={false}
-              style={{ inset: 0, pointerEvents: "none", position: "fixed", zIndex: 60 }}
+              style={{
+                inset: 0,
+                pointerEvents: "none",
+                position: "fixed",
+                zIndex: 60,
+              }}
               width={viewportWidth}
             />
           ) : null}

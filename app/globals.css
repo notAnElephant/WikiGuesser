@@ -3,8 +3,7 @@
 
 @layer base {
   :root {
-    --font-sans:
-      "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+    --font-sans: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
     --font-serif:
       "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   }

@@ -1,4 +1,7 @@
-import { primaryButtonClass, secondaryButtonClass } from "@/src/components/game-shell/config";
+import {
+  primaryButtonClass,
+  secondaryButtonClass,
+} from "@/src/components/game-shell/config";
 import { getCategoryMeta } from "@/src/components/game-shell/utils";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
 import { Ban, House, PartyPopper, RotateCcw, Trophy } from "lucide-react";
@@ -39,9 +42,17 @@ export function GameResultDialog({
             }`}
           >
             {result.status === "win" ? (
-              <PartyPopper aria-hidden="true" className="size-6 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
+              <PartyPopper
+                aria-hidden="true"
+                className="size-6 text-[#1f1b17] dark:text-[#f5f7fb]"
+                strokeWidth={2.1}
+              />
             ) : (
-              <Ban aria-hidden="true" className="size-6 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
+              <Ban
+                aria-hidden="true"
+                className="size-6 text-[#1f1b17] dark:text-[#f5f7fb]"
+                strokeWidth={2.1}
+              />
             )}
           </span>
 
@@ -60,27 +71,57 @@ export function GameResultDialog({
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <div className="flex items-center gap-3 rounded-[22px] border border-black/8 bg-white/78 p-4 dark:border-white/10 dark:bg-white/6">
-            <Trophy aria-hidden="true" className="size-5 text-[#115e59] dark:text-[#8ff4e7]" strokeWidth={2.1} />
+            <Trophy
+              aria-hidden="true"
+              className="size-5 text-[#115e59] dark:text-[#8ff4e7]"
+              strokeWidth={2.1}
+            />
             <div>
-              <span className="block text-[0.72rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Score</span>
-              <strong className="text-[#1f1b17] dark:text-[#f5f7fb]">{result.score} pts</strong>
+              <span className="block text-[0.72rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
+                Score
+              </span>
+              <strong className="text-[#1f1b17] dark:text-[#f5f7fb]">
+                {result.score} pts
+              </strong>
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-[22px] border border-black/8 bg-white/78 p-4 dark:border-white/10 dark:bg-white/6">
-            <CurrentCategoryIcon aria-hidden="true" className="size-5 text-[#115e59] dark:text-[#8ff4e7]" strokeWidth={2.1} />
+            <CurrentCategoryIcon
+              aria-hidden="true"
+              className="size-5 text-[#115e59] dark:text-[#8ff4e7]"
+              strokeWidth={2.1}
+            />
             <div>
-              <span className="block text-[0.72rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Category</span>
-              <strong className="text-[#1f1b17] dark:text-[#f5f7fb]">{currentCategoryLabel}</strong>
+              <span className="block text-[0.72rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
+                Category
+              </span>
+              <strong className="text-[#1f1b17] dark:text-[#f5f7fb]">
+                {currentCategoryLabel}
+              </strong>
             </div>
           </div>
         </div>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <button className={`${primaryButtonClass} flex-1`} disabled={isBusy} onClick={startRound} type="button">
-            <RotateCcw aria-hidden="true" className="size-4" strokeWidth={2.2} />
+          <button
+            className={`${primaryButtonClass} flex-1`}
+            disabled={isBusy}
+            onClick={startRound}
+            type="button"
+          >
+            <RotateCcw
+              aria-hidden="true"
+              className="size-4"
+              strokeWidth={2.2}
+            />
             Play again
           </button>
-          <button className={`${secondaryButtonClass} flex-1`} disabled={isBusy} onClick={clearForCategoryChoice} type="button">
+          <button
+            className={`${secondaryButtonClass} flex-1`}
+            disabled={isBusy}
+            onClick={clearForCategoryChoice}
+            type="button"
+          >
             <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
             Categories
           </button>

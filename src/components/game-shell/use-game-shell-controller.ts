@@ -2,32 +2,60 @@
 
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 
-import { getMenuMessage, getMessageAppearance, isClueLocked, toPlayableClues } from "@/src/components/game-shell/utils";
-import type { ActiveRound, GameShellProps, RoundOutcome } from "@/src/components/game-shell/types";
-import type { GameMode, GuessRoundResult, RevealClueResult, StartRoundResult } from "@/src/lib/types";
+import {
+  getMenuMessage,
+  getMessageAppearance,
+  isClueLocked,
+  toPlayableClues,
+} from "@/src/components/game-shell/utils";
+import type {
+  ActiveRound,
+  GameShellProps,
+  RoundOutcome,
+} from "@/src/components/game-shell/types";
+import type {
+  GameMode,
+  GuessRoundResult,
+  RevealClueResult,
+  StartRoundResult,
+} from "@/src/lib/types";
 import type { FormEvent } from "react";
 import { useState, useTransition } from "react";
 
-export function useGameShellController({ categories, countryOptions }: GameShellProps) {
-  const defaultCategory = categories.find((category) => category.entityCount > 0)?.id ?? null;
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(defaultCategory);
+export function useGameShellController({
+  categories,
+  countryOptions,
+}: GameShellProps) {
+  const defaultCategory =
+    categories.find((category) => category.entityCount > 0)?.id ?? null;
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    defaultCategory,
+  );
   const [selectedMode, setSelectedMode] = useState<GameMode | null>("classic");
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
   const [guessedEntities, setGuessedEntities] = useState<string[]>([]);
-  const [message, setMessage] = useState(getMenuMessage(defaultCategory, "classic"));
+  const [message, setMessage] = useState(
+    getMenuMessage(defaultCategory, "classic"),
+  );
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const validCountryLookup = new Map(countryOptions.map((option) => [normalizeGuess(option), option]));
+  const validCountryLookup = new Map(
+    countryOptions.map((option) => [normalizeGuess(option), option]),
+  );
 
-  const totalEntityCount = categories.reduce((sum, category) => sum + category.entityCount, 0);
+  const totalEntityCount = categories.reduce(
+    (sum, category) => sum + category.entityCount,
+    0,
+  );
   const totalSelectedEntityCount =
     selectedCategory === "random"
       ? totalEntityCount
-      : (categories.find((category) => category.id === selectedCategory)?.entityCount ?? 0);
+      : (categories.find((category) => category.id === selectedCategory)
+          ?.entityCount ?? 0);
 
   const view = round ? "round" : result ? "result" : "menu";
   const showRandomMix = categories.length > 1;
@@ -37,31 +65,66 @@ export function useGameShellController({ categories, countryOptions }: GameShell
   const isCountryRound = round?.category === "countries";
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
-  const normalizedGuessedEntities = new Set(guessedEntities.map((entry) => normalizeGuess(entry)));
-  const isCountryGuessValid = !isCountryRound || validCountryLookup.has(normalizedGuess);
-  const isAlreadyGuessed = hasGuess && normalizedGuessedEntities.has(normalizedGuess);
+  const normalizedGuessedEntities = new Set(
+    guessedEntities.map((entry) => normalizeGuess(entry)),
+  );
+  const isCountryGuessValid =
+    !isCountryRound || validCountryLookup.has(normalizedGuess);
+  const isAlreadyGuessed =
+    hasGuess && normalizedGuessedEntities.has(normalizedGuess);
   const availableCountryOptions = countryOptions.filter(
     (option) => !normalizedGuessedEntities.has(normalizeGuess(option)),
   );
   const canSubmitGuess = Boolean(
-    round && round.canGuess && hasGuess && isCountryGuessValid && !isAlreadyGuessed && !isPending && !isSyncingReveal,
+    round &&
+    round.canGuess &&
+    hasGuess &&
+    isCountryGuessValid &&
+    !isAlreadyGuessed &&
+    !isPending &&
+    !isSyncingReveal,
   );
-  const selectedCategoryMeta = categories.find((category) => category.id === selectedCategory);
+  const selectedCategoryMeta = categories.find(
+    (category) => category.id === selectedCategory,
+  );
   const selectedCategoryLabel =
-    selectedCategory === "random" ? "Mixed category" : selectedCategoryMeta?.label ?? "Pick a category";
-  const currentCategory = round?.category ?? result?.category ?? selectedCategory;
-  const currentCategoryMeta = categories.find((category) => category.id === currentCategory);
+    selectedCategory === "random"
+      ? "Mixed category"
+      : (selectedCategoryMeta?.label ?? "Pick a category");
+  const currentCategory =
+    round?.category ?? result?.category ?? selectedCategory;
+  const currentCategoryMeta = categories.find(
+    (category) => category.id === currentCategory,
+  );
   const currentCategoryLabel =
-    currentCategoryMeta?.label ?? (currentCategory === "random" ? "Mixed category" : selectedCategoryLabel);
-  const canStartRound = Boolean(selectedCategory && selectedMode && totalSelectedEntityCount > 0 && !isPending);
+    currentCategoryMeta?.label ??
+    (currentCategory === "random" ? "Mixed category" : selectedCategoryLabel);
+  const canStartRound = Boolean(
+    selectedCategory &&
+    selectedMode &&
+    totalSelectedEntityCount > 0 &&
+    !isPending,
+  );
   const revealedCount = currentClues.filter((clue) => clue.isRevealed).length;
   const displayScore = result?.score ?? score ?? 0;
-  const statusAppearance = getMessageAppearance(message, result?.status ?? null);
+  const statusAppearance = getMessageAppearance(
+    message,
+    result?.status ?? null,
+  );
   const isBusy = isPending || isSyncingReveal;
-  const guessButtonLabel =
-    isBusy ? "..." : round?.canGuess ? "Guess" : currentMode === "blurred-lines" ? "Reveal" : "Locked";
+  const guessButtonLabel = isBusy
+    ? "..."
+    : round?.canGuess
+      ? "Guess"
+      : currentMode === "blurred-lines"
+        ? "Reveal"
+        : "Locked";
   const validationMessage =
-    isCountryRound && hasGuess && !isCountryGuessValid ? "Pick a listed country." : isAlreadyGuessed ? "Already tried." : null;
+    isCountryRound && hasGuess && !isCountryGuessValid
+      ? "Pick a listed country."
+      : isAlreadyGuessed
+        ? "Already tried."
+        : null;
 
   function handleCategorySelect(categoryId: string) {
     if (categoryId === "random") {
@@ -204,7 +267,11 @@ export function useGameShellController({ categories, countryOptions }: GameShell
     }
 
     if (!round.canGuess) {
-      setMessage(round.mode === "blurred-lines" ? "Reveal a row." : "Wait for the next clue.");
+      setMessage(
+        round.mode === "blurred-lines"
+          ? "Reveal a row."
+          : "Wait for the next clue.",
+      );
       return;
     }
 
@@ -213,7 +280,9 @@ export function useGameShellController({ categories, countryOptions }: GameShell
       return;
     }
 
-    const submittedGuess = isCountryRound ? (validCountryLookup.get(normalizedGuess) ?? guess.trim()) : guess.trim();
+    const submittedGuess = isCountryRound
+      ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
+      : guess.trim();
 
     startTransition(async () => {
       const response = await fetch(`/api/rounds/${round.roundId}/guess`, {

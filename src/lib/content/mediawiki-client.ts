@@ -46,7 +46,11 @@ interface RedirectResponse {
   };
 }
 
-async function fetchSectionIndex(pageTitle: string, sectionTitle: string, wikiHost = "simple.wikipedia.org"): Promise<string> {
+async function fetchSectionIndex(
+  pageTitle: string,
+  sectionTitle: string,
+  wikiHost = "simple.wikipedia.org",
+): Promise<string> {
   const params = new URLSearchParams({
     action: "parse",
     page: pageTitle,
@@ -54,17 +58,27 @@ async function fetchSectionIndex(pageTitle: string, sectionTitle: string, wikiHo
     format: "json",
     origin: "*",
   });
-  const data = await fetchWikimediaJson<ParseSectionsResponse>(`https://${wikiHost}/w/api.php?${params.toString()}`);
-  const section = data.parse?.sections?.find((candidate) => candidate.line === sectionTitle);
+  const data = await fetchWikimediaJson<ParseSectionsResponse>(
+    `https://${wikiHost}/w/api.php?${params.toString()}`,
+  );
+  const section = data.parse?.sections?.find(
+    (candidate) => candidate.line === sectionTitle,
+  );
 
   if (!section) {
-    throw new Error(`Unable to find section "${sectionTitle}" on ${pageTitle}.`);
+    throw new Error(
+      `Unable to find section "${sectionTitle}" on ${pageTitle}.`,
+    );
   }
 
   return section.index;
 }
 
-async function fetchSectionLinks(pageTitle: string, sectionIndex: string, wikiHost = "simple.wikipedia.org"): Promise<string[]> {
+async function fetchSectionLinks(
+  pageTitle: string,
+  sectionIndex: string,
+  wikiHost = "simple.wikipedia.org",
+): Promise<string[]> {
   const params = new URLSearchParams({
     action: "parse",
     page: pageTitle,
@@ -73,7 +87,9 @@ async function fetchSectionLinks(pageTitle: string, sectionIndex: string, wikiHo
     format: "json",
     origin: "*",
   });
-  const data = await fetchWikimediaJson<ParseLinksResponse>(`https://${wikiHost}/w/api.php?${params.toString()}`);
+  const data = await fetchWikimediaJson<ParseLinksResponse>(
+    `https://${wikiHost}/w/api.php?${params.toString()}`,
+  );
 
   return (data.parse?.links ?? [])
     .filter((link) => link.ns === 0 && link.exists !== undefined)
@@ -97,7 +113,9 @@ export async function fetchWikibaseItemsForTitles(
       format: "json",
       origin: "*",
     });
-    const data = await fetchWikimediaJson<PagePropsResponse>(`https://${wikiHost}/w/api.php?${params.toString()}`);
+    const data = await fetchWikimediaJson<PagePropsResponse>(
+      `https://${wikiHost}/w/api.php?${params.toString()}`,
+    );
 
     Object.entries(data.query?.pages ?? {}).forEach(([, page]) => {
       const qid = page.pageprops?.wikibase_item;
@@ -112,9 +130,17 @@ export async function fetchWikibaseItemsForTitles(
   return titleToQid;
 }
 
-export async function fetchSimpleWikipediaCountryQids(limit?: number): Promise<string[]> {
-  const sectionIndex = await fetchSectionIndex("List_of_countries", "Countries");
-  const linkedTitles = await fetchSectionLinks("List_of_countries", sectionIndex);
+export async function fetchSimpleWikipediaCountryQids(
+  limit?: number,
+): Promise<string[]> {
+  const sectionIndex = await fetchSectionIndex(
+    "List_of_countries",
+    "Countries",
+  );
+  const linkedTitles = await fetchSectionLinks(
+    "List_of_countries",
+    sectionIndex,
+  );
   const dedupedTitles = [...new Set(linkedTitles)];
   const scopedTitles = limit ? dedupedTitles.slice(0, limit) : dedupedTitles;
   const titleToQid = await fetchWikibaseItemsForTitles(scopedTitles);
@@ -133,8 +159,12 @@ export async function fetchRedirectAliases(title: string): Promise<string[]> {
     format: "json",
     origin: "*",
   });
-  const data = await fetchWikimediaJson<RedirectResponse>(`https://en.wikipedia.org/w/api.php?${params.toString()}`);
+  const data = await fetchWikimediaJson<RedirectResponse>(
+    `https://en.wikipedia.org/w/api.php?${params.toString()}`,
+  );
   const pages = Object.values(data.query?.pages ?? {});
 
-  return pages.flatMap((page) => page.redirects?.map((redirect) => redirect.title) ?? []);
+  return pages.flatMap(
+    (page) => page.redirects?.map((redirect) => redirect.title) ?? [],
+  );
 }

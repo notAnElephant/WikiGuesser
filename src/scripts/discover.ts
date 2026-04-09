@@ -9,11 +9,17 @@ async function main() {
   const categoryArg = getArgValue("category") as EntityCategory | undefined;
   const rawLimit = getArgValue("limit");
   const limit = rawLimit ? getNumericArgValue("limit", 50) : undefined;
-  const categories = categoryArg ? [categoryArg] : allCategoryDefinitions.map((definition) => definition.id);
+  const categories = categoryArg
+    ? [categoryArg]
+    : allCategoryDefinitions.map((definition) => definition.id);
 
   for (const category of categories) {
     const qids = await discoverCategoryQids(category, limit);
-    const target = await writeGeneratedJson({ category, qids, fetchedAt: new Date().toISOString() }, "discovery", `${category}.json`);
+    const target = await writeGeneratedJson(
+      { category, qids, fetchedAt: new Date().toISOString() },
+      "discovery",
+      `${category}.json`,
+    );
     console.log(`Discovered ${qids.length} ${category} entities -> ${target}`);
   }
 }

@@ -1,7 +1,12 @@
 import { categoryDefinitions } from "@/src/lib/content/category-definitions";
 import { fetchRedirectAliases } from "@/src/lib/content/mediawiki-client";
 import { materializeSnapshot } from "@/src/lib/content/materialize-snapshot";
-import type { EntityCategory, MaterializedSnapshot, NormalizedEntity, SourceEntity } from "@/src/lib/types";
+import type {
+  EntityCategory,
+  MaterializedSnapshot,
+  NormalizedEntity,
+  SourceEntity,
+} from "@/src/lib/types";
 
 export async function normalizeEntitiesForCategory(
   category: EntityCategory,
@@ -49,7 +54,9 @@ export async function buildSnapshotFromSources(
       continue;
     }
 
-    normalizedEntities.push(...(await normalizeEntitiesForCategory(category, entities)));
+    normalizedEntities.push(
+      ...(await normalizeEntitiesForCategory(category, entities)),
+    );
   }
 
   return materializeSnapshot(normalizedEntities, previousSnapshot);

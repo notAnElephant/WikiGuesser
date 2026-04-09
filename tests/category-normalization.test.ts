@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { categoryDefinitions } from "@/src/lib/content/category-definitions";
-import { citySourceFixture, countrySourceFixture, personSourceFixture } from "@/tests/fixtures";
+import {
+  citySourceFixture,
+  countrySourceFixture,
+  personSourceFixture,
+} from "@/tests/fixtures";
 
 describe("category normalization", () => {
   it("builds a playable country entity", () => {
-    const entity = categoryDefinitions.countries.normalize(countrySourceFixture);
+    const entity =
+      categoryDefinitions.countries.normalize(countrySourceFixture);
     expect(entity?.canonicalAnswer).toBe("France");
     expect(entity?.clues).toHaveLength(5);
     expect(entity?.clues.at(-1)?.label).toBe("Capital");
@@ -32,7 +37,14 @@ describe("category normalization", () => {
         P2046: [{ type: "quantity", amount: 0.49, unit: "km²" }],
         P1082: [{ type: "quantity", amount: 882, unit: null }],
         P38: [{ type: "entity", id: "Q4916", label: "euro" }],
-        P625: [{ type: "coordinate", latitude: 41.904, longitude: 12.453, precision: 0.1 }],
+        P625: [
+          {
+            type: "coordinate",
+            latitude: 41.904,
+            longitude: 12.453,
+            precision: 0.1,
+          },
+        ],
       },
     });
 

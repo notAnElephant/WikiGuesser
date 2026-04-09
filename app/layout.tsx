@@ -12,10 +12,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "WikiGuesser",
-  description: "A fast clue-based trivia game built from Wikipedia-inspired topics.",
+  description:
+    "A fast clue-based trivia game built from Wikipedia-inspired topics.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(15,118,110,0.2),transparent_34%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.18),transparent_24%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.32),transparent_28%),linear-gradient(180deg,#fbf5eb_0%,#f2eadb_100%)] font-sans text-[#1f1b17] transition-colors dark:bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.14),transparent_22%),radial-gradient(circle_at_bottom,rgba(36,212,194,0.08),transparent_24%),linear-gradient(180deg,#08111b_0%,#0f1724_54%,#16202d_100%)] dark:text-[#f5f7fb]">
@@ -28,7 +31,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   href="/"
                 >
                   <span className="inline-flex size-9 items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.16))] text-[#115e59] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.16),rgba(56,189,248,0.14))] dark:text-[#8ff4e7]">
-                    <Dice5 aria-hidden="true" className="size-4.5" strokeWidth={2.2} />
+                    <Dice5
+                      aria-hidden="true"
+                      className="size-4.5"
+                      strokeWidth={2.2}
+                    />
                   </span>
                   <span>WikiGuesser</span>
                 </Link>
@@ -40,7 +47,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                       className="inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
                       href="/sign-in"
                     >
-                      <LogIn aria-hidden="true" className="size-4" strokeWidth={2.2} />
+                      <LogIn
+                        aria-hidden="true"
+                        className="size-4"
+                        strokeWidth={2.2}
+                      />
                       Log in
                     </Link>
                     <Link

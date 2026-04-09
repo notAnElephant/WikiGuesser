@@ -3,7 +3,10 @@ export const GAME_MODES = ["classic", "blurred-lines"] as const;
 
 export type EntityCategory = (typeof ENTITY_CATEGORIES)[number];
 export type GameMode = (typeof GAME_MODES)[number];
-export const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = ["countries", "cities"];
+export const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = [
+  "countries",
+  "cities",
+];
 
 export interface AcceptedAnswer {
   kind: "canonical" | "alias" | "wikipedia-title" | "redirect";
@@ -62,7 +65,12 @@ export type SourceClaimValue =
   | { type: "string"; value: string }
   | { type: "quantity"; amount: number; unit: string | null }
   | { type: "time"; value: string; precision: number | null }
-  | { type: "coordinate"; latitude: number; longitude: number; precision: number | null }
+  | {
+      type: "coordinate";
+      latitude: number;
+      longitude: number;
+      precision: number | null;
+    }
   | { type: "monolingualtext"; text: string; language: string | null };
 
 export interface SourceEntity {

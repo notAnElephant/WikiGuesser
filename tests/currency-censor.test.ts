@@ -18,6 +18,8 @@ describe("currency censor", () => {
   });
 
   it("leaves neutral currency names untouched", () => {
-    expect(splitCurrencyRevealSegments("Euro")).toEqual([{ isBlurred: false, text: "Euro" }]);
+    expect(splitCurrencyRevealSegments("Euro")).toEqual([
+      { isBlurred: false, text: "Euro" },
+    ]);
   });
 });

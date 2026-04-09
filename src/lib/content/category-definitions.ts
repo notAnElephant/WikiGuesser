@@ -65,7 +65,10 @@ function getCountryCapitalLabel(source: SourceEntity): string | null {
   return null;
 }
 
-export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefinition> = {
+export const categoryDefinitions: Record<
+  CategoryDefinition["id"],
+  CategoryDefinition
+> = {
   countries: {
     id: "countries",
     label: "Countries",
@@ -93,11 +96,37 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
         minimumClues: 5,
         redirectAliases: options?.redirectAliases,
         clues: [
-          createClue("continent", "Continent", formatList(getEntityLabels(source, "P30"), 1), 1),
-          createClue("area", "Area", formatAreaSquareKilometers(getFirstQuantity(source, "P2046")), 2),
-          createClue("population", "Population", formatPopulation(getFirstQuantity(source, "P1082")), 3),
-          createClue("currency", "Currency", formatList(getEntityLabels(source, "P38"), 1), 4),
-          createClue("capital", "Capital", getCountryCapitalLabel(source), 5, "late"),
+          createClue(
+            "continent",
+            "Continent",
+            formatList(getEntityLabels(source, "P30"), 1),
+            1,
+          ),
+          createClue(
+            "area",
+            "Area",
+            formatAreaSquareKilometers(getFirstQuantity(source, "P2046")),
+            2,
+          ),
+          createClue(
+            "population",
+            "Population",
+            formatPopulation(getFirstQuantity(source, "P1082")),
+            3,
+          ),
+          createClue(
+            "currency",
+            "Currency",
+            formatList(getEntityLabels(source, "P38"), 1),
+            4,
+          ),
+          createClue(
+            "capital",
+            "Capital",
+            getCountryCapitalLabel(source),
+            5,
+            "late",
+          ),
         ],
         metadata: {
           centroidLatitude: coordinate?.latitude ?? null,
@@ -109,13 +138,22 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
   cities: {
     id: "cities",
     label: "Cities",
-    description: "Capital city rounds limited to current capitals of UN member states.",
+    description:
+      "Capital city rounds limited to current capitals of UN member states.",
     discovery: {
       type: "sparql",
       query: citiesQuery,
     },
     requiredMinimumClues: 5,
-    allowedProperties: ["P17", "P131", "P1082", "P2046", "P2044", "P421", "P571"],
+    allowedProperties: [
+      "P17",
+      "P131",
+      "P1082",
+      "P2046",
+      "P2044",
+      "P421",
+      "P571",
+    ],
     lateRevealProperties: ["P571"],
     bannedProperties: ["P18", "P242"],
     clueOrder: ["P17", "P131", "P1082", "P2046", "P2044", "P421", "P571"],
@@ -131,13 +169,49 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
         minimumClues: 5,
         redirectAliases: options?.redirectAliases,
         clues: [
-          createClue("country", "Country", formatList(getEntityLabels(source, "P17"), 1), 1),
-          createClue("admin-region", "Administrative region", formatList(getEntityLabels(source, "P131"), 1), 2),
-          createClue("population", "Population", formatPopulation(getFirstQuantity(source, "P1082")), 3),
-          createClue("area", "Area", formatAreaSquareKilometers(getFirstQuantity(source, "P2046")), 4),
-          createClue("elevation", "Elevation", formatElevationMeters(getFirstQuantity(source, "P2044")), 5),
-          createClue("timezone", "Time zone", formatList(getEntityLabels(source, "P421"), 1), 6),
-          createClue("founded", "Founded", formatYear(getFirstTimeValue(source, "P571")), 7, "late"),
+          createClue(
+            "country",
+            "Country",
+            formatList(getEntityLabels(source, "P17"), 1),
+            1,
+          ),
+          createClue(
+            "admin-region",
+            "Administrative region",
+            formatList(getEntityLabels(source, "P131"), 1),
+            2,
+          ),
+          createClue(
+            "population",
+            "Population",
+            formatPopulation(getFirstQuantity(source, "P1082")),
+            3,
+          ),
+          createClue(
+            "area",
+            "Area",
+            formatAreaSquareKilometers(getFirstQuantity(source, "P2046")),
+            4,
+          ),
+          createClue(
+            "elevation",
+            "Elevation",
+            formatElevationMeters(getFirstQuantity(source, "P2044")),
+            5,
+          ),
+          createClue(
+            "timezone",
+            "Time zone",
+            formatList(getEntityLabels(source, "P421"), 1),
+            6,
+          ),
+          createClue(
+            "founded",
+            "Founded",
+            formatYear(getFirstTimeValue(source, "P571")),
+            7,
+            "late",
+          ),
         ],
       });
     },
@@ -145,7 +219,8 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
   people: {
     id: "people",
     label: "People",
-    description: "People rounds curated to avoid instant giveaways and weak clue sets.",
+    description:
+      "People rounds curated to avoid instant giveaways and weak clue sets.",
     discovery: {
       type: "sparql",
       query: peopleQuery,
@@ -167,12 +242,43 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
         minimumClues: 5,
         redirectAliases: options?.redirectAliases,
         clues: [
-          createClue("occupation", "Occupation", formatList(getEntityLabels(source, "P106")), 1),
-          createClue("citizenship", "Citizenship", formatList(getEntityLabels(source, "P27")), 2),
-          createClue("birth-decade", "Birth decade", formatBirthDecade(getFirstTimeValue(source, "P569")), 3),
-          createClue("field", "Field", formatList(getEntityLabels(source, "P101")), 4),
-          createClue("education", "Education", formatList(getEntityLabels(source, "P69")), 5),
-          createClue("award", "Award", formatList(getEntityLabels(source, "P166"), 1), 6, "late"),
+          createClue(
+            "occupation",
+            "Occupation",
+            formatList(getEntityLabels(source, "P106")),
+            1,
+          ),
+          createClue(
+            "citizenship",
+            "Citizenship",
+            formatList(getEntityLabels(source, "P27")),
+            2,
+          ),
+          createClue(
+            "birth-decade",
+            "Birth decade",
+            formatBirthDecade(getFirstTimeValue(source, "P569")),
+            3,
+          ),
+          createClue(
+            "field",
+            "Field",
+            formatList(getEntityLabels(source, "P101")),
+            4,
+          ),
+          createClue(
+            "education",
+            "Education",
+            formatList(getEntityLabels(source, "P69")),
+            5,
+          ),
+          createClue(
+            "award",
+            "Award",
+            formatList(getEntityLabels(source, "P166"), 1),
+            6,
+            "late",
+          ),
         ],
       });
     },

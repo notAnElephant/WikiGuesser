@@ -11,10 +11,27 @@ import {
   renderClueValue,
   renderHiddenCluePlaceholder,
 } from "@/src/components/game-shell/utils";
-import type { MessageAppearance, RoundOutcome } from "@/src/components/game-shell/types";
+import type {
+  MessageAppearance,
+  RoundOutcome,
+} from "@/src/components/game-shell/types";
 import type { ActiveRound } from "@/src/components/game-shell/types";
 import type { GameMode, RoundClue } from "@/src/lib/types";
-import { ArrowRight, CircleAlert, Eye, House, LoaderCircle, Lock, PartyPopper, Play, RotateCcw, Search, Sparkles, Target, X } from "lucide-react";
+import {
+  ArrowRight,
+  CircleAlert,
+  Eye,
+  House,
+  LoaderCircle,
+  Lock,
+  PartyPopper,
+  Play,
+  RotateCcw,
+  Search,
+  Sparkles,
+  Target,
+  X,
+} from "lucide-react";
 import type { FormEvent } from "react";
 
 interface GamePlayViewProps {
@@ -83,52 +100,92 @@ export function GamePlayView({
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/12 bg-[#0f766e]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:border-[#24d4c2]/14 dark:bg-[#24d4c2]/8 dark:text-[#8ff4e7]">
             {result?.status === "win" ? (
-              <PartyPopper aria-hidden="true" className="size-3.5" strokeWidth={2.2} />
+              <PartyPopper
+                aria-hidden="true"
+                className="size-3.5"
+                strokeWidth={2.2}
+              />
             ) : (
               <Play aria-hidden="true" className="size-3.5" strokeWidth={2.2} />
             )}
-            {view === "round" ? "Round live" : result?.status === "win" ? "Solved" : "Answer shown"}
+            {view === "round"
+              ? "Round live"
+              : result?.status === "win"
+                ? "Solved"
+                : "Answer shown"}
           </span>
           <span className="inline-flex items-center gap-2 rounded-full bg-white/78 px-3 py-1.5 text-sm font-medium text-[#115e59] dark:bg-white/6 dark:text-[#8ff4e7]">
-            <CurrentCategoryIcon aria-hidden="true" className="size-4" strokeWidth={2.2} />
+            <CurrentCategoryIcon
+              aria-hidden="true"
+              className="size-4"
+              strokeWidth={2.2}
+            />
             {currentCategoryLabel}
           </span>
           <span className="inline-flex items-center gap-2 rounded-full bg-white/78 px-3 py-1.5 text-sm font-medium text-[#115e59] dark:bg-white/6 dark:text-[#8ff4e7]">
-            <CurrentModeIcon aria-hidden="true" className="size-4" strokeWidth={2.2} />
+            <CurrentModeIcon
+              aria-hidden="true"
+              className="size-4"
+              strokeWidth={2.2}
+            />
             {currentModeMeta.label}
           </span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 sm:w-auto">
           <div className="rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 dark:border-white/10 dark:bg-white/6">
-            <span className="block text-[0.7rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Score</span>
-            <strong className="text-[1.2rem] text-[#1f1b17] dark:text-[#f5f7fb]">{displayScore}</strong>
+            <span className="block text-[0.7rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
+              Score
+            </span>
+            <strong className="text-[1.2rem] text-[#1f1b17] dark:text-[#f5f7fb]">
+              {displayScore}
+            </strong>
           </div>
           <div className="rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 dark:border-white/10 dark:bg-white/6">
-            <span className="block text-[0.7rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Left</span>
-            <strong className="text-[1.2rem] text-[#1f1b17] dark:text-[#f5f7fb]">{round?.remainingClues ?? 0}</strong>
+            <span className="block text-[0.7rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
+              Left
+            </span>
+            <strong className="text-[1.2rem] text-[#1f1b17] dark:text-[#f5f7fb]">
+              {round?.remainingClues ?? 0}
+            </strong>
           </div>
           <div className="rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 dark:border-white/10 dark:bg-white/6">
-            <span className="block text-[0.7rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Tried</span>
-            <strong className="text-[1.2rem] text-[#1f1b17] dark:text-[#f5f7fb]">{guessedEntities.length}</strong>
+            <span className="block text-[0.7rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
+              Tried
+            </span>
+            <strong className="text-[1.2rem] text-[#1f1b17] dark:text-[#f5f7fb]">
+              {guessedEntities.length}
+            </strong>
           </div>
         </div>
       </header>
 
       <div className="grid flex-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_340px]">
-        <section className={`${surfaceClass} grid content-start gap-4 p-4 sm:p-5`}>
+        <section
+          className={`${surfaceClass} grid content-start gap-4 p-4 sm:p-5`}
+        >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="m-0 font-serif-display text-[clamp(1.95rem,6vw,3.2rem)] font-semibold leading-[0.92] tracking-[-0.055em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                {currentMode === "blurred-lines" ? "Open the dossier" : "Read the trail"}
+                {currentMode === "blurred-lines"
+                  ? "Open the dossier"
+                  : "Read the trail"}
               </h1>
               <p className="m-0 mt-2 text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-                {currentMode === "blurred-lines" ? "Reveal only what you need." : "Each miss burns another clue."}
+                {currentMode === "blurred-lines"
+                  ? "Reveal only what you need."
+                  : "Each miss burns another clue."}
               </p>
             </div>
 
-            <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${statusAppearance.className}`}>
-              <StatusIcon aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.2} />
+            <div
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${statusAppearance.className}`}
+            >
+              <StatusIcon
+                aria-hidden="true"
+                className="size-4 shrink-0"
+                strokeWidth={2.2}
+              />
               <span>{message}</span>
             </div>
           </div>
@@ -161,13 +218,18 @@ export function GamePlayView({
               <table className="w-full border-collapse text-left text-sm text-[#202122] dark:text-[#edf3fa]">
                 <thead>
                   <tr className="bg-white text-xs uppercase tracking-[0.16em] text-[#54595d] dark:bg-[#101926] dark:text-[#99a9bc]">
-                    <th className="w-[38%] border-b border-r border-[#c8ccd1] px-4 py-3 font-semibold dark:border-white/10">Field</th>
-                    <th className="border-b border-[#c8ccd1] px-4 py-3 font-semibold dark:border-white/10">Reveal</th>
+                    <th className="w-[38%] border-b border-r border-[#c8ccd1] px-4 py-3 font-semibold dark:border-white/10">
+                      Field
+                    </th>
+                    <th className="border-b border-[#c8ccd1] px-4 py-3 font-semibold dark:border-white/10">
+                      Reveal
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentClues.map((clue, index) => {
-                    const isLocked = Boolean(round) && isClueLocked(currentClues, clue);
+                    const isLocked =
+                      Boolean(round) && isClueLocked(currentClues, clue);
                     const ClueIcon = getClueIcon(clue.key);
 
                     return (
@@ -177,7 +239,11 @@ export function GamePlayView({
                       >
                         <th className="border-r border-t border-[#c8ccd1] px-4 py-3 align-top font-semibold text-[#202122] dark:border-white/10 dark:text-[#edf3fa]">
                           <span className="inline-flex items-center gap-2">
-                            <ClueIcon aria-hidden="true" className="size-4" strokeWidth={2.1} />
+                            <ClueIcon
+                              aria-hidden="true"
+                              className="size-4"
+                              strokeWidth={2.1}
+                            />
                             <span>{clue.label}</span>
                           </span>
                         </th>
@@ -191,16 +257,26 @@ export function GamePlayView({
                                 aria-hidden="true"
                                 className="pointer-events-none inline-flex select-none items-center gap-1 rounded-full px-2 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-0"
                               >
-                                <Eye aria-hidden="true" className="size-3" strokeWidth={2.2} />
+                                <Eye
+                                  aria-hidden="true"
+                                  className="size-3"
+                                  strokeWidth={2.2}
+                                />
                                 Reveal
                               </span>
                             </div>
                           ) : round ? (
                             isLocked ? (
                               <div className="flex w-full items-start justify-between gap-3">
-                                <span className="min-w-0">{renderHiddenCluePlaceholder(clue, true)}</span>
+                                <span className="min-w-0">
+                                  {renderHiddenCluePlaceholder(clue, true)}
+                                </span>
                                 <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(248,250,252,0.88)] px-2 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#54595d] dark:bg-[rgba(15,23,36,0.88)] dark:text-[#99a9bc]">
-                                  <Lock aria-hidden="true" className="size-3" strokeWidth={2.2} />
+                                  <Lock
+                                    aria-hidden="true"
+                                    className="size-3"
+                                    strokeWidth={2.2}
+                                  />
                                   Later
                                 </span>
                               </div>
@@ -222,7 +298,11 @@ export function GamePlayView({
                                   onClick={() => revealClue(clue.key)}
                                   type="button"
                                 >
-                                  <Eye aria-hidden="true" className="size-3" strokeWidth={2.2} />
+                                  <Eye
+                                    aria-hidden="true"
+                                    className="size-3"
+                                    strokeWidth={2.2}
+                                  />
                                   Reveal
                                 </button>
                               </div>
@@ -255,7 +335,11 @@ export function GamePlayView({
                   >
                     <div className="flex items-start gap-4">
                       <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] text-[#1f1b17] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))] dark:text-[#f5f7fb]">
-                        <ClueIcon aria-hidden="true" className="size-5" strokeWidth={2.1} />
+                        <ClueIcon
+                          aria-hidden="true"
+                          className="size-5"
+                          strokeWidth={2.1}
+                        />
                       </span>
                       <div className="min-w-0">
                         <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
@@ -277,7 +361,11 @@ export function GamePlayView({
                 <li className="grid min-h-48 place-items-center rounded-[28px] border border-dashed border-black/10 bg-white/78 p-6 text-center dark:border-white/12 dark:bg-[rgba(255,255,255,0.05)]">
                   <div className="grid gap-3">
                     <span className="mx-auto inline-flex size-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))]">
-                      <Sparkles aria-hidden="true" className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
+                      <Sparkles
+                        aria-hidden="true"
+                        className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
+                        strokeWidth={2.1}
+                      />
                     </span>
                     <strong className="font-serif-display text-[1.5rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
                       First clue coming up
@@ -293,7 +381,11 @@ export function GamePlayView({
           {round ? (
             <div className={`${surfaceClass} grid gap-4 p-4`}>
               <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-                <Target aria-hidden="true" className="size-4" strokeWidth={2.2} />
+                <Target
+                  aria-hidden="true"
+                  className="size-4"
+                  strokeWidth={2.2}
+                />
                 Guess
               </div>
 
@@ -310,7 +402,9 @@ export function GamePlayView({
                     list={isCountryRound ? "country-guess-options" : undefined}
                     disabled={isBusy}
                     onChange={(event) => setGuess(event.target.value)}
-                    placeholder={isCountryRound ? "Search country" : "Type answer"}
+                    placeholder={
+                      isCountryRound ? "Search country" : "Type answer"
+                    }
                     type="text"
                     value={guess}
                   />
@@ -318,25 +412,51 @@ export function GamePlayView({
 
                 {validationMessage ? (
                   <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/18 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200">
-                    <CircleAlert aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.2} />
+                    <CircleAlert
+                      aria-hidden="true"
+                      className="size-4 shrink-0"
+                      strokeWidth={2.2}
+                    />
                     {validationMessage}
                   </div>
                 ) : !round.canGuess ? (
                   <div className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/76 px-3 py-2 text-sm font-medium text-[#6b6259] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb]">
                     {round.mode === "blurred-lines" ? (
-                      <Eye aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.2} />
+                      <Eye
+                        aria-hidden="true"
+                        className="size-4 shrink-0"
+                        strokeWidth={2.2}
+                      />
                     ) : (
-                      <Lock aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.2} />
+                      <Lock
+                        aria-hidden="true"
+                        className="size-4 shrink-0"
+                        strokeWidth={2.2}
+                      />
                     )}
-                    {round.mode === "blurred-lines" ? "Reveal a row." : "Next miss reveals more."}
+                    {round.mode === "blurred-lines"
+                      ? "Reveal a row."
+                      : "Next miss reveals more."}
                   </div>
                 ) : null}
 
-                <button className={`${primaryButtonClass} w-full`} disabled={!canSubmitGuess} type="submit">
+                <button
+                  className={`${primaryButtonClass} w-full`}
+                  disabled={!canSubmitGuess}
+                  type="submit"
+                >
                   {isBusy ? (
-                    <LoaderCircle aria-hidden="true" className="size-4 animate-spin" strokeWidth={2.2} />
+                    <LoaderCircle
+                      aria-hidden="true"
+                      className="size-4 animate-spin"
+                      strokeWidth={2.2}
+                    />
                   ) : (
-                    <ArrowRight aria-hidden="true" className="size-4" strokeWidth={2.3} />
+                    <ArrowRight
+                      aria-hidden="true"
+                      className="size-4"
+                      strokeWidth={2.3}
+                    />
                   )}
                   {guessButtonLabel}
                 </button>
@@ -353,7 +473,11 @@ export function GamePlayView({
                         className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(220,38,38,0.14)] bg-[rgba(254,242,242,0.95)] px-3 py-1 text-xs font-medium text-[#991b1b] dark:border-[rgba(248,113,113,0.2)] dark:bg-[rgba(127,29,29,0.18)] dark:text-[#fca5a5]"
                         key={entity}
                       >
-                        <X aria-hidden="true" className="size-3.5 shrink-0 text-[#dc2626] dark:text-[#f87171]" strokeWidth={2.25} />
+                        <X
+                          aria-hidden="true"
+                          className="size-3.5 shrink-0 text-[#dc2626] dark:text-[#f87171]"
+                          strokeWidth={2.25}
+                        />
                         <span>{entity}</span>
                       </span>
                     ))}
@@ -372,11 +496,25 @@ export function GamePlayView({
           ) : null}
 
           <div className={`${surfaceClass} grid gap-3 p-4`}>
-            <button className={`${secondaryButtonClass} w-full`} disabled={isBusy} onClick={startRound} type="button">
-              <RotateCcw aria-hidden="true" className="size-4" strokeWidth={2.2} />
+            <button
+              className={`${secondaryButtonClass} w-full`}
+              disabled={isBusy}
+              onClick={startRound}
+              type="button"
+            >
+              <RotateCcw
+                aria-hidden="true"
+                className="size-4"
+                strokeWidth={2.2}
+              />
               New round
             </button>
-            <button className={`${secondaryButtonClass} w-full`} disabled={isBusy} onClick={clearForCategoryChoice} type="button">
+            <button
+              className={`${secondaryButtonClass} w-full`}
+              disabled={isBusy}
+              onClick={clearForCategoryChoice}
+              type="button"
+            >
               <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
               Categories
             </button>

@@ -1,12 +1,28 @@
 import { splitCurrencyRevealSegments } from "@/src/lib/game/currency-censor";
 
-import { CATEGORY_META, CLUE_ICON_MAP, GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
-import type { CategoryCardMeta, MessageAppearance } from "@/src/components/game-shell/types";
+import {
+  CATEGORY_META,
+  CLUE_ICON_MAP,
+  GAME_MODE_OPTIONS,
+} from "@/src/components/game-shell/config";
+import type {
+  CategoryCardMeta,
+  MessageAppearance,
+} from "@/src/components/game-shell/types";
 import type { GameMode, PlayableClue, RoundClue } from "@/src/lib/types";
-import { Ban, CircleAlert, PartyPopper, Sparkles, type LucideIcon } from "lucide-react";
+import {
+  Ban,
+  CircleAlert,
+  PartyPopper,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
-export function selectionCardClass(isActive: boolean, isDisabled = false): string {
+export function selectionCardClass(
+  isActive: boolean,
+  isDisabled = false,
+): string {
   return `group grid gap-3 rounded-[26px] border p-4 text-left transition ${
     isDisabled
       ? "cursor-not-allowed border-black/5 bg-[rgba(255,255,255,0.56)] opacity-55 dark:border-white/8 dark:bg-white/6"
@@ -16,7 +32,10 @@ export function selectionCardClass(isActive: boolean, isDisabled = false): strin
   }`;
 }
 
-export function getMenuMessage(category: string | null, mode: GameMode | null): string {
+export function getMenuMessage(
+  category: string | null,
+  mode: GameMode | null,
+): string {
   if (!category) {
     return "Pick a category.";
   }
@@ -48,7 +67,9 @@ export function toPlayableClues(clues: RoundClue[]): PlayableClue[] {
     }));
 }
 
-export function renderClueValue(clue: Pick<RoundClue, "key" | "value">): ReactNode {
+export function renderClueValue(
+  clue: Pick<RoundClue, "key" | "value">,
+): ReactNode {
   if (!clue.value) {
     return null;
   }
@@ -65,7 +86,10 @@ export function renderClueValue(clue: Pick<RoundClue, "key" | "value">): ReactNo
 
   return segments.map((segment, index) =>
     segment.isBlurred ? (
-      <span className="inline-block align-baseline" key={`${segment.text}-${index}`}>
+      <span
+        className="inline-block align-baseline"
+        key={`${segment.text}-${index}`}
+      >
         <span
           aria-hidden="true"
           className="select-none rounded-[0.45rem] bg-black/10 px-1.5 text-transparent [text-shadow:0_0_14px_rgba(31,27,23,0.98)] blur-[4.8px] dark:bg-white/14 dark:[text-shadow:0_0_14px_rgba(245,247,251,0.98)]"
@@ -110,14 +134,19 @@ export function getCategoryMeta(categoryId: string | null): CategoryCardMeta {
 }
 
 export function getModeMeta(mode: GameMode | null) {
-  return GAME_MODE_OPTIONS.find((entry) => entry.id === mode) ?? GAME_MODE_OPTIONS[0];
+  return (
+    GAME_MODE_OPTIONS.find((entry) => entry.id === mode) ?? GAME_MODE_OPTIONS[0]
+  );
 }
 
 export function getClueIcon(key: string): LucideIcon {
   return CLUE_ICON_MAP[key] ?? Sparkles;
 }
 
-export function getMessageAppearance(message: string, resultStatus: "win" | "loss" | null): MessageAppearance {
+export function getMessageAppearance(
+  message: string,
+  resultStatus: "win" | "loss" | null,
+): MessageAppearance {
   const lowerMessage = message.toLowerCase();
 
   if (resultStatus === "win" || lowerMessage.includes("correct")) {

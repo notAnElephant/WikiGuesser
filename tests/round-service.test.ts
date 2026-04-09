@@ -2,13 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 
 import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
 import { parseRoundState } from "@/src/lib/game/round-token";
-import { revealClue, startRound, submitGuess } from "@/src/lib/game/round-service";
+import {
+  revealClue,
+  startRound,
+  submitGuess,
+} from "@/src/lib/game/round-service";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 
 vi.mock("@/src/lib/repository/snapshot-repository", async () => {
-  const actual = await vi.importActual<typeof import("@/src/lib/repository/snapshot-repository")>(
-    "@/src/lib/repository/snapshot-repository",
-  );
+  const actual = await vi.importActual<
+    typeof import("@/src/lib/repository/snapshot-repository")
+  >("@/src/lib/repository/snapshot-repository");
 
   return {
     ...actual,
@@ -18,10 +22,18 @@ vi.mock("@/src/lib/repository/snapshot-repository", async () => {
 
 describe("round service", () => {
   it("starts deterministically for a fixed category and seed", async () => {
-    const firstRound = await startRound({ category: "countries", seed: "alpha" }, "user_test_alpha");
-    const secondRound = await startRound({ category: "countries", seed: "alpha" }, "user_test_alpha");
+    const firstRound = await startRound(
+      { category: "countries", seed: "alpha" },
+      "user_test_alpha",
+    );
+    const secondRound = await startRound(
+      { category: "countries", seed: "alpha" },
+      "user_test_alpha",
+    );
 
-    expect(parseRoundState(firstRound.token).entityId).toBe(parseRoundState(secondRound.token).entityId);
+    expect(parseRoundState(firstRound.token).entityId).toBe(
+      parseRoundState(secondRound.token).entityId,
+    );
     expect(parseRoundState(firstRound.token).userId).toBe("user_test_alpha");
     expect(firstRound.mode).toBe("classic");
     expect(firstRound.revealedClues).toHaveLength(1);
@@ -29,7 +41,10 @@ describe("round service", () => {
   });
 
   it("starts city rounds once the category is enabled", async () => {
-    const round = await startRound({ category: "cities", seed: "alpha" }, "user_test_alpha");
+    const round = await startRound(
+      { category: "cities", seed: "alpha" },
+      "user_test_alpha",
+    );
 
     expect(round.category).toBe("cities");
     expect(round.revealedClues).toHaveLength(1);
@@ -37,11 +52,17 @@ describe("round service", () => {
   });
 
   it("reveals the next clue after an incorrect classic guess", async () => {
-    const round = await startRound({ category: "countries", seed: "alpha" }, "user_test_alpha");
+    const round = await startRound(
+      { category: "countries", seed: "alpha" },
+      "user_test_alpha",
+    );
     const roundState = parseRoundState(round.token);
     const snapshot = await getLatestSnapshot();
-    const actualEntity = snapshot.entities.find((entity) => entity.id === roundState.entityId);
-    const wrongCountry = actualEntity?.canonicalAnswer === "France" ? "Japan" : "France";
+    const actualEntity = snapshot.entities.find(
+      (entity) => entity.id === roundState.entityId,
+    );
+    const wrongCountry =
+      actualEntity?.canonicalAnswer === "France" ? "Japan" : "France";
     const result = await submitGuess(
       {
         token: round.token,
@@ -58,11 +79,17 @@ describe("round service", () => {
   });
 
   it("allows one final guess after the last classic clue is revealed", async () => {
-    const round = await startRound({ category: "countries", seed: "alpha" }, "user_test_alpha");
+    const round = await startRound(
+      { category: "countries", seed: "alpha" },
+      "user_test_alpha",
+    );
     const roundState = parseRoundState(round.token);
     const snapshot = await getLatestSnapshot();
-    const actualEntity = snapshot.entities.find((entity) => entity.id === roundState.entityId);
-    const wrongCountry = actualEntity?.canonicalAnswer === "France" ? "Japan" : "France";
+    const actualEntity = snapshot.entities.find(
+      (entity) => entity.id === roundState.entityId,
+    );
+    const wrongCountry =
+      actualEntity?.canonicalAnswer === "France" ? "Japan" : "France";
 
     let activeToken = round.token;
     let latestResult = await submitGuess(
@@ -99,29 +126,45 @@ describe("round service", () => {
 
     expect(finalGuessResult.isComplete).toBe(true);
     expect(finalGuessResult.token).toBeNull();
-    expect(finalGuessResult.canonicalAnswer).toBe(actualEntity!.canonicalAnswer);
+    expect(finalGuessResult.canonicalAnswer).toBe(
+      actualEntity!.canonicalAnswer,
+    );
   });
 
   it("starts blurred lines with a fully hidden table", async () => {
-    const round = await startRound({ category: "countries", mode: "blurred-lines", seed: "alpha" }, "user_test_alpha");
+    const round = await startRound(
+      { category: "countries", mode: "blurred-lines", seed: "alpha" },
+      "user_test_alpha",
+    );
     const roundState = parseRoundState(round.token);
     const snapshot = await getLatestSnapshot();
-    const actualEntity = snapshot.entities.find((entity) => entity.id === roundState.entityId);
+    const actualEntity = snapshot.entities.find(
+      (entity) => entity.id === roundState.entityId,
+    );
 
     expect(round.mode).toBe("blurred-lines");
     expect(round.revealedClues).toHaveLength(0);
     expect(round.canGuess).toBe(false);
     expect(round.clues).toHaveLength(actualEntity!.clues.length);
     expect(round.clues.every((clue) => clue.value === null)).toBe(true);
-    expect(round.clues.every((clue) => clue.prefetchedValue.length > 0)).toBe(true);
+    expect(round.clues.every((clue) => clue.prefetchedValue.length > 0)).toBe(
+      true,
+    );
   });
 
   it("reveals a chosen blurred-lines clue and unlocks a guess", async () => {
-    const round = await startRound({ category: "countries", mode: "blurred-lines", seed: "alpha" }, "user_test_alpha");
+    const round = await startRound(
+      { category: "countries", mode: "blurred-lines", seed: "alpha" },
+      "user_test_alpha",
+    );
     const roundState = parseRoundState(round.token);
     const snapshot = await getLatestSnapshot();
-    const actualEntity = snapshot.entities.find((entity) => entity.id === roundState.entityId);
-    const chosenClue = actualEntity!.clues.find((clue) => clue.spoilerLevel === "safe") ?? actualEntity!.clues[0]!;
+    const actualEntity = snapshot.entities.find(
+      (entity) => entity.id === roundState.entityId,
+    );
+    const chosenClue =
+      actualEntity!.clues.find((clue) => clue.spoilerLevel === "safe") ??
+      actualEntity!.clues[0]!;
     const result = await revealClue(
       {
         token: round.token,
@@ -133,11 +176,16 @@ describe("round service", () => {
     expect(result.mode).toBe("blurred-lines");
     expect(result.canGuess).toBe(true);
     expect(result.revealedClues).toHaveLength(1);
-    expect(result.clues.find((clue) => clue.key === chosenClue.key)?.value).toBe(chosenClue.value);
+    expect(
+      result.clues.find((clue) => clue.key === chosenClue.key)?.value,
+    ).toBe(chosenClue.value);
   });
 
   it("requires a reveal before the first blurred-lines guess", async () => {
-    const round = await startRound({ category: "countries", mode: "blurred-lines", seed: "alpha" }, "user_test_alpha");
+    const round = await startRound(
+      { category: "countries", mode: "blurred-lines", seed: "alpha" },
+      "user_test_alpha",
+    );
 
     await expect(
       submitGuess(
@@ -151,10 +199,15 @@ describe("round service", () => {
   });
 
   it("does not auto-reveal a new blurred-lines clue after a wrong guess", async () => {
-    const round = await startRound({ category: "countries", mode: "blurred-lines", seed: "alpha" }, "user_test_alpha");
+    const round = await startRound(
+      { category: "countries", mode: "blurred-lines", seed: "alpha" },
+      "user_test_alpha",
+    );
     const roundState = parseRoundState(round.token);
     const snapshot = await getLatestSnapshot();
-    const actualEntity = snapshot.entities.find((entity) => entity.id === roundState.entityId);
+    const actualEntity = snapshot.entities.find(
+      (entity) => entity.id === roundState.entityId,
+    );
     const chosenClue = actualEntity!.clues[1]!;
     const revealedRound = await revealClue(
       {
@@ -163,7 +216,8 @@ describe("round service", () => {
       },
       "user_test_alpha",
     );
-    const wrongCountry = actualEntity?.canonicalAnswer === "France" ? "Japan" : "France";
+    const wrongCountry =
+      actualEntity?.canonicalAnswer === "France" ? "Japan" : "France";
     const guessResult = await submitGuess(
       {
         token: revealedRound.token,
@@ -180,10 +234,15 @@ describe("round service", () => {
   });
 
   it("awards score for a correct guess", async () => {
-    const round = await startRound({ category: "countries", seed: "alpha" }, "user_test_alpha");
+    const round = await startRound(
+      { category: "countries", seed: "alpha" },
+      "user_test_alpha",
+    );
     const roundState = parseRoundState(round.token);
     const snapshot = await getLatestSnapshot();
-    const actualEntity = snapshot.entities.find((entity) => entity.id === roundState.entityId);
+    const actualEntity = snapshot.entities.find(
+      (entity) => entity.id === roundState.entityId,
+    );
     expect(actualEntity).toBeTruthy();
     const correctAnswer = actualEntity!.canonicalAnswer;
 
@@ -201,7 +260,10 @@ describe("round service", () => {
   });
 
   it("rejects guesses for a different authenticated user", async () => {
-    const round = await startRound({ category: "countries", seed: "alpha" }, "user_owner");
+    const round = await startRound(
+      { category: "countries", seed: "alpha" },
+      "user_owner",
+    );
 
     await expect(
       submitGuess(

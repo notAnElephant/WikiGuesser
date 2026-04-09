@@ -1,7 +1,11 @@
 import { categoryDefinitions } from "@/src/lib/content/category-definitions";
 import { fetchSimpleWikipediaCountryQids } from "@/src/lib/content/mediawiki-client";
 import { fetchWikimediaJson } from "@/src/lib/content/wikimedia-fetch";
-import type { EntityCategory, SourceClaimValue, SourceEntity } from "@/src/lib/types";
+import type {
+  EntityCategory,
+  SourceClaimValue,
+  SourceEntity,
+} from "@/src/lib/types";
 
 interface WikidataLabelEntity {
   labels?: {
@@ -15,29 +19,38 @@ function buildDiscoveryQuery(rawQuery: string, limit: number): string {
   return rawQuery.replace("__LIMIT__", String(limit));
 }
 
-export async function discoverCategoryQids(category: EntityCategory, limit?: number): Promise<string[]> {
+export async function discoverCategoryQids(
+  category: EntityCategory,
+  limit?: number,
+): Promise<string[]> {
   if (category === "countries") {
     return [...new Set(await fetchSimpleWikipediaCountryQids(limit))];
   }
 
   const defaultLimit = category === "cities" ? 250 : 50;
-  const query = buildDiscoveryQuery(categoryDefinitions[category].discovery.query, limit ?? defaultLimit);
-  const body = new URLSearchParams({ query, format: "json" });
-  const data = await fetchWikimediaJson<{ results: { bindings: Array<{ item: { value: string } }> } }>(
-    "https://query.wikidata.org/sparql",
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/sparql-results+json",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body,
-    },
+  const query = buildDiscoveryQuery(
+    categoryDefinitions[category].discovery.query,
+    limit ?? defaultLimit,
   );
+  const body = new URLSearchParams({ query, format: "json" });
+  const data = await fetchWikimediaJson<{
+    results: { bindings: Array<{ item: { value: string } }> };
+  }>("https://query.wikidata.org/sparql", {
+    method: "POST",
+    headers: {
+      Accept: "application/sparql-results+json",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
 
-  return [...new Set(data.results.bindings
-    .map((binding) => binding.item.value.split("/").pop())
-    .filter((qid): qid is string => Boolean(qid)))];
+  return [
+    ...new Set(
+      data.results.bindings
+        .map((binding) => binding.item.value.split("/").pop())
+        .filter((qid): qid is string => Boolean(qid)),
+    ),
+  ];
 }
 
 async function fetchRawEntity(qid: string): Promise<any> {
@@ -48,7 +61,9 @@ async function fetchRawEntity(qid: string): Promise<any> {
   return data.entities[qid];
 }
 
-async function fetchEntityLabels(ids: string[]): Promise<Record<string, string>> {
+async function fetchEntityLabels(
+  ids: string[],
+): Promise<Record<string, string>> {
   if (ids.length === 0) {
     return {};
   }
@@ -65,9 +80,9 @@ async function fetchEntityLabels(ids: string[]): Promise<Record<string, string>>
       languages: "en",
       origin: "*",
     });
-    const data = await fetchWikimediaJson<{ entities: Record<string, WikidataLabelEntity> }>(
-      `https://www.wikidata.org/w/api.php?${params.toString()}`,
-    );
+    const data = await fetchWikimediaJson<{
+      entities: Record<string, WikidataLabelEntity>;
+    }>(`https://www.wikidata.org/w/api.php?${params.toString()}`);
 
     Object.entries(data.entities).forEach(([id, entity]) => {
       const label = entity.labels?.en?.value;
@@ -81,7 +96,10 @@ async function fetchEntityLabels(ids: string[]): Promise<Record<string, string>>
   return labelMap;
 }
 
-function collectReferenceIds(rawEntity: any, allowedProperties: string[]): string[] {
+function collectReferenceIds(
+  rawEntity: any,
+  allowedProperties: string[],
+): string[] {
   const ids = new Set<string>();
 
   allowedProperties.forEach((propertyId) => {
@@ -100,7 +118,10 @@ function collectReferenceIds(rawEntity: any, allowedProperties: string[]): strin
   return [...ids];
 }
 
-function toClaimValue(claim: any, labelMap: Record<string, string>): SourceClaimValue | null {
+function toClaimValue(
+  claim: any,
+  labelMap: Record<string, string>,
+): SourceClaimValue | null {
   const mainSnak = claim.mainsnak;
 
   if (!mainSnak || mainSnak.snaktype !== "value" || !mainSnak.datavalue) {
@@ -151,18 +172,25 @@ function toClaimValue(claim: any, labelMap: Record<string, string>): SourceClaim
   }
 }
 
-function toSourceEntity(rawEntity: any, labelMap: Record<string, string>): SourceEntity {
+function toSourceEntity(
+  rawEntity: any,
+  labelMap: Record<string, string>,
+): SourceEntity {
   const label = rawEntity.labels?.en?.value ?? rawEntity.id;
   const description = rawEntity.descriptions?.en?.value ?? null;
   const wikipediaTitle = rawEntity.sitelinks?.enwiki?.title ?? null;
-  const aliases = (rawEntity.aliases?.en ?? []).map((alias: { value?: string }) => alias.value).filter(Boolean);
+  const aliases = (rawEntity.aliases?.en ?? [])
+    .map((alias: { value?: string }) => alias.value)
+    .filter(Boolean);
   const claims = Object.fromEntries(
-    Object.entries<any[]>(rawEntity.claims ?? {}).map(([propertyId, propertyClaims]) => [
-      propertyId,
-      propertyClaims
-        .map((claim) => toClaimValue(claim, labelMap))
-        .filter((claim): claim is SourceClaimValue => claim !== null),
-    ]),
+    Object.entries<any[]>(rawEntity.claims ?? {}).map(
+      ([propertyId, propertyClaims]) => [
+        propertyId,
+        propertyClaims
+          .map((claim) => toClaimValue(claim, labelMap))
+          .filter((claim): claim is SourceClaimValue => claim !== null),
+      ],
+    ),
   );
 
   return {
@@ -176,13 +204,19 @@ function toSourceEntity(rawEntity: any, labelMap: Record<string, string>): Sourc
   };
 }
 
-export async function hydrateEntities(category: EntityCategory, qids: string[]): Promise<SourceEntity[]> {
+export async function hydrateEntities(
+  category: EntityCategory,
+  qids: string[],
+): Promise<SourceEntity[]> {
   const definition = categoryDefinitions[category];
   const entities: SourceEntity[] = [];
 
   for (const qid of qids) {
     const rawEntity = await fetchRawEntity(qid);
-    const referenceIds = collectReferenceIds(rawEntity, definition.allowedProperties);
+    const referenceIds = collectReferenceIds(
+      rawEntity,
+      definition.allowedProperties,
+    );
     const labelMap = await fetchEntityLabels(referenceIds);
     entities.push(toSourceEntity(rawEntity, labelMap));
   }

@@ -3,7 +3,11 @@ import type { SnapshotEntity } from "@prisma/client";
 
 import { env } from "@/src/lib/env";
 import { getPrismaClient } from "@/src/lib/repository/prisma";
-import type { CategorySummary, MaterializedSnapshot, NormalizedEntity } from "@/src/lib/types";
+import type {
+  CategorySummary,
+  MaterializedSnapshot,
+  NormalizedEntity,
+} from "@/src/lib/types";
 
 function toNormalizedEntity(record: SnapshotEntity): NormalizedEntity {
   return {
@@ -12,9 +16,11 @@ function toNormalizedEntity(record: SnapshotEntity): NormalizedEntity {
     category: record.category as NormalizedEntity["category"],
     canonicalAnswer: record.canonicalAnswer,
     wikipediaTitle: record.wikipediaTitle,
-    acceptedAnswers: record.acceptedAnswers as unknown as NormalizedEntity["acceptedAnswers"],
+    acceptedAnswers:
+      record.acceptedAnswers as unknown as NormalizedEntity["acceptedAnswers"],
     clues: record.clues as unknown as NormalizedEntity["clues"],
-    metadata: (record.metadata ?? {}) as unknown as NormalizedEntity["metadata"],
+    metadata: (record.metadata ??
+      {}) as unknown as NormalizedEntity["metadata"],
     sourceFingerprint: record.sourceFingerprint,
   };
 }
@@ -65,25 +71,36 @@ export async function getLatestSnapshot(): Promise<MaterializedSnapshot> {
   return snapshot;
 }
 
-export function buildCategorySummaries(snapshot: MaterializedSnapshot): CategorySummary[] {
+export function buildCategorySummaries(
+  snapshot: MaterializedSnapshot,
+): CategorySummary[] {
   return [
     {
       id: "countries",
       label: "Countries",
-      description: "Flags, geography, and national facts before the answer becomes clear.",
-      entityCount: snapshot.entities.filter((entity) => entity.category === "countries").length,
+      description:
+        "Flags, geography, and national facts before the answer becomes clear.",
+      entityCount: snapshot.entities.filter(
+        (entity) => entity.category === "countries",
+      ).length,
     },
     {
       id: "cities",
       label: "Cities",
-      description: "Capital cities revealed through country, geography, and city facts.",
-      entityCount: snapshot.entities.filter((entity) => entity.category === "cities").length,
+      description:
+        "Capital cities revealed through country, geography, and city facts.",
+      entityCount: snapshot.entities.filter(
+        (entity) => entity.category === "cities",
+      ).length,
     },
     {
       id: "people",
       label: "People",
-      description: "Famous figures revealed through achievements, roles, and biography clues.",
-      entityCount: snapshot.entities.filter((entity) => entity.category === "people").length,
+      description:
+        "Famous figures revealed through achievements, roles, and biography clues.",
+      entityCount: snapshot.entities.filter(
+        (entity) => entity.category === "people",
+      ).length,
     },
   ];
 }
@@ -93,7 +110,9 @@ export async function listCategorySummaries(): Promise<CategorySummary[]> {
   return buildCategorySummaries(snapshot);
 }
 
-export async function persistSnapshot(snapshot: MaterializedSnapshot): Promise<void> {
+export async function persistSnapshot(
+  snapshot: MaterializedSnapshot,
+): Promise<void> {
   if (!env.databaseUrl) {
     throw new Error("DATABASE_URL is not configured.");
   }
@@ -122,7 +141,8 @@ export async function persistSnapshot(snapshot: MaterializedSnapshot): Promise<v
         canonicalAnswer: entity.canonicalAnswer,
         wikipediaTitle: entity.wikipediaTitle,
         sourceFingerprint: entity.sourceFingerprint,
-        acceptedAnswers: entity.acceptedAnswers as unknown as Prisma.InputJsonValue,
+        acceptedAnswers:
+          entity.acceptedAnswers as unknown as Prisma.InputJsonValue,
         clues: entity.clues as unknown as Prisma.InputJsonValue,
         metadata: entity.metadata as unknown as Prisma.InputJsonValue,
       })),

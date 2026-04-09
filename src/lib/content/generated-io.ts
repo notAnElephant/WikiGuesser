@@ -7,7 +7,9 @@ export function getGeneratedPath(...segments: string[]): string {
   return path.join(generatedRoot, ...segments);
 }
 
-export async function ensureGeneratedDirectory(...segments: string[]): Promise<string> {
+export async function ensureGeneratedDirectory(
+  ...segments: string[]
+): Promise<string> {
   const target = getGeneratedPath(...segments);
   await mkdir(target, { recursive: true });
   return target;
@@ -18,7 +20,10 @@ export async function readGeneratedJson<T>(...segments: string[]): Promise<T> {
   return JSON.parse(await readFile(target, "utf8")) as T;
 }
 
-export async function writeGeneratedJson(value: unknown, ...segments: string[]): Promise<string> {
+export async function writeGeneratedJson(
+  value: unknown,
+  ...segments: string[]
+): Promise<string> {
   const directory = path.dirname(getGeneratedPath(...segments));
   await mkdir(directory, { recursive: true });
   const target = getGeneratedPath(...segments);

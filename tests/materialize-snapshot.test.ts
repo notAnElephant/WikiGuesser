@@ -13,7 +13,11 @@ describe("materializeSnapshot", () => {
       ...demoSnapshot.entities[0]!,
       sourceFingerprint: "changed",
     };
-    const nextEntities = [changedFrance, demoSnapshot.entities[1]!, demoSnapshot.entities[2]!];
+    const nextEntities = [
+      changedFrance,
+      demoSnapshot.entities[1]!,
+      demoSnapshot.entities[2]!,
+    ];
 
     const result = materializeSnapshot(nextEntities, previousSnapshot);
 

@@ -1,8 +1,17 @@
-import {CATEGORY_META, GAME_MODE_OPTIONS, primaryButtonClass, surfaceClass} from "@/src/components/game-shell/config";
-import type {MessageAppearance} from "@/src/components/game-shell/types";
-import {getCategoryMeta, getModeMeta, selectionCardClass} from "@/src/components/game-shell/utils";
-import type {CategorySummary, GameMode} from "@/src/lib/types";
-import {Compass, Play, Shuffle, Sparkles} from "lucide-react";
+import {
+  CATEGORY_META,
+  GAME_MODE_OPTIONS,
+  primaryButtonClass,
+  surfaceClass,
+} from "@/src/components/game-shell/config";
+import type { MessageAppearance } from "@/src/components/game-shell/types";
+import {
+  getCategoryMeta,
+  getModeMeta,
+  selectionCardClass,
+} from "@/src/components/game-shell/utils";
+import type { CategorySummary, GameMode } from "@/src/lib/types";
+import { Compass, Play, Shuffle, Sparkles } from "lucide-react";
 
 interface GameMenuViewProps {
   canStartRound: boolean;
@@ -46,11 +55,19 @@ export function GameMenuView({
       <header className={`${surfaceClass} overflow-hidden p-5 sm:p-7`}>
         <div className="flex flex-wrap gap-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/12 bg-[#0f766e]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:border-[#24d4c2]/14 dark:bg-[#24d4c2]/8 dark:text-[#8ff4e7]">
-            <Sparkles aria-hidden="true" className="size-3.5" strokeWidth={2.2} />
+            <Sparkles
+              aria-hidden="true"
+              className="size-3.5"
+              strokeWidth={2.2}
+            />
             Fast rounds
           </span>
           <span className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/76 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb]">
-            <Shuffle aria-hidden="true" className="size-3.5" strokeWidth={2.2} />
+            <Shuffle
+              aria-hidden="true"
+              className="size-3.5"
+              strokeWidth={2.2}
+            />
             {totalEntityCount} answers live
           </span>
         </div>
@@ -67,7 +84,9 @@ export function GameMenuView({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-[26px] border border-black/8 bg-white/78 p-4 dark:border-white/10 dark:bg-white/6">
-              <div className={`mb-3 inline-flex rounded-2xl bg-linear-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}>
+              <div
+                className={`mb-3 inline-flex rounded-2xl bg-linear-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}
+              >
                 <SelectedCategoryIcon
                   aria-hidden="true"
                   className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
@@ -87,7 +106,11 @@ export function GameMenuView({
 
             <div className="rounded-[26px] border border-black/8 bg-white/78 p-4 dark:border-white/10 dark:bg-white/6">
               <div className="mb-3 inline-flex rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.16),rgba(255,219,112,0.12))] p-2.5 dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))]">
-                <SelectedModeIcon aria-hidden="true" className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
+                <SelectedModeIcon
+                  aria-hidden="true"
+                  className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
+                  strokeWidth={2.1}
+                />
               </div>
               <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
                 Mode
@@ -95,7 +118,9 @@ export function GameMenuView({
               <strong className="mt-2 block font-serif-display text-[1.45rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
                 {selectedModeMeta.label}
               </strong>
-              <span className="mt-1 block text-sm text-[#6b6259] dark:text-[#9aa9bb]">{selectedModeMeta.summary}</span>
+              <span className="mt-1 block text-sm text-[#6b6259] dark:text-[#9aa9bb]">
+                {selectedModeMeta.summary}
+              </span>
             </div>
           </div>
         </div>
@@ -107,7 +132,11 @@ export function GameMenuView({
             <div className="grid gap-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-                  <Compass aria-hidden="true" className="size-4" strokeWidth={2.2} />
+                  <Compass
+                    aria-hidden="true"
+                    className="size-4"
+                    strokeWidth={2.2}
+                  />
                   Categories
                 </div>
               </div>
@@ -115,19 +144,29 @@ export function GameMenuView({
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {showRandomMix ? (
                   <button
-                    className={selectionCardClass(selectedCategory === "random")}
+                    className={selectionCardClass(
+                      selectedCategory === "random",
+                    )}
                     onClick={() => handleCategorySelect("random")}
                     type="button"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <span className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${CATEGORY_META.random.accent}`}>
-                        <Shuffle aria-hidden="true" className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
+                      <span
+                        className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${CATEGORY_META.random.accent}`}
+                      >
+                        <Shuffle
+                          aria-hidden="true"
+                          className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
+                          strokeWidth={2.1}
+                        />
                       </span>
                     </div>
                     <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
                       Mixed category
                     </strong>
-                    <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Random across every live category.</span>
+                    <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
+                      Random across every live category.
+                    </span>
                   </button>
                 ) : null}
 
@@ -137,14 +176,19 @@ export function GameMenuView({
 
                   return (
                     <button
-                      className={selectionCardClass(selectedCategory === category.id, category.entityCount === 0)}
+                      className={selectionCardClass(
+                        selectedCategory === category.id,
+                        category.entityCount === 0,
+                      )}
                       disabled={category.entityCount === 0}
                       key={category.id}
                       onClick={() => handleCategorySelect(category.id)}
                       type="button"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <span className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${categoryMeta.accent}`}>
+                        <span
+                          className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${categoryMeta.accent}`}
+                        >
                           <CategoryIcon
                             aria-hidden="true"
                             className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
@@ -155,7 +199,9 @@ export function GameMenuView({
                       <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
                         {category.label}
                       </strong>
-                      <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">{categoryMeta.shortLabel}</span>
+                      <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
+                        {categoryMeta.shortLabel}
+                      </span>
                     </button>
                   );
                 })}
@@ -164,18 +210,26 @@ export function GameMenuView({
 
             <div className="grid gap-3">
               <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-                <Sparkles aria-hidden="true" className="size-4" strokeWidth={2.2} />
+                <Sparkles
+                  aria-hidden="true"
+                  className="size-4"
+                  strokeWidth={2.2}
+                />
                 Modes
               </div>
 
               <div className="grid gap-3 lg:grid-cols-2">
                 {GAME_MODE_OPTIONS.map((mode) => {
-                  const isDisabled = !selectedCategory || totalSelectedEntityCount === 0;
+                  const isDisabled =
+                    !selectedCategory || totalSelectedEntityCount === 0;
                   const ModeIcon = mode.icon;
 
                   return (
                     <button
-                      className={selectionCardClass(selectedMode === mode.id, isDisabled)}
+                      className={selectionCardClass(
+                        selectedMode === mode.id,
+                        isDisabled,
+                      )}
                       disabled={isDisabled}
                       key={mode.id}
                       onClick={() => handleModeSelect(mode.id)}
@@ -183,7 +237,11 @@ export function GameMenuView({
                     >
                       <div className="flex items-start justify-between gap-3">
                         <span className="inline-flex rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] p-2.5 dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))]">
-                          <ModeIcon aria-hidden="true" className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
+                          <ModeIcon
+                            aria-hidden="true"
+                            className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
+                            strokeWidth={2.1}
+                          />
                         </span>
                         <span className="rounded-full bg-black/5 px-2.5 py-1 text-xs font-semibold text-[#6b6259] dark:bg-white/8 dark:text-[#9aa9bb]">
                           {mode.summary}
@@ -192,7 +250,9 @@ export function GameMenuView({
                       <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
                         {mode.label}
                       </strong>
-                      <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">{mode.hint}</span>
+                      <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
+                        {mode.hint}
+                      </span>
                     </button>
                   );
                 })}
@@ -201,8 +261,14 @@ export function GameMenuView({
           </div>
 
           <aside className="grid content-start gap-4 rounded-[28px] border border-black/8 bg-white/78 p-4 dark:border-white/10 dark:bg-[rgba(255,255,255,0.05)]">
-            <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${statusAppearance.className}`}>
-              <StatusIcon aria-hidden="true" className="size-4 shrink-0" strokeWidth={2.2} />
+            <div
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${statusAppearance.className}`}
+            >
+              <StatusIcon
+                aria-hidden="true"
+                className="size-4 shrink-0"
+                strokeWidth={2.2}
+              />
               <span>{message}</span>
             </div>
 
@@ -217,7 +283,9 @@ export function GameMenuView({
               </div>
 
               <div className="flex items-center gap-3">
-                <span className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}>
+                <span
+                  className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}
+                >
                   <SelectedCategoryIcon
                     aria-hidden="true"
                     className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
@@ -225,23 +293,40 @@ export function GameMenuView({
                   />
                 </span>
                 <div className="min-w-0">
-                  <p className="m-0 text-xs uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Category</p>
-                  <strong className="block truncate text-[#1f1b17] dark:text-[#f5f7fb]">{selectedCategoryLabel}</strong>
+                  <p className="m-0 text-xs uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
+                    Category
+                  </p>
+                  <strong className="block truncate text-[#1f1b17] dark:text-[#f5f7fb]">
+                    {selectedCategoryLabel}
+                  </strong>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
                 <span className="inline-flex rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] p-2.5 dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))]">
-                  <SelectedModeIcon aria-hidden="true" className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
+                  <SelectedModeIcon
+                    aria-hidden="true"
+                    className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
+                    strokeWidth={2.1}
+                  />
                 </span>
                 <div className="min-w-0">
-                  <p className="m-0 text-xs uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Mode</p>
-                  <strong className="block truncate text-[#1f1b17] dark:text-[#f5f7fb]">{selectedModeMeta.label}</strong>
+                  <p className="m-0 text-xs uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
+                    Mode
+                  </p>
+                  <strong className="block truncate text-[#1f1b17] dark:text-[#f5f7fb]">
+                    {selectedModeMeta.label}
+                  </strong>
                 </div>
               </div>
             </div>
 
-            <button className={`${primaryButtonClass} w-full`} disabled={!canStartRound} onClick={startRound} type="button">
+            <button
+              className={`${primaryButtonClass} w-full`}
+              disabled={!canStartRound}
+              onClick={startRound}
+              type="button"
+            >
               <Play aria-hidden="true" className="size-4.5" strokeWidth={2.3} />
               Deal round
             </button>

@@ -12,10 +12,14 @@ function decodeBase64Url(value: string): string {
 }
 
 function sign(payload: string): string {
-  return createHmac("sha256", env.roundTokenSecret).update(payload).digest("base64url");
+  return createHmac("sha256", env.roundTokenSecret)
+    .update(payload)
+    .digest("base64url");
 }
 
-export function createRoundState(data: Omit<RoundState, "roundId">): RoundState {
+export function createRoundState(
+  data: Omit<RoundState, "roundId">,
+): RoundState {
   return {
     ...data,
     roundId: randomUUID(),
@@ -41,7 +45,9 @@ export function parseRoundState(token: string): RoundState {
     throw new Error("Round token signature mismatch.");
   }
 
-  if (!timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+  if (
+    !timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))
+  ) {
     throw new Error("Round token signature mismatch.");
   }
 

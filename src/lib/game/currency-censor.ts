@@ -76,12 +76,18 @@ const CURRENCY_NOUNS = [
   "zloty",
 ] as const;
 
-const currencyNounPattern = [...CURRENCY_NOUNS].sort((left, right) => right.length - left.length).join("|");
-const countryPrefixPattern =
-  String.raw`((?:[\p{Lu}][\p{L}'-]*|[A-Z]{2,})(?:\s+(?:[\p{Lu}][\p{L}'-]*|[A-Z]{2,}|and|of|the))*)`;
-const currencyRevealPattern = new RegExp(`${countryPrefixPattern}\\s+(${currencyNounPattern})\\b`, "gu");
+const currencyNounPattern = [...CURRENCY_NOUNS]
+  .sort((left, right) => right.length - left.length)
+  .join("|");
+const countryPrefixPattern = String.raw`((?:[\p{Lu}][\p{L}'-]*|[A-Z]{2,})(?:\s+(?:[\p{Lu}][\p{L}'-]*|[A-Z]{2,}|and|of|the))*)`;
+const currencyRevealPattern = new RegExp(
+  `${countryPrefixPattern}\\s+(${currencyNounPattern})\\b`,
+  "gu",
+);
 
-export function splitCurrencyRevealSegments(value: string): CurrencyRevealSegment[] {
+export function splitCurrencyRevealSegments(
+  value: string,
+): CurrencyRevealSegment[] {
   const segments: CurrencyRevealSegment[] = [];
   let cursor = 0;
 
@@ -95,11 +101,17 @@ export function splitCurrencyRevealSegments(value: string): CurrencyRevealSegmen
     }
 
     if (matchIndex > cursor) {
-      segments.push({ isBlurred: false, text: value.slice(cursor, matchIndex) });
+      segments.push({
+        isBlurred: false,
+        text: value.slice(cursor, matchIndex),
+      });
     }
 
     segments.push({ isBlurred: true, text: countryLikePrefix });
-    segments.push({ isBlurred: false, text: fullMatch.slice(countryLikePrefix.length) });
+    segments.push({
+      isBlurred: false,
+      text: fullMatch.slice(countryLikePrefix.length),
+    });
     cursor = matchIndex + fullMatch.length;
   }
 

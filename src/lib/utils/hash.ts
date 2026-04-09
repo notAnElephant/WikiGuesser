@@ -15,8 +15,8 @@ function replacer(_key: string, currentValue: unknown): unknown {
 
   if (currentValue && typeof currentValue === "object") {
     return Object.fromEntries(
-      Object.entries(currentValue as Record<string, unknown>).sort(([left], [right]) =>
-        left.localeCompare(right),
+      Object.entries(currentValue as Record<string, unknown>).sort(
+        ([left], [right]) => left.localeCompare(right),
       ),
     );
   }

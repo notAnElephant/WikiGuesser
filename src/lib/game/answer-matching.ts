@@ -13,7 +13,9 @@ export function normalizeGuess(value: string): string {
     .replace(/\s+/g, " ");
 }
 
-export function dedupeAcceptedAnswers(answers: AcceptedAnswer[]): AcceptedAnswer[] {
+export function dedupeAcceptedAnswers(
+  answers: AcceptedAnswer[],
+): AcceptedAnswer[] {
   const seen = new Set<string>();
 
   return answers.filter((answer) => {
@@ -26,8 +28,13 @@ export function dedupeAcceptedAnswers(answers: AcceptedAnswer[]): AcceptedAnswer
   });
 }
 
-export function matchesEntityGuess(entity: NormalizedEntity, guess: string): boolean {
+export function matchesEntityGuess(
+  entity: NormalizedEntity,
+  guess: string,
+): boolean {
   const normalizedGuess = normalizeGuess(guess);
 
-  return entity.acceptedAnswers.some((answer) => answer.normalized === normalizedGuess);
+  return entity.acceptedAnswers.some(
+    (answer) => answer.normalized === normalizedGuess,
+  );
 }
