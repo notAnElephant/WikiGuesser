@@ -22,10 +22,34 @@ function getWebSocketConstructor(): typeof WebSocket {
   return (wsModule.default ?? wsModule) as typeof WebSocket;
 }
 
+function hasDailyDelegates(
+  client: PrismaClient | undefined,
+): client is PrismaClient {
+  if (!client) {
+    return false;
+  }
+
+  const candidate = client as PrismaClient & {
+    dailyChallenge?: unknown;
+    dailyResult?: unknown;
+    userDailyCategoryModeStats?: unknown;
+  };
+
+  return Boolean(
+    candidate.dailyChallenge &&
+      candidate.dailyResult &&
+      candidate.userDailyCategoryModeStats,
+  );
+}
+
 export function getPrismaClient(): PrismaClient {
-  if (!globalThis.prisma) {
+  if (!hasDailyDelegates(globalThis.prisma)) {
     if (!env.databaseUrl) {
       throw new Error("DATABASE_URL is not configured.");
+    }
+
+    if (globalThis.prisma) {
+      void globalThis.prisma.$disconnect().catch(() => {});
     }
 
     neonConfig.webSocketConstructor = getWebSocketConstructor();

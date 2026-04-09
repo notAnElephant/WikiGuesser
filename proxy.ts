@@ -7,6 +7,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/rounds/start",
   "/api/rounds/(.*)/guess",
   "/api/rounds/(.*)/reveal",
+  "/api/daily/start",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

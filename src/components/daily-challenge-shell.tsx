@@ -245,16 +245,23 @@ export function DailyChallengeShell({
     setIsSyncingReveal(false);
 
     startTransition(async () => {
-      const response = await fetch("/api/daily/start", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          category: card.category,
-          mode: card.mode,
-        }),
-      });
+      let response: Response;
+
+      try {
+        response = await fetch("/api/daily/start", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            category: card.category,
+            mode: card.mode,
+          }),
+        });
+      } catch {
+        setMessage("Daily failed. Retry.");
+        return;
+      }
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as {
