@@ -1,6 +1,5 @@
 import type { EntityCategory, GameMode, NormalizedEntity } from "@/src/lib/types";
 import { DAILY_RESET_TIME_ZONE } from "@/src/lib/types";
-import { hashString } from "@/src/lib/utils/hash";
 
 const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", {
   timeZone: DAILY_RESET_TIME_ZONE,
@@ -17,6 +16,17 @@ export function getDailyComboKey(category: EntityCategory, mode: GameMode) {
   return `${category}:${mode}`;
 }
 
+function hashSeed(value: string) {
+  let hash = 2166136261;
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+}
+
 export function selectDailyChallengeEntity(
   entities: NormalizedEntity[],
   dayKey: string,
@@ -30,8 +40,7 @@ export function selectDailyChallengeEntity(
   }
 
   const seed = `${dayKey}:${category}:${mode}`;
-  const index =
-    Number.parseInt(hashString(seed).slice(0, 8), 16) % matchingEntities.length;
+  const index = hashSeed(seed) % matchingEntities.length;
 
   return matchingEntities[index]!;
 }
