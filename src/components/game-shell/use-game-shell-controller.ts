@@ -48,11 +48,11 @@ export function useGameShellController({ categories, countryOptions }: GameShell
   );
   const selectedCategoryMeta = categories.find((category) => category.id === selectedCategory);
   const selectedCategoryLabel =
-    selectedCategory === "random" ? "Mixed deck" : selectedCategoryMeta?.label ?? "Pick a deck";
+    selectedCategory === "random" ? "Mixed category" : selectedCategoryMeta?.label ?? "Pick a category";
   const currentCategory = round?.category ?? result?.category ?? selectedCategory;
   const currentCategoryMeta = categories.find((category) => category.id === currentCategory);
   const currentCategoryLabel =
-    currentCategoryMeta?.label ?? (currentCategory === "random" ? "Mixed deck" : selectedCategoryLabel);
+    currentCategoryMeta?.label ?? (currentCategory === "random" ? "Mixed category" : selectedCategoryLabel);
   const canStartRound = Boolean(selectedCategory && selectedMode && totalSelectedEntityCount > 0 && !isPending);
   const revealedCount = currentClues.filter((clue) => clue.isRevealed).length;
   const displayScore = result?.score ?? score ?? 0;
@@ -66,7 +66,7 @@ export function useGameShellController({ categories, countryOptions }: GameShell
   function handleCategorySelect(categoryId: string) {
     if (categoryId === "random") {
       if (totalEntityCount === 0) {
-        setMessage("Deck not ready.");
+        setMessage("Category not ready.");
         return;
       }
 
@@ -78,7 +78,7 @@ export function useGameShellController({ categories, countryOptions }: GameShell
     const category = categories.find((entry) => entry.id === categoryId);
 
     if (!category || category.entityCount === 0) {
-      setMessage("Deck not ready.");
+      setMessage("Category not ready.");
       return;
     }
 
@@ -88,7 +88,7 @@ export function useGameShellController({ categories, countryOptions }: GameShell
 
   function handleModeSelect(mode: GameMode) {
     if (!selectedCategory) {
-      setMessage("Pick a deck first.");
+      setMessage("Pick a category first.");
       return;
     }
 

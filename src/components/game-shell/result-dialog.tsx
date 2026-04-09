@@ -69,7 +69,7 @@ export function GameResultDialog({
           <div className="flex items-center gap-3 rounded-[22px] border border-black/8 bg-white/78 p-4 dark:border-white/10 dark:bg-white/6">
             <CurrentCategoryIcon aria-hidden="true" className="size-5 text-[#115e59] dark:text-[#8ff4e7]" strokeWidth={2.1} />
             <div>
-              <span className="block text-[0.72rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Deck</span>
+              <span className="block text-[0.72rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Category</span>
               <strong className="text-[#1f1b17] dark:text-[#f5f7fb]">{currentCategoryLabel}</strong>
             </div>
           </div>
@@ -82,7 +82,7 @@ export function GameResultDialog({
           </button>
           <button className={`${secondaryButtonClass} flex-1`} disabled={isBusy} onClick={clearForCategoryChoice} type="button">
             <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
-            Decks
+            Categories
           </button>
         </div>
       </div>

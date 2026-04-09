@@ -378,7 +378,7 @@ export function GamePlayView({
             </button>
             <button className={`${secondaryButtonClass} w-full`} disabled={isBusy} onClick={clearForCategoryChoice} type="button">
               <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
-              Decks
+              Categories
             </button>
           </div>
         </aside>

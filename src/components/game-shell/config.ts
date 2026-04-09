@@ -24,7 +24,7 @@ export const CATEGORY_META = {
     icon: Shuffle,
     accent:
       "from-[#1d4ed8]/18 via-[#0ea5e9]/10 to-transparent dark:from-[#38bdf8]/22 dark:via-[#22d3ee]/10",
-    shortLabel: "Mixed deck",
+    shortLabel: "Mixed category",
   },
   countries: {
     icon: Globe2,

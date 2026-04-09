@@ -75,7 +75,7 @@ export function GameMenuView({
                 />
               </div>
               <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
-                Deck
+                Category
               </p>
               <strong className="mt-2 block font-serif-display text-[1.45rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
                 {selectedCategoryLabel}
@@ -125,9 +125,9 @@ export function GameMenuView({
                       </span>
                     </div>
                     <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                      Mixed deck
+                      Mixed category
                     </strong>
-                    <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Random across every live deck.</span>
+                    <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">Random across every live category.</span>
                   </button>
                 ) : null}
 
@@ -225,7 +225,7 @@ export function GameMenuView({
                   />
                 </span>
                 <div className="min-w-0">
-                  <p className="m-0 text-xs uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Deck</p>
+                  <p className="m-0 text-xs uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">Category</p>
                   <strong className="block truncate text-[#1f1b17] dark:text-[#f5f7fb]">{selectedCategoryLabel}</strong>
                 </div>
               </div>

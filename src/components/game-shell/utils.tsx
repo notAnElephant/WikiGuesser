@@ -18,7 +18,7 @@ export function selectionCardClass(isActive: boolean, isDisabled = false): strin
 
 export function getMenuMessage(category: string | null, mode: GameMode | null): string {
   if (!category) {
-    return "Pick a deck.";
+    return "Pick a category.";
   }
 
   if (!mode) {
@@ -105,7 +105,7 @@ export function getCategoryMeta(categoryId: string | null): CategoryCardMeta {
     icon: Sparkles,
     accent:
       "from-[#0f766e]/16 via-[#f59e0b]/6 to-transparent dark:from-[#24d4c2]/18 dark:via-[#fbbf24]/6",
-    shortLabel: "Live deck",
+    shortLabel: "Live category",
   };
 }
 
