@@ -4,9 +4,11 @@ import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
 import { parseRoundState } from "@/src/lib/game/round-token";
 import {
   revealClue,
+  startDailyRound,
   startRound,
   submitGuess,
 } from "@/src/lib/game/round-service";
+import * as dailyRepository from "@/src/lib/repository/daily-repository";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 
 vi.mock("@/src/lib/repository/snapshot-repository", async () => {
@@ -20,7 +22,56 @@ vi.mock("@/src/lib/repository/snapshot-repository", async () => {
   };
 });
 
+vi.mock("@/src/lib/repository/daily-repository", () => {
+  const dailyEntity = demoSnapshot.entities.find(
+    (entity) => entity.id === "countries-france",
+  )!;
+
+  return {
+    getOrCreateDailyChallenge: vi.fn(async () => ({
+      id: "daily-countries-classic",
+      dayKey: "2026-04-09",
+      category: "countries",
+      mode: "classic",
+      snapshotKey: "daily-snapshot",
+      entityId: dailyEntity.id,
+      entityQid: dailyEntity.qid,
+      canonicalAnswer: dailyEntity.canonicalAnswer,
+    })),
+    getDailyEntityForChallenge: vi.fn(async () => ({
+      challenge: {
+        id: "daily-countries-classic",
+        dayKey: "2026-04-09",
+        category: "countries",
+        mode: "classic",
+        snapshotKey: "daily-snapshot",
+      },
+      entity: dailyEntity,
+    })),
+    findDailyResultForActor: vi.fn(async () => null),
+    recordCompletedDailyRound: vi.fn(async () => ({
+      created: true,
+      pendingClaimId: null,
+    })),
+  };
+});
+
+const mockedDailyRepository = vi.mocked(dailyRepository);
+
 describe("round service", () => {
+  it("starts a daily round from the stored challenge payload", async () => {
+    const round = await startDailyRound(
+      { category: "countries", mode: "classic" },
+      "guest_daily",
+    );
+    const roundState = parseRoundState(round.token);
+
+    expect(round.kind).toBe("daily");
+    expect(roundState.kind).toBe("daily");
+    expect(roundState.dailyChallengeId).toBe("daily-countries-classic");
+    expect(round.revealedClues).toHaveLength(1);
+  });
+
   it("starts deterministically for a fixed category and seed", async () => {
     const firstRound = await startRound(
       { category: "countries", seed: "alpha" },
@@ -274,5 +325,61 @@ describe("round service", () => {
         "user_intruder",
       ),
     ).rejects.toThrow("Round token does not belong to the authenticated user.");
+  });
+
+  it("plays a daily round from stored challenge data even if the latest snapshot changes", async () => {
+    vi.mocked(getLatestSnapshot).mockResolvedValueOnce({
+      ...demoSnapshot,
+      entities: demoSnapshot.entities.filter(
+        (entity) => entity.id !== "countries-france",
+      ),
+    });
+
+    const round = await startDailyRound(
+      { category: "countries", mode: "classic" },
+      "guest_daily",
+    );
+    const result = await submitGuess(
+      {
+        token: round.token,
+        guess: "France",
+      },
+      "guest_daily",
+    );
+
+    expect(result.isCorrect).toBe(true);
+    expect(result.kind).toBe("daily");
+    expect(result.canonicalAnswer).toBe("France");
+  });
+
+  it("returns a pending claim id for guest daily completions", async () => {
+    mockedDailyRepository.recordCompletedDailyRound.mockResolvedValueOnce({
+      created: true,
+      pendingClaimId: "claim-1",
+    });
+
+    const round = await startDailyRound(
+      { category: "countries", mode: "classic" },
+      "guest_daily_claim",
+    );
+    const result = await submitGuess(
+      {
+        token: round.token,
+        guess: "France",
+      },
+      "guest_daily_claim",
+    );
+
+    expect(result.pendingClaimId).toBe("claim-1");
+  });
+
+  it("blocks already-completed daily challenges", async () => {
+    mockedDailyRepository.findDailyResultForActor.mockResolvedValueOnce({
+      id: "existing-daily-result",
+    } as Awaited<ReturnType<typeof dailyRepository.findDailyResultForActor>>);
+
+    await expect(
+      startDailyRound({ category: "countries", mode: "classic" }, "user_repeat"),
+    ).rejects.toThrow("Daily challenge already completed.");
   });
 });

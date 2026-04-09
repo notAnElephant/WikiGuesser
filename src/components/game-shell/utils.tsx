@@ -44,7 +44,7 @@ export function getMenuMessage(
     return "Pick a mode.";
   }
 
-  return "Deal a round.";
+  return "Start free play.";
 }
 
 export function hasHiddenSafeClues(clues: RoundClue[]): boolean {

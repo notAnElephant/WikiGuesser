@@ -13,6 +13,13 @@ export interface CompletedRoundStatsInput {
   completedAt: Date;
 }
 
+export interface DailyCategoryModeStatsSnapshot {
+  roundsPlayed: number;
+  roundsWon: number;
+  totalScore: number;
+  bestScore: number;
+}
+
 export function buildNextCategoryModeStats(
   current: CategoryModeStatsSnapshot | null,
   completedRound: CompletedRoundStatsInput,
@@ -35,5 +42,17 @@ export function buildNextCategoryModeStats(
     currentStreak,
     bestStreak,
     lastPlayedAt: completedRound.completedAt,
+  };
+}
+
+export function buildNextDailyCategoryModeStats(
+  current: DailyCategoryModeStatsSnapshot | null,
+  completedRound: CompletedRoundStatsInput,
+): DailyCategoryModeStatsSnapshot {
+  return {
+    roundsPlayed: (current?.roundsPlayed ?? 0) + 1,
+    roundsWon: (current?.roundsWon ?? 0) + (completedRound.isCorrect ? 1 : 0),
+    totalScore: (current?.totalScore ?? 0) + completedRound.score,
+    bestScore: Math.max(current?.bestScore ?? 0, completedRound.score),
   };
 }

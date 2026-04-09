@@ -39,3 +39,22 @@ export function getClerkUserIdFromActorId(actorId: string): string | null {
   const clerkUserId = actorId.slice(AUTHENTICATED_ACTOR_PREFIX.length);
   return clerkUserId.length > 0 ? clerkUserId : null;
 }
+
+export function isGuestActorId(actorId: string): boolean {
+  return actorId.startsWith("guest:");
+}
+
+export async function getOptionalActorId() {
+  const { userId } = await auth();
+
+  if (userId) {
+    return `${AUTHENTICATED_ACTOR_PREFIX}${userId}`;
+  }
+
+  const cookieStore = await cookies();
+  const guestId = cookieStore.get(GUEST_ACTOR_COOKIE)?.value;
+
+  return guestId ? `guest:${guestId}` : null;
+}
+
+export { GUEST_ACTOR_COOKIE };

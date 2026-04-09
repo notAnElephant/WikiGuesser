@@ -36,10 +36,14 @@ model SnapshotEntity {
 model UserProfile {
   id          String                 @id @default(cuid())
   clerkUserId String                 @unique
+  displayName String?
+  imageUrl    String?
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
   gameResults GameResult[]
   stats       UserCategoryModeStats[]
+  dailyResults DailyResult[]
+  dailyStats   UserDailyCategoryModeStats[]
 }
 
 model GameResult {
@@ -75,6 +79,63 @@ model UserCategoryModeStats {
   currentStreak Int         @default(0)
   bestStreak    Int         @default(0)
   lastPlayedAt  DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userProfileId, category, mode])
+}
+
+model DailyChallenge {
+  id              String        @id @default(cuid())
+  dayKey          String
+  category        String
+  mode            String
+  snapshotKey     String
+  entityId        String
+  entityQid       String
+  canonicalAnswer String
+  acceptedAnswers Json
+  clues           Json
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  results         DailyResult[]
+
+  @@unique([dayKey, category, mode])
+  @@index([dayKey])
+}
+
+model DailyResult {
+  id               String         @id @default(cuid())
+  dailyChallengeId String
+  dailyChallenge   DailyChallenge @relation(fields: [dailyChallengeId], references: [id], onDelete: Cascade)
+  playerKey        String
+  userProfileId    String?
+  userProfile      UserProfile?   @relation(fields: [userProfileId], references: [id], onDelete: SetNull)
+  category         String
+  mode             String
+  score            Int
+  isCorrect        Boolean
+  revealedClueCount Int
+  totalClues       Int
+  completedAt      DateTime       @default(now())
+  claimedAt        DateTime?
+
+  @@unique([dailyChallengeId, playerKey])
+  @@index([dailyChallengeId, completedAt])
+  @@index([userProfileId, category, mode, completedAt])
+}
+
+model UserDailyCategoryModeStats {
+  id            String      @id @default(cuid())
+  userProfileId String
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  category      String
+  mode          String
+  roundsPlayed  Int         @default(0)
+  roundsWon     Int         @default(0)
+  totalScore    Int         @default(0)
+  bestScore     Int         @default(0)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 

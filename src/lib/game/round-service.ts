@@ -1,12 +1,18 @@
 import { randomUUID } from "node:crypto";
 
-import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
 import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
+import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
 import {
   createRoundState,
   parseRoundState,
   serializeRoundState,
 } from "@/src/lib/game/round-token";
+import {
+  findDailyResultForActor,
+  getDailyEntityForChallenge,
+  getOrCreateDailyChallenge,
+  recordCompletedDailyRound,
+} from "@/src/lib/repository/daily-repository";
 import { recordCompletedRound } from "@/src/lib/repository/game-stats-repository";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
@@ -18,6 +24,7 @@ import type {
   RevealClueResult,
   RoundClue,
   RoundState,
+  StartDailyRoundInput,
   StartRoundInput,
   StartRoundResult,
 } from "@/src/lib/types";
@@ -108,6 +115,7 @@ function buildRoundProgress(
   options?: { revealAll?: boolean },
 ) {
   return {
+    kind: roundState.kind,
     category: entity.category,
     mode: roundState.mode,
     clues: getClues(entity, roundState.revealedClueKeys, options),
@@ -129,13 +137,30 @@ function buildTokenizedRoundResult(
 }
 
 async function getRoundEntity(roundToken: string, userId: string) {
-  const snapshot = await getLatestSnapshot();
   const roundState = parseRoundState(roundToken);
 
   if (roundState.userId !== userId) {
     throw new Error("Round token does not belong to the authenticated user.");
   }
 
+  if (roundState.kind === "daily") {
+    if (!roundState.dailyChallengeId) {
+      throw new Error("Daily round token is missing its challenge reference.");
+    }
+
+    const { challenge, entity } = await getDailyEntityForChallenge(
+      roundState.dailyChallengeId,
+    );
+
+    return {
+      entity,
+      roundState,
+      snapshotKey: challenge.snapshotKey,
+      dailyChallengeId: challenge.id,
+    };
+  }
+
+  const snapshot = await getLatestSnapshot();
   const entity = snapshot.entities.find(
     (candidate) => candidate.id === roundState.entityId,
   );
@@ -148,6 +173,7 @@ async function getRoundEntity(roundToken: string, userId: string) {
     entity,
     roundState,
     snapshotKey: snapshot.key,
+    dailyChallengeId: null,
   };
 }
 
@@ -157,10 +183,31 @@ async function persistCompletedRoundIfNeeded(params: {
   entity: NormalizedEntity;
   roundState: RoundState;
   result: GuessRoundResult;
+  dailyChallengeId: string | null;
 }) {
+  if (!params.result.isComplete) {
+    return;
+  }
+
+  if (params.roundState.kind === "daily") {
+    const record = await recordCompletedDailyRound({
+      actorId: params.actorId,
+      dailyChallengeId: params.dailyChallengeId!,
+      category: params.entity.category,
+      mode: params.roundState.mode,
+      score: params.result.score,
+      isCorrect: params.result.isCorrect,
+      revealedClueCount: params.roundState.revealedClueKeys.length,
+      totalClues: params.roundState.totalClues,
+    });
+
+    params.result.pendingClaimId = record.pendingClaimId;
+    return;
+  }
+
   const clerkUserId = getClerkUserIdFromActorId(params.actorId);
 
-  if (!clerkUserId || !params.result.isComplete) {
+  if (!clerkUserId) {
     return;
   }
 
@@ -216,9 +263,45 @@ export async function startRound(
     entityId: entity.id,
     category: entity.category,
     mode,
+    kind: "standard",
     seed,
     revealedClueKeys,
     canGuess: mode === "classic",
+    totalClues: entity.clues.length,
+  });
+
+  return buildTokenizedRoundResult(entity, roundState);
+}
+
+export async function startDailyRound(
+  input: StartDailyRoundInput,
+  userId: string,
+): Promise<StartRoundResult> {
+  if (!ACTIVE_GAME_CATEGORIES.includes(input.category)) {
+    throw new Error("That category is temporarily unavailable.");
+  }
+
+  const challenge = await getOrCreateDailyChallenge(input.category, input.mode);
+  const existingResult = await findDailyResultForActor(challenge.id, userId);
+
+  if (existingResult) {
+    throw new Error("Daily challenge already completed.");
+  }
+
+  const { entity } = await getDailyEntityForChallenge(challenge.id);
+  const revealedClueKeys =
+    input.mode === "classic" && entity.clues[0] ? [entity.clues[0].key] : [];
+  const roundState = createRoundState({
+    userId,
+    entityId: entity.id,
+    category: entity.category,
+    mode: input.mode,
+    kind: "daily",
+    dailyChallengeId: challenge.id,
+    dayKey: challenge.dayKey,
+    seed: `${challenge.dayKey}:${input.category}:${input.mode}`,
+    revealedClueKeys,
+    canGuess: input.mode === "classic",
     totalClues: entity.clues.length,
   });
 
@@ -267,18 +350,24 @@ export async function submitGuess(
   input: GuessRoundInput,
   userId: string,
 ): Promise<GuessRoundResult> {
-  const { entity, roundState, snapshotKey } = await getRoundEntity(
-    input.token,
-    userId,
-  );
+  const { entity, roundState, snapshotKey, dailyChallengeId } =
+    await getRoundEntity(input.token, userId);
   const isCorrect = matchesEntityGuess(entity, input.guess);
+
+  if (dailyChallengeId) {
+    const existingResult = await findDailyResultForActor(dailyChallengeId, userId);
+
+    if (existingResult) {
+      throw new Error("Daily challenge already completed.");
+    }
+  }
 
   if (roundState.mode === "blurred-lines" && !roundState.canGuess) {
     throw new Error("Reveal a clue before guessing.");
   }
 
   if (isCorrect) {
-    const result = {
+    const result: GuessRoundResult = {
       roundId: roundState.roundId,
       token: null,
       ...buildRoundProgress(entity, roundState, { revealAll: true }),
@@ -286,6 +375,7 @@ export async function submitGuess(
       isComplete: true,
       canonicalAnswer: entity.canonicalAnswer,
       score: getScoreForRevealCount(roundState.revealedClueKeys.length),
+      pendingClaimId: null,
     };
 
     await persistCompletedRoundIfNeeded({
@@ -294,6 +384,7 @@ export async function submitGuess(
       entity,
       roundState,
       result,
+      dailyChallengeId,
     });
 
     return result;
@@ -314,10 +405,11 @@ export async function submitGuess(
         isComplete: false,
         canonicalAnswer: null,
         score: 0,
+        pendingClaimId: null,
       };
     }
 
-    const result = {
+    const result: GuessRoundResult = {
       roundId: roundState.roundId,
       token: null,
       ...buildRoundProgress(entity, roundState, { revealAll: true }),
@@ -325,6 +417,7 @@ export async function submitGuess(
       isComplete: true,
       canonicalAnswer: entity.canonicalAnswer,
       score: 0,
+      pendingClaimId: null,
     };
 
     await persistCompletedRoundIfNeeded({
@@ -333,6 +426,7 @@ export async function submitGuess(
       entity,
       roundState,
       result,
+      dailyChallengeId,
     });
 
     return result;
@@ -355,10 +449,11 @@ export async function submitGuess(
       isComplete: false,
       canonicalAnswer: null,
       score: 0,
+      pendingClaimId: null,
     };
   }
 
-  const result = {
+  const result: GuessRoundResult = {
     roundId: roundState.roundId,
     token: null,
     ...buildRoundProgress(entity, roundState, { revealAll: true }),
@@ -366,6 +461,7 @@ export async function submitGuess(
     isComplete: true,
     canonicalAnswer: entity.canonicalAnswer,
     score: 0,
+    pendingClaimId: null,
   };
 
   await persistCompletedRoundIfNeeded({
@@ -374,6 +470,7 @@ export async function submitGuess(
     entity,
     roundState,
     result,
+    dailyChallengeId,
   });
 
   return result;

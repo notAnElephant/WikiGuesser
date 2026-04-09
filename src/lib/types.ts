@@ -1,8 +1,10 @@
 export const ENTITY_CATEGORIES = ["countries", "cities", "people"] as const;
 export const GAME_MODES = ["classic", "blurred-lines"] as const;
+export const DAILY_RESET_TIME_ZONE = "Europe/Budapest";
 
 export type EntityCategory = (typeof ENTITY_CATEGORIES)[number];
 export type GameMode = (typeof GAME_MODES)[number];
+export type RoundKind = "standard" | "daily";
 export const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = [
   "countries",
   "cities",
@@ -115,12 +117,20 @@ export interface StartRoundInput {
   seed?: string;
 }
 
+export interface StartDailyRoundInput {
+  category: EntityCategory;
+  mode: GameMode;
+}
+
 export interface RoundState {
   roundId: string;
   userId: string;
   entityId: string;
   category: EntityCategory;
   mode: GameMode;
+  kind: RoundKind;
+  dailyChallengeId?: string;
+  dayKey?: string;
   seed: string;
   revealedClueKeys: string[];
   canGuess: boolean;
@@ -130,6 +140,7 @@ export interface RoundState {
 export interface StartRoundResult {
   roundId: string;
   token: string;
+  kind: RoundKind;
   category: EntityCategory;
   mode: GameMode;
   clues: RoundClue[];
@@ -151,6 +162,7 @@ export interface RevealClueInput {
 export interface RevealClueResult {
   roundId: string;
   token: string;
+  kind: RoundKind;
   category: EntityCategory;
   mode: GameMode;
   clues: RoundClue[];
@@ -162,6 +174,7 @@ export interface RevealClueResult {
 export interface GuessRoundResult {
   roundId: string;
   token: string | null;
+  kind: RoundKind;
   category: EntityCategory;
   mode: GameMode;
   isCorrect: boolean;
@@ -172,4 +185,42 @@ export interface GuessRoundResult {
   remainingClues: number;
   canGuess: boolean;
   score: number;
+  pendingClaimId?: string | null;
+}
+
+export interface DailyChallengePlayerStatus {
+  hasPlayed: boolean;
+  score: number | null;
+  completedAt: string | null;
+}
+
+export interface DailyChallengeCard {
+  challengeId: string;
+  dayKey: string;
+  category: EntityCategory;
+  mode: GameMode;
+  playerStatus: DailyChallengePlayerStatus;
+}
+
+export interface DailyLeaderboardEntry {
+  playerKey: string;
+  displayName: string;
+  imageUrl: string | null;
+  score: number;
+  roundsWon?: number;
+  bestScore?: number;
+  completedAt?: string | null;
+}
+
+export interface DailyComboLeaderboard {
+  today: DailyLeaderboardEntry[];
+  total: DailyLeaderboardEntry[];
+}
+
+export interface DailyHomeData {
+  dayKey: string;
+  cards: DailyChallengeCard[];
+  leaderboardByCombo: Record<string, DailyComboLeaderboard>;
+  defaultCategory: EntityCategory;
+  defaultMode: GameMode;
 }

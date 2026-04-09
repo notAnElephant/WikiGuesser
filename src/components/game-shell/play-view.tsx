@@ -43,16 +43,19 @@ interface GamePlayViewProps {
   currentClues: RoundClue[];
   currentMode: GameMode | null;
   displayScore: number;
+  flowLabel?: string;
   guess: string;
   guessedEntities: string[];
   guessButtonLabel: string;
   handleGuessSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  homeButtonLabel?: string;
   isBusy: boolean;
   isCountryRound: boolean;
   message: string;
   result: RoundOutcome | null;
   revealClue: (clueKey: string) => void;
   revealedCount: number;
+  restartButtonLabel?: string;
   round: ActiveRound | null;
   setGuess: (value: string) => void;
   startRound: () => void;
@@ -71,16 +74,19 @@ export function GamePlayView({
   currentClues,
   currentMode,
   displayScore,
+  flowLabel = "Round",
   guess,
   guessedEntities,
   guessButtonLabel,
   handleGuessSubmit,
+  homeButtonLabel = "Categories",
   isBusy,
   isCountryRound,
   message,
   result,
   revealClue,
   revealedCount,
+  restartButtonLabel = "New round",
   round,
   setGuess,
   startRound,
@@ -109,7 +115,7 @@ export function GamePlayView({
               <Play aria-hidden="true" className="size-3.5" strokeWidth={2.2} />
             )}
             {view === "round"
-              ? "Round live"
+              ? `${flowLabel} live`
               : result?.status === "win"
                 ? "Solved"
                 : "Answer shown"}
@@ -507,7 +513,7 @@ export function GamePlayView({
                 className="size-4"
                 strokeWidth={2.2}
               />
-              New round
+              {restartButtonLabel}
             </button>
             <button
               className={`${secondaryButtonClass} w-full`}
@@ -516,7 +522,7 @@ export function GamePlayView({
               type="button"
             >
               <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
-              Categories
+              {homeButtonLabel}
             </button>
           </div>
         </aside>

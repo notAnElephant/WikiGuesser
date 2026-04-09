@@ -11,7 +11,11 @@ interface GameResultDialogProps {
   currentCategory: string | null;
   currentCategoryLabel: string;
   isBusy: boolean;
+  onPrimaryAction?: () => void;
+  onSecondaryAction?: () => void;
+  primaryActionLabel?: string;
   result: RoundOutcome;
+  secondaryActionLabel?: string;
   startRound: () => void;
 }
 
@@ -20,10 +24,16 @@ export function GameResultDialog({
   currentCategory,
   currentCategoryLabel,
   isBusy,
+  onPrimaryAction,
+  onSecondaryAction,
+  primaryActionLabel = "Play again",
   result,
+  secondaryActionLabel = "Categories",
   startRound,
 }: GameResultDialogProps) {
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
+  const handlePrimaryAction = onPrimaryAction ?? startRound;
+  const handleSecondaryAction = onSecondaryAction ?? clearForCategoryChoice;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,20,14,0.46)] p-4 backdrop-blur-sm dark:bg-[rgba(3,7,14,0.62)]">
@@ -106,7 +116,7 @@ export function GameResultDialog({
           <button
             className={`${primaryButtonClass} flex-1`}
             disabled={isBusy}
-            onClick={startRound}
+            onClick={handlePrimaryAction}
             type="button"
           >
             <RotateCcw
@@ -114,16 +124,16 @@ export function GameResultDialog({
               className="size-4"
               strokeWidth={2.2}
             />
-            Play again
+            {primaryActionLabel}
           </button>
           <button
             className={`${secondaryButtonClass} flex-1`}
             disabled={isBusy}
-            onClick={clearForCategoryChoice}
+            onClick={handleSecondaryAction}
             type="button"
           >
             <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
-            Categories
+            {secondaryActionLabel}
           </button>
         </div>
       </div>

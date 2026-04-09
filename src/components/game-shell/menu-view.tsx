@@ -60,7 +60,7 @@ export function GameMenuView({
               className="size-3.5"
               strokeWidth={2.2}
             />
-            Fast rounds
+            Free play
           </span>
           <span className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/76 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb]">
             <Shuffle
@@ -78,7 +78,7 @@ export function GameMenuView({
               WikiGuesser
             </h1>
             <p className="m-0 mt-4 max-w-xl text-[1.02rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
-              Read the clues. Beat the reveal.
+              Unlimited rounds. No daily lock.
             </p>
           </div>
 

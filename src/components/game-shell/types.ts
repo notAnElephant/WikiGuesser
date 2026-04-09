@@ -3,6 +3,7 @@ import type {
   EntityCategory,
   GameMode,
   RevealClueResult,
+  RoundKind,
   RoundClue,
   StartRoundResult,
 } from "@/src/lib/types";
@@ -19,6 +20,7 @@ export interface RoundOutcome {
   status: "win" | "loss";
   canonicalAnswer: string;
   score: number;
+  kind: RoundKind;
   category: EntityCategory;
   mode: GameMode;
   clues: RoundClue[];

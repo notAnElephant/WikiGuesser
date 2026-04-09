@@ -46,14 +46,17 @@ export function GameShell(props: GameShellProps) {
         currentClues={game.currentClues}
         currentMode={game.currentMode}
         displayScore={game.displayScore}
+        flowLabel="Free play"
         guess={game.guess}
         guessedEntities={game.guessedEntities}
         guessButtonLabel={game.guessButtonLabel}
         handleGuessSubmit={game.handleGuessSubmit}
+        homeButtonLabel="Free play"
         isBusy={game.isBusy}
         isCountryRound={game.isCountryRound}
         message={game.message}
         result={game.result}
+        restartButtonLabel="New free-play round"
         revealClue={game.revealClue}
         revealedCount={game.revealedCount}
         round={game.round}
@@ -89,7 +92,9 @@ export function GameShell(props: GameShellProps) {
             currentCategory={game.currentCategory}
             currentCategoryLabel={game.currentCategoryLabel}
             isBusy={game.isBusy}
+            primaryActionLabel="Play again"
             result={game.result}
+            secondaryActionLabel="Free play"
             startRound={game.startRound}
           />
         </>

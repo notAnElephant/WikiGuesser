@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 import { getActorId } from "@/src/lib/auth/actor";
 import { submitGuessSchema } from "@/src/lib/api-schemas";
+import {
+  PENDING_DAILY_CLAIMS_COOKIE,
+  getPendingDailyClaimCookieOptions,
+  parsePendingDailyClaimIds,
+  serializePendingDailyClaimIds,
+} from "@/src/lib/game/daily-claim-cookie";
 import { parseRoundState } from "@/src/lib/game/round-token";
 import { submitGuess } from "@/src/lib/game/round-service";
 
@@ -28,7 +35,23 @@ export async function POST(
     }
 
     const result = await submitGuess(input, actorId);
-    return NextResponse.json(result);
+    const response = NextResponse.json(result);
+
+    if (result.pendingClaimId && actorId.startsWith("guest:")) {
+      const cookieStore = await cookies();
+      const existingIds = parsePendingDailyClaimIds(
+        cookieStore.get(PENDING_DAILY_CLAIMS_COOKIE)?.value,
+      );
+      const nextIds = [...new Set([...existingIds, result.pendingClaimId])];
+
+      response.cookies.set(
+        PENDING_DAILY_CLAIMS_COOKIE,
+        serializePendingDailyClaimIds(nextIds),
+        getPendingDailyClaimCookieOptions(),
+      );
+    }
+
+    return response;
   } catch (error) {
     return NextResponse.json(
       {

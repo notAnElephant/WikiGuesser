@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildNextCategoryModeStats } from "@/src/lib/game/player-stats";
+import {
+  buildNextCategoryModeStats,
+  buildNextDailyCategoryModeStats,
+} from "@/src/lib/game/player-stats";
 
 describe("player stats", () => {
   it("creates the first aggregate row from a win", () => {
@@ -77,6 +80,30 @@ describe("player stats", () => {
       currentStreak: 0,
       bestStreak: 4,
       lastPlayedAt: completedAt,
+    });
+  });
+
+  it("aggregates daily-only totals without streak data", () => {
+    const completedAt = new Date("2026-04-09T10:15:00.000Z");
+    const next = buildNextDailyCategoryModeStats(
+      {
+        roundsPlayed: 2,
+        roundsWon: 1,
+        totalScore: 100,
+        bestScore: 80,
+      },
+      {
+        score: 60,
+        isCorrect: true,
+        completedAt,
+      },
+    );
+
+    expect(next).toEqual({
+      roundsPlayed: 3,
+      roundsWon: 2,
+      totalScore: 160,
+      bestScore: 80,
     });
   });
 });
