@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
 
 import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
+import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { createRoundState, parseRoundState, serializeRoundState } from "@/src/lib/game/round-token";
+import { recordCompletedRound } from "@/src/lib/repository/game-stats-repository";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
   GameMode,
@@ -108,7 +110,37 @@ async function getRoundEntity(roundToken: string, userId: string) {
   return {
     entity,
     roundState,
+    snapshotKey: snapshot.key,
   };
+}
+
+async function persistCompletedRoundIfNeeded(params: {
+  actorId: string;
+  snapshotKey: string;
+  entity: NormalizedEntity;
+  roundState: RoundState;
+  result: GuessRoundResult;
+}) {
+  const clerkUserId = getClerkUserIdFromActorId(params.actorId);
+
+  if (!clerkUserId || !params.result.isComplete) {
+    return;
+  }
+
+  await recordCompletedRound({
+    clerkUserId,
+    roundId: params.roundState.roundId,
+    snapshotKey: params.snapshotKey,
+    entityId: params.entity.id,
+    entityQid: params.entity.qid,
+    canonicalAnswer: params.entity.canonicalAnswer,
+    category: params.entity.category,
+    mode: params.roundState.mode,
+    score: params.result.score,
+    isCorrect: params.result.isCorrect,
+    revealedClueCount: params.roundState.revealedClueKeys.length,
+    totalClues: params.roundState.totalClues,
+  });
 }
 
 export async function startRound(input: StartRoundInput = {}, userId: string): Promise<StartRoundResult> {
@@ -176,7 +208,7 @@ export async function revealClue(input: RevealClueInput, userId: string): Promis
 }
 
 export async function submitGuess(input: GuessRoundInput, userId: string): Promise<GuessRoundResult> {
-  const { entity, roundState } = await getRoundEntity(input.token, userId);
+  const { entity, roundState, snapshotKey } = await getRoundEntity(input.token, userId);
   const isCorrect = matchesEntityGuess(entity, input.guess);
 
   if (roundState.mode === "blurred-lines" && !roundState.canGuess) {
@@ -184,7 +216,7 @@ export async function submitGuess(input: GuessRoundInput, userId: string): Promi
   }
 
   if (isCorrect) {
-    return {
+    const result = {
       roundId: roundState.roundId,
       token: null,
       ...buildRoundProgress(entity, roundState, { revealAll: true }),
@@ -193,6 +225,16 @@ export async function submitGuess(input: GuessRoundInput, userId: string): Promi
       canonicalAnswer: entity.canonicalAnswer,
       score: getScoreForRevealCount(roundState.revealedClueKeys.length),
     };
+
+    await persistCompletedRoundIfNeeded({
+      actorId: userId,
+      snapshotKey,
+      entity,
+      roundState,
+      result,
+    });
+
+    return result;
   }
 
   if (roundState.mode === "blurred-lines") {
@@ -213,7 +255,7 @@ export async function submitGuess(input: GuessRoundInput, userId: string): Promi
       };
     }
 
-    return {
+    const result = {
       roundId: roundState.roundId,
       token: null,
       ...buildRoundProgress(entity, roundState, { revealAll: true }),
@@ -222,6 +264,16 @@ export async function submitGuess(input: GuessRoundInput, userId: string): Promi
       canonicalAnswer: entity.canonicalAnswer,
       score: 0,
     };
+
+    await persistCompletedRoundIfNeeded({
+      actorId: userId,
+      snapshotKey,
+      entity,
+      roundState,
+      result,
+    });
+
+    return result;
   }
 
   const nextClassicClueKey = getNextClassicClueKey(entity, roundState);
@@ -244,7 +296,7 @@ export async function submitGuess(input: GuessRoundInput, userId: string): Promi
     };
   }
 
-  return {
+  const result = {
     roundId: roundState.roundId,
     token: null,
     ...buildRoundProgress(entity, roundState, { revealAll: true }),
@@ -253,4 +305,14 @@ export async function submitGuess(input: GuessRoundInput, userId: string): Promi
     canonicalAnswer: entity.canonicalAnswer,
     score: 0,
   };
+
+  await persistCompletedRoundIfNeeded({
+    actorId: userId,
+    snapshotKey,
+    entity,
+    roundState,
+    result,
+  });
+
+  return result;
 }

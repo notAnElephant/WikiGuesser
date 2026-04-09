@@ -1,8 +1,8 @@
-import { CATEGORY_META, GAME_MODE_OPTIONS, primaryButtonClass, surfaceClass } from "@/src/components/game-shell/config";
-import { getCategoryMeta, getModeMeta, selectionCardClass } from "@/src/components/game-shell/utils";
-import type { MessageAppearance } from "@/src/components/game-shell/types";
-import type { CategorySummary, GameMode } from "@/src/lib/types";
-import { Compass, Play, Shuffle, Sparkles } from "lucide-react";
+import {CATEGORY_META, GAME_MODE_OPTIONS, primaryButtonClass, surfaceClass} from "@/src/components/game-shell/config";
+import type {MessageAppearance} from "@/src/components/game-shell/types";
+import {getCategoryMeta, getModeMeta, selectionCardClass} from "@/src/components/game-shell/utils";
+import type {CategorySummary, GameMode} from "@/src/lib/types";
+import {Compass, Play, Shuffle, Sparkles} from "lucide-react";
 
 interface GameMenuViewProps {
   canStartRound: boolean;
@@ -108,11 +108,8 @@ export function GameMenuView({
               <div className="flex items-center justify-between gap-3">
                 <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
                   <Compass aria-hidden="true" className="size-4" strokeWidth={2.2} />
-                  Decks
+                  Categories
                 </div>
-                <span className="rounded-full bg-white/76 px-3 py-1 text-xs font-semibold text-[#6b6259] dark:bg-white/6 dark:text-[#9aa9bb]">
-                  {categories.length + (showRandomMix ? 1 : 0)} picks
-                </span>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

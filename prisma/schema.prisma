@@ -32,3 +32,51 @@ model SnapshotEntity {
   @@unique([snapshotVersionId, category, qid])
   @@index([snapshotVersionId, category])
 }
+
+model UserProfile {
+  id          String                 @id @default(cuid())
+  clerkUserId String                 @unique
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  gameResults GameResult[]
+  stats       UserCategoryModeStats[]
+}
+
+model GameResult {
+  roundId            String      @id
+  userProfileId      String
+  userProfile        UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  snapshotKey        String
+  entityId           String
+  entityQid          String
+  canonicalAnswer    String
+  category           String
+  mode               String
+  score              Int
+  isCorrect          Boolean
+  revealedClueCount  Int
+  totalClues         Int
+  completedAt        DateTime    @default(now())
+
+  @@index([userProfileId, completedAt])
+  @@index([userProfileId, category, mode, completedAt])
+}
+
+model UserCategoryModeStats {
+  id            String      @id @default(cuid())
+  userProfileId String
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  category      String
+  mode          String
+  roundsPlayed  Int         @default(0)
+  roundsWon     Int         @default(0)
+  totalScore    Int         @default(0)
+  bestScore     Int         @default(0)
+  currentStreak Int         @default(0)
+  bestStreak    Int         @default(0)
+  lastPlayedAt  DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userProfileId, category, mode])
+}

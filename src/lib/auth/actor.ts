@@ -5,12 +5,13 @@ import { cookies } from "next/headers";
 
 const GUEST_ACTOR_COOKIE = "wikiguesser_guest";
 const GUEST_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const AUTHENTICATED_ACTOR_PREFIX = "user:";
 
 export async function getActorId() {
   const { userId } = await auth();
 
   if (userId) {
-    return `user:${userId}`;
+    return `${AUTHENTICATED_ACTOR_PREFIX}${userId}`;
   }
 
   const cookieStore = await cookies();
@@ -28,4 +29,13 @@ export async function getActorId() {
   }
 
   return `guest:${guestId}`;
+}
+
+export function getClerkUserIdFromActorId(actorId: string): string | null {
+  if (!actorId.startsWith(AUTHENTICATED_ACTOR_PREFIX)) {
+    return null;
+  }
+
+  const clerkUserId = actorId.slice(AUTHENTICATED_ACTOR_PREFIX.length);
+  return clerkUserId.length > 0 ? clerkUserId : null;
 }
