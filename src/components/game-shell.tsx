@@ -896,7 +896,16 @@ export function GameShell({ categories, countryOptions }: GameShellProps) {
                         </th>
                         <td className="border-t border-[#c8ccd1] px-4 py-3 align-top dark:border-white/10">
                           {clue.isRevealed ? (
-                            <span className="text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">{renderClueValue(clue)}</span>
+                            <div className="flex w-full items-start justify-between gap-3">
+                              <span className="min-w-0 text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">{renderClueValue(clue)}</span>
+                              <span
+                                aria-hidden="true"
+                                className="pointer-events-none inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-0 select-none"
+                              >
+                                <Eye aria-hidden="true" className="size-3" strokeWidth={2.2} />
+                                Reveal
+                              </span>
+                            </div>
                           ) : round ? (
                             isLocked ? (
                               <div className="flex w-full items-start justify-between gap-3">
@@ -910,7 +919,7 @@ export function GameShell({ categories, countryOptions }: GameShellProps) {
                               <div className="flex w-full items-start justify-between gap-3">
                                 <button
                                   aria-label={`Reveal ${clue.label}`}
-                                  className="min-w-0 rounded-xl bg-transparent px-1 py-1 text-left transition duration-150 hover:-translate-y-0.5 hover:bg-[rgba(162,169,177,0.08)] dark:hover:bg-white/6"
+                                  className="min-w-0 bg-transparent p-0 text-left transition duration-150 hover:-translate-y-0.5 hover:opacity-100"
                                   disabled={isBusy}
                                   onClick={() => revealClue(clue.key)}
                                   type="button"
