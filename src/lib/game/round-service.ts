@@ -4,7 +4,6 @@ import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
 import { createRoundState, parseRoundState, serializeRoundState } from "@/src/lib/game/round-token";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
-  EntityCategory,
   GameMode,
   GuessRoundInput,
   GuessRoundResult,
@@ -16,11 +15,11 @@ import type {
   StartRoundInput,
   StartRoundResult,
 } from "@/src/lib/types";
+import { ACTIVE_GAME_CATEGORIES, type EntityCategory } from "@/src/lib/types";
 import { hashString } from "@/src/lib/utils/hash";
 
 const SCORE_BY_REVEAL_INDEX = [100, 80, 60, 40, 20, 10];
 const DEFAULT_GAME_MODE: GameMode = "classic";
-const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = ["countries"];
 
 function getScoreForRevealCount(revealCount: number): number {
   const normalizedRevealCount = Math.max(revealCount, 1);

@@ -18,3 +18,18 @@ export function getNumericArgValue(name: string, fallback: number): number {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
+
+export function getListArgValue(name: string): string[] | undefined {
+  const value = getArgValue(name);
+
+  if (!value) {
+    return undefined;
+  }
+
+  const items = value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return items.length > 0 ? items : undefined;
+}

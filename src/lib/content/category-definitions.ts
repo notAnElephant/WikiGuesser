@@ -25,6 +25,15 @@ LIMIT __LIMIT__
 
 const citiesQuery = `
 SELECT DISTINCT ?item WHERE {
+  ?country wdt:P31 wd:Q3624078;
+           p:P463 ?unMembershipStatement;
+           p:P36 ?capitalStatement.
+  ?unMembershipStatement a wikibase:BestRank;
+                         ps:P463 wd:Q1065.
+  MINUS { ?unMembershipStatement pq:P582 ?membershipEnd. }
+  ?capitalStatement a wikibase:BestRank;
+                    ps:P36 ?item.
+  MINUS { ?capitalStatement pq:P582 ?capitalEnd. }
   ?item wdt:P31/wdt:P279* wd:Q515.
   ?article schema:about ?item;
            schema:isPartOf <https://en.wikipedia.org/>.
@@ -85,7 +94,7 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
   cities: {
     id: "cities",
     label: "Cities",
-    description: "City rounds focused on region, scale, and geography before founded dates.",
+    description: "Capital city rounds limited to current capitals of UN member states.",
     discovery: {
       type: "sparql",
       query: citiesQuery,

@@ -3,6 +3,7 @@ export const GAME_MODES = ["classic", "blurred-lines"] as const;
 
 export type EntityCategory = (typeof ENTITY_CATEGORIES)[number];
 export type GameMode = (typeof GAME_MODES)[number];
+export const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = ["countries", "cities"];
 
 export interface AcceptedAnswer {
   kind: "canonical" | "alias" | "wikipedia-title" | "redirect";

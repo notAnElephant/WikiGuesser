@@ -1,8 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
 import { parseRoundState } from "@/src/lib/game/round-token";
 import { revealClue, startRound, submitGuess } from "@/src/lib/game/round-service";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
+
+vi.mock("@/src/lib/repository/snapshot-repository", async () => {
+  const actual = await vi.importActual<typeof import("@/src/lib/repository/snapshot-repository")>(
+    "@/src/lib/repository/snapshot-repository",
+  );
+
+  return {
+    ...actual,
+    getLatestSnapshot: vi.fn(async () => demoSnapshot),
+  };
+});
 
 describe("round service", () => {
   it("starts deterministically for a fixed category and seed", async () => {
@@ -16,10 +28,12 @@ describe("round service", () => {
     expect(firstRound.canGuess).toBe(true);
   });
 
-  it("rejects temporarily disabled categories", async () => {
-    await expect(startRound({ category: "cities", seed: "alpha" }, "user_test_alpha")).rejects.toThrow(
-      "That category is temporarily unavailable.",
-    );
+  it("starts city rounds once the category is enabled", async () => {
+    const round = await startRound({ category: "cities", seed: "alpha" }, "user_test_alpha");
+
+    expect(round.category).toBe("cities");
+    expect(round.revealedClues).toHaveLength(1);
+    expect(round.revealedClues[0]?.label).toBe("Country");
   });
 
   it("reveals the next clue after an incorrect classic guess", async () => {

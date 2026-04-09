@@ -4,7 +4,7 @@ Fast Wikipedia-inspired guessing game built with Next.js, Prisma, Clerk, and a W
 
 ## Current Product
 
-- Live category: `countries`
+- Live categories: `countries`, `cities`
 - Modes: `classic`, `blurred-lines`
 - Theme: dark by default, user-toggleable
 - Auth: Clerk
@@ -47,18 +47,19 @@ npm test
 npm run prisma:generate
 npm run prisma:migrate:deploy
 npm run ingest:discover
+npm run ingest:discover:cities
 npm run ingest:hydrate
+npm run ingest:hydrate:cities
 npm run ingest:build-snapshot
+npm run ingest:build-snapshot:cities
+npm run ingest:build-snapshot:active
 ```
 
 ## Data Flow
 
 - Content is discovered and hydrated from Wikidata + Wikipedia.
-- Snapshots can be stored in Postgres and written to `.generated/latest-snapshot.json`.
-- Runtime snapshot fallback order:
-  1. latest Postgres snapshot
-  2. generated JSON snapshot
-  3. bundled demo snapshot
+- Snapshots are persisted to Postgres.
+- Runtime reads from the latest Postgres snapshot only.
 
 ## Repo Layout
 

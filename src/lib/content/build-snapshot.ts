@@ -9,8 +9,16 @@ export async function normalizeEntitiesForCategory(
 ): Promise<NormalizedEntity[]> {
   const definition = categoryDefinitions[category];
   const normalizedEntities: NormalizedEntity[] = [];
+  const seenSourceQids = new Set<string>();
+  const seenNormalizedIds = new Set<string>();
 
   for (const sourceEntity of sourceEntities) {
+    if (seenSourceQids.has(sourceEntity.qid)) {
+      continue;
+    }
+
+    seenSourceQids.add(sourceEntity.qid);
+
     const redirectAliases =
       definition.aliasStrategy.includeRedirects && sourceEntity.wikipediaTitle
         ? await fetchRedirectAliases(sourceEntity.wikipediaTitle)
@@ -19,7 +27,8 @@ export async function normalizeEntitiesForCategory(
       redirectAliases,
     });
 
-    if (normalizedEntity) {
+    if (normalizedEntity && !seenNormalizedIds.has(normalizedEntity.id)) {
+      seenNormalizedIds.add(normalizedEntity.id);
       normalizedEntities.push(normalizedEntity);
     }
   }

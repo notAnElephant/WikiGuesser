@@ -29,6 +29,6 @@ model SnapshotEntity {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
-  @@unique([snapshotVersionId, qid])
+  @@unique([snapshotVersionId, category, qid])
   @@index([snapshotVersionId, category])
 }

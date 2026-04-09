@@ -17,10 +17,11 @@ function buildDiscoveryQuery(rawQuery: string, limit: number): string {
 
 export async function discoverCategoryQids(category: EntityCategory, limit?: number): Promise<string[]> {
   if (category === "countries") {
-    return fetchSimpleWikipediaCountryQids(limit);
+    return [...new Set(await fetchSimpleWikipediaCountryQids(limit))];
   }
 
-  const query = buildDiscoveryQuery(categoryDefinitions[category].discovery.query, limit ?? 50);
+  const defaultLimit = category === "cities" ? 250 : 50;
+  const query = buildDiscoveryQuery(categoryDefinitions[category].discovery.query, limit ?? defaultLimit);
   const body = new URLSearchParams({ query, format: "json" });
   const data = await fetchWikimediaJson<{ results: { bindings: Array<{ item: { value: string } }> } }>(
     "https://query.wikidata.org/sparql",
@@ -34,9 +35,9 @@ export async function discoverCategoryQids(category: EntityCategory, limit?: num
     },
   );
 
-  return data.results.bindings
+  return [...new Set(data.results.bindings
     .map((binding) => binding.item.value.split("/").pop())
-    .filter((qid): qid is string => Boolean(qid));
+    .filter((qid): qid is string => Boolean(qid)))];
 }
 
 async function fetchRawEntity(qid: string): Promise<any> {
