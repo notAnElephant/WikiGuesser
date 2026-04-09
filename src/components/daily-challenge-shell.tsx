@@ -1,28 +1,19 @@
 "use client";
 
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
-import { getDailyComboKey } from "@/src/lib/game/daily";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
-
-import {
-  primaryButtonClass,
-  surfaceClass,
-} from "@/src/components/game-shell/config";
+import { primaryButtonClass, surfaceClass } from "@/src/components/game-shell/config";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
-import type {
-  ActiveRound,
-  RoundOutcome,
-} from "@/src/components/game-shell/types";
+import type { ActiveRound, RoundOutcome } from "@/src/components/game-shell/types";
 import {
   getCategoryMeta,
   getMenuMessage,
   getMessageAppearance,
   getModeMeta,
   isClueLocked,
-  toPlayableClues,
+  toPlayableClues
 } from "@/src/components/game-shell/utils";
+import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import { getDailyComboKey } from "@/src/lib/game/daily";
 import type {
   DailyChallengeCard,
   DailyHomeData,
@@ -30,9 +21,11 @@ import type {
   GameMode,
   GuessRoundResult,
   RevealClueResult,
-  StartRoundResult,
+  StartRoundResult
 } from "@/src/lib/types";
 import { ArrowRight, CalendarDays, Crown, LoaderCircle, Sparkles, Trophy } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 
 interface DailyChallengeShellProps {
   countryOptions: string[];
@@ -133,14 +126,16 @@ export function DailyChallengeShell({
   }, [hasPendingClaim, isSignedIn, router]);
 
   const validCountryLookup = useMemo(
-    () => new Map(countryOptions.map((option) => [normalizeGuess(option), option])),
+    () =>
+      new Map(countryOptions.map((option) => [normalizeGuess(option), option])),
     [countryOptions],
   );
 
   const cards = useMemo(
     () =>
       data.cards.map((card) => {
-        const override = playedOverrides[getDailyComboKey(card.category, card.mode)];
+        const override =
+          playedOverrides[getDailyComboKey(card.category, card.mode)];
 
         return override
           ? {
@@ -187,12 +182,12 @@ export function DailyChallengeShell({
   );
   const canSubmitGuess = Boolean(
     round &&
-      round.canGuess &&
-      hasGuess &&
-      isCountryGuessValid &&
-      !isAlreadyGuessed &&
-      !isPending &&
-      !isSyncingReveal,
+    round.canGuess &&
+    hasGuess &&
+    isCountryGuessValid &&
+    !isAlreadyGuessed &&
+    !isPending &&
+    !isSyncingReveal,
   );
   const currentCategory =
     round?.category ?? result?.category ?? selectedCard.category;
@@ -262,16 +257,18 @@ export function DailyChallengeShell({
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         setMessage(payload?.error ?? "Daily failed.");
         return;
       }
 
       const payload = (await response.json()) as StartRoundResult;
       setRound(payload);
-      setMessage(payload.mode === "blurred-lines" ? "Tap a row." : "Daily live.");
+      setMessage(
+        payload.mode === "blurred-lines" ? "Tap a row." : "Daily live.",
+      );
     });
   }
 
@@ -327,7 +324,9 @@ export function DailyChallengeShell({
 
         const payload = (await response.json()) as RevealClueResult;
         setRound(payload);
-        setMessage(payload.remainingClues === 0 ? "Last clue." : "Clue unlocked.");
+        setMessage(
+          payload.remainingClues === 0 ? "Last clue." : "Clue unlocked.",
+        );
       } catch {
         setRound(previousRound);
         setMessage("Reveal failed.");
@@ -349,7 +348,9 @@ export function DailyChallengeShell({
 
     if (!round.canGuess) {
       setMessage(
-        round.mode === "blurred-lines" ? "Reveal a row." : "Wait for the next clue.",
+        round.mode === "blurred-lines"
+          ? "Reveal a row."
+          : "Wait for the next clue.",
       );
       return;
     }
@@ -376,9 +377,9 @@ export function DailyChallengeShell({
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         setMessage(payload?.error ?? "Guess failed.");
         return;
       }
@@ -487,7 +488,9 @@ export function DailyChallengeShell({
               clearToHub({ refresh: true });
             }}
             onSecondaryAction={() => clearToHub()}
-            primaryActionLabel={isSignedIn ? "Daily leaderboard" : "Create account"}
+            primaryActionLabel={
+              isSignedIn ? "Daily leaderboard" : "Create account"
+            }
             result={result}
             secondaryActionLabel="Daily hub"
             startRound={() => startDaily(selectedCard)}
@@ -502,11 +505,19 @@ export function DailyChallengeShell({
       <div className={`${surfaceClass} overflow-hidden p-5 sm:p-7`}>
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/12 bg-[#0f766e]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:border-[#24d4c2]/14 dark:bg-[#24d4c2]/8 dark:text-[#8ff4e7]">
-            <Sparkles aria-hidden="true" className="size-3.5" strokeWidth={2.2} />
+            <Sparkles
+              aria-hidden="true"
+              className="size-3.5"
+              strokeWidth={2.2}
+            />
             Daily challenge
           </span>
           <span className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/76 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb]">
-            <CalendarDays aria-hidden="true" className="size-3.5" strokeWidth={2.2} />
+            <CalendarDays
+              aria-hidden="true"
+              className="size-3.5"
+              strokeWidth={2.2}
+            />
             Resets at 00:00 Budapest
           </span>
         </div>
@@ -514,7 +525,7 @@ export function DailyChallengeShell({
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)] lg:items-end">
           <div>
             <h1 className="m-0 max-w-[10ch] font-serif-display text-[clamp(2.4rem,8vw,4.6rem)] font-semibold leading-[0.92] tracking-[-0.065em] text-[#1f1b17] dark:text-[#f5f7fb]">
-              Same puzzle. New board.
+              WikiGuesser
             </h1>
             <p className="m-0 mt-4 max-w-xl text-[1.02rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
               One shared shot per category and mode. Build today. Climb total.
@@ -544,7 +555,11 @@ export function DailyChallengeShell({
                     strokeWidth={2.2}
                   />
                 ) : (
-                  <ArrowRight aria-hidden="true" className="size-4" strokeWidth={2.2} />
+                  <ArrowRight
+                    aria-hidden="true"
+                    className="size-4"
+                    strokeWidth={2.2}
+                  />
                 )}
                 {selectedCard.playerStatus.hasPlayed ? "Played" : "Start daily"}
               </button>
@@ -685,10 +700,13 @@ export function DailyChallengeShell({
                       <div className="text-xs text-[#6b6259] dark:text-[#9aa9bb]">
                         {leaderboardPeriod === "today"
                           ? entry.completedAt
-                            ? new Date(entry.completedAt).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
+                            ? new Date(entry.completedAt).toLocaleTimeString(
+                                [],
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )
                             : "Today"
                           : `${entry.roundsWon ?? 0} wins`}
                       </div>
