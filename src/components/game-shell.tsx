@@ -203,7 +203,7 @@ function renderClueValue(clue: Pick<RoundClue, "key" | "value">): ReactNode {
       <span className="inline-block align-baseline" key={`${segment.text}-${index}`}>
         <span
           aria-hidden="true"
-          className="select-none rounded-[0.45rem] bg-black/10 px-1.5 text-[transparent] [text-shadow:0_0_14px_rgba(31,27,23,0.98)] blur-[4.8px] dark:bg-white/14 dark:[text-shadow:0_0_14px_rgba(245,247,251,0.98)]"
+          className="select-none rounded-[0.45rem] bg-black/10 px-1.5 text-transparent [text-shadow:0_0_14px_rgba(31,27,23,0.98)] blur-[4.8px] dark:bg-white/14 dark:[text-shadow:0_0_14px_rgba(245,247,251,0.98)]"
         >
           {segment.text}
         </span>
@@ -310,8 +310,7 @@ function getMessageAppearance(message: string, result: RoundOutcome | null) {
 }
 
 export function GameShell({ categories, countryOptions }: GameShellProps) {
-  const firstPlayableCategory = categories.find((category) => category.entityCount > 0)?.id ?? null;
-  const defaultCategory = firstPlayableCategory;
+  const defaultCategory = categories.find((category) => category.entityCount > 0)?.id ?? null;
   const [selectedCategory, setSelectedCategory] = useState<string | null>(defaultCategory);
   const [selectedMode, setSelectedMode] = useState<GameMode | null>("classic");
   const [round, setRound] = useState<ActiveRound | null>(null);
@@ -626,7 +625,7 @@ export function GameShell({ categories, countryOptions }: GameShellProps) {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-[26px] border border-black/8 bg-white/78 p-4 dark:border-white/10 dark:bg-white/6">
-                <div className={`mb-3 inline-flex rounded-2xl bg-gradient-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}>
+                <div className={`mb-3 inline-flex rounded-2xl bg-linear-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}>
                   <SelectedCategoryIcon aria-hidden="true" className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
                 </div>
                 <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">Deck</p>
@@ -668,11 +667,8 @@ export function GameShell({ categories, countryOptions }: GameShellProps) {
                   {showRandomMix ? (
                     <button className={selectionCardClass(selectedCategory === "random")} onClick={() => handleCategorySelect("random")} type="button">
                       <div className="flex items-start justify-between gap-3">
-                        <span className={`inline-flex rounded-2xl bg-gradient-to-br p-2.5 ${CATEGORY_META.random.accent}`}>
+                        <span className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${CATEGORY_META.random.accent}`}>
                           <Shuffle aria-hidden="true" className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
-                        </span>
-                        <span className="rounded-full bg-black/5 px-2.5 py-1 text-xs font-semibold text-[#6b6259] dark:bg-white/8 dark:text-[#9aa9bb]">
-                          {totalEntityCount}
                         </span>
                       </div>
                       <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">Mixed deck</strong>
@@ -693,11 +689,8 @@ export function GameShell({ categories, countryOptions }: GameShellProps) {
                         type="button"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <span className={`inline-flex rounded-2xl bg-gradient-to-br p-2.5 ${categoryMeta.accent}`}>
+                          <span className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${categoryMeta.accent}`}>
                             <CategoryIcon aria-hidden="true" className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
-                          </span>
-                          <span className="rounded-full bg-black/5 px-2.5 py-1 text-xs font-semibold text-[#6b6259] dark:bg-white/8 dark:text-[#9aa9bb]">
-                            {category.entityCount > 0 ? category.entityCount : "Soon"}
                           </span>
                         </div>
                         <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">{category.label}</strong>
@@ -750,7 +743,7 @@ export function GameShell({ categories, countryOptions }: GameShellProps) {
                 <span>{message}</span>
               </div>
 
-              <div className="grid gap-3 rounded-[24px] border border-black/8 bg-[rgba(15,118,110,0.04)] p-4 dark:border-white/10 dark:bg-[rgba(36,212,194,0.05)]">
+              <div className="grid gap-3 rounded-3xl border border-black/8 bg-[rgba(15,118,110,0.04)] p-4 dark:border-white/10 dark:bg-[rgba(36,212,194,0.05)]">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">Ready</span>
                   <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[#115e59] dark:bg-white/8 dark:text-[#8ff4e7]">
@@ -759,7 +752,7 @@ export function GameShell({ categories, countryOptions }: GameShellProps) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className={`inline-flex rounded-2xl bg-gradient-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}>
+                  <span className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}>
                     <SelectedCategoryIcon aria-hidden="true" className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]" strokeWidth={2.1} />
                   </span>
                   <div className="min-w-0">
@@ -846,7 +839,7 @@ export function GameShell({ categories, countryOptions }: GameShellProps) {
             </div>
           </div>
 
-          <div className="grid gap-2 rounded-[24px] border border-black/8 bg-white/72 p-4 dark:border-white/10 dark:bg-white/5">
+          <div className="grid gap-2 rounded-3xl border border-black/8 bg-white/72 p-4 dark:border-white/10 dark:bg-white/5">
             <div className="flex items-center justify-between gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
               <span>Reveal meter</span>
               <span>
@@ -1105,7 +1098,7 @@ export function GameShell({ categories, countryOptions }: GameShellProps) {
             <div
               aria-labelledby="round-result-title"
               aria-modal="true"
-              className="w-full max-w-md rounded-[32px] border border-[rgba(17,94,89,0.14)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(255,247,238,0.95))] p-6 shadow-[0_30px_80px_rgba(29,22,14,0.26)] dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(14,22,34,0.98),rgba(19,29,43,0.95))] dark:shadow-[0_30px_80px_rgba(0,0,0,0.46)] sm:p-7"
+              className="w-full max-w-md rounded-4xl border border-[rgba(17,94,89,0.14)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(255,247,238,0.95))] p-6 shadow-[0_30px_80px_rgba(29,22,14,0.26)] dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(14,22,34,0.98),rgba(19,29,43,0.95))] dark:shadow-[0_30px_80px_rgba(0,0,0,0.46)] sm:p-7"
               role="dialog"
             >
               <div className="flex items-start gap-4">
