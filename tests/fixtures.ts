@@ -7,10 +7,10 @@ export const countrySourceFixture: SourceEntity = {
   wikipediaTitle: "France",
   aliases: ["French Republic"],
   claims: {
+    P30: [{ type: "entity", id: "Q46", label: "Europe" }],
     P2046: [{ type: "quantity", amount: 551695, unit: "km²" }],
     P1082: [{ type: "quantity", amount: 68400000, unit: null }],
-    P421: [{ type: "entity", id: "Q6655", label: "UTC+01:00" }],
-    P37: [{ type: "entity", id: "Q150", label: "French" }],
+    P38: [{ type: "entity", id: "Q4917", label: "euro" }],
     P36: [{ type: "entity", id: "Q90", label: "Paris" }],
     P625: [{ type: "coordinate", latitude: 46.2276, longitude: 2.2137, precision: 0.1 }],
   },

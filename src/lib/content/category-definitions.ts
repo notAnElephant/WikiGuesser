@@ -1,4 +1,4 @@
-import type { CategoryDefinition } from "@/src/lib/types";
+import type { CategoryDefinition, SourceEntity } from "@/src/lib/types";
 import {
   buildNormalizedEntity,
   createClue,
@@ -50,6 +50,21 @@ SELECT DISTINCT ?item WHERE {
 LIMIT __LIMIT__
 `;
 
+function getCountryCapitalLabel(source: SourceEntity): string | null {
+  const explicitCapital = formatList(getEntityLabels(source, "P36"), 1);
+
+  if (explicitCapital) {
+    return explicitCapital;
+  }
+
+  // Vatican City is a sovereign city-state and serves as its own capital.
+  if (source.label === "Vatican City") {
+    return source.label;
+  }
+
+  return null;
+}
+
 export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefinition> = {
   countries: {
     id: "countries",
@@ -82,7 +97,7 @@ export const categoryDefinitions: Record<CategoryDefinition["id"], CategoryDefin
           createClue("area", "Area", formatAreaSquareKilometers(getFirstQuantity(source, "P2046")), 2),
           createClue("population", "Population", formatPopulation(getFirstQuantity(source, "P1082")), 3),
           createClue("currency", "Currency", formatList(getEntityLabels(source, "P38"), 1), 4),
-          createClue("capital", "Capital", formatList(getEntityLabels(source, "P36"), 1), 5, "late"),
+          createClue("capital", "Capital", getCountryCapitalLabel(source), 5, "late"),
         ],
         metadata: {
           centroidLatitude: coordinate?.latitude ?? null,
