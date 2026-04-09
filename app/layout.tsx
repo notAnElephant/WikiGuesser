@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ClerkProvider, Show, UserButton } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { ThemeProvider } from "@/src/components/theme-provider";
 import { ThemeToggle } from "@/src/components/theme-toggle";
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </header>
             {children}
             <Analytics />
+            <SpeedInsights />
           </ClerkProvider>
         </ThemeProvider>
       </body>
