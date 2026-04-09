@@ -68,10 +68,10 @@ export default function RootLayout({
               </div>
             </header>
             {children}
-            <Analytics />
-            <SpeedInsights />
           </ClerkProvider>
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
