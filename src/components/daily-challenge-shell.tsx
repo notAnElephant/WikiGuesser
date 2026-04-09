@@ -41,6 +41,25 @@ interface PlayedOverride {
   completedAt: string;
 }
 
+function getTimeUntilBudapestMidnight() {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Budapest",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+  const parts = formatter.formatToParts(new Date());
+  const values = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  ) as Record<string, string>;
+  const hours = Number(values.hour ?? "0");
+  const minutes = Number(values.minute ?? "0");
+
+  return `${String(23 - hours).padStart(2, "0")}:${String(59 - minutes).padStart(2, "0")}`;
+}
+
 function toCategoryLabel(category: EntityCategory) {
   return category[0]!.toUpperCase() + category.slice(1);
 }
@@ -69,6 +88,7 @@ export function DailyChallengeShell({
   const [isClaimingPending, setIsClaimingPending] = useState(
     isSignedIn && hasPendingClaim,
   );
+  const [resetCountdown, setResetCountdown] = useState("00:00");
   const [playedOverrides, setPlayedOverrides] = useState<
     Record<string, PlayedOverride>
   >({});
@@ -78,6 +98,18 @@ export function DailyChallengeShell({
     setSelectedCategory(data.defaultCategory);
     setSelectedMode(data.defaultMode);
   }, [data.defaultCategory, data.defaultMode]);
+
+  useEffect(() => {
+    setResetCountdown(getTimeUntilBudapestMidnight());
+
+    const intervalId = window.setInterval(() => {
+      setResetCountdown(getTimeUntilBudapestMidnight());
+    }, 60_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isSignedIn || !hasPendingClaim) {
@@ -525,7 +557,7 @@ export function DailyChallengeShell({
               className="size-3.5"
               strokeWidth={2.2}
             />
-            Resets at 00:00 Budapest
+            Resets in {resetCountdown}
           </span>
         </div>
 
