@@ -27,3 +27,7 @@ export const revealClueSchema = z.object({
   token: z.string().min(1),
   clueKey: z.string().min(1),
 });
+
+export const giveUpRoundSchema = z.object({
+  token: z.string().min(1),
+});

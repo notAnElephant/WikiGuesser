@@ -46,6 +46,7 @@ export function GameShell(props: GameShellProps) {
         currentClues={game.currentClues}
         currentMode={game.currentMode}
         displayScore={game.displayScore}
+        giveUpRound={game.giveUpRound}
         flowLabel="Free play"
         guess={game.guess}
         guessedEntities={game.guessedEntities}
@@ -68,7 +69,7 @@ export function GameShell(props: GameShellProps) {
         visibleClassicClues={game.visibleClassicClues}
       />
 
-      {game.result ? (
+      {game.result && game.result.showDialog !== false ? (
         <>
           {game.result.status === "win" &&
           viewportWidth > 0 &&

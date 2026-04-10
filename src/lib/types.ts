@@ -159,6 +159,10 @@ export interface RevealClueInput {
   clueKey: string;
 }
 
+export interface GiveUpRoundInput {
+  token: string;
+}
+
 export interface RevealClueResult {
   roundId: string;
   token: string;

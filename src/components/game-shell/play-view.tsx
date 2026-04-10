@@ -19,6 +19,7 @@ import type { ActiveRound } from "@/src/components/game-shell/types";
 import type { GameMode, RoundClue } from "@/src/lib/types";
 import {
   ArrowRight,
+  Ban,
   CircleAlert,
   Eye,
   House,
@@ -43,6 +44,7 @@ interface GamePlayViewProps {
   currentClues: RoundClue[];
   currentMode: GameMode | null;
   displayScore: number;
+  giveUpRound: () => void;
   flowLabel?: string;
   guess: string;
   guessedEntities: string[];
@@ -74,6 +76,7 @@ export function GamePlayView({
   currentClues,
   currentMode,
   displayScore,
+  giveUpRound,
   flowLabel = "Round",
   guess,
   guessedEntities,
@@ -465,6 +468,19 @@ export function GamePlayView({
                     />
                   )}
                   {guessButtonLabel}
+                </button>
+                <button
+                  className={`${secondaryButtonClass} w-full`}
+                  disabled={isBusy}
+                  onClick={giveUpRound}
+                  type="button"
+                >
+                  <Ban
+                    aria-hidden="true"
+                    className="size-4"
+                    strokeWidth={2.2}
+                  />
+                  Give up
                 </button>
               </form>
 

@@ -17,6 +17,7 @@ import { recordCompletedRound } from "@/src/lib/repository/game-stats-repository
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
   GameMode,
+  GiveUpRoundInput,
   GuessRoundInput,
   GuessRoundResult,
   NormalizedEntity,
@@ -451,6 +452,44 @@ export async function submitGuess(
       score: 0,
       pendingClaimId: null,
     };
+  }
+
+  const result: GuessRoundResult = {
+    roundId: roundState.roundId,
+    token: null,
+    ...buildRoundProgress(entity, roundState, { revealAll: true }),
+    isCorrect: false,
+    isComplete: true,
+    canonicalAnswer: entity.canonicalAnswer,
+    score: 0,
+    pendingClaimId: null,
+  };
+
+  await persistCompletedRoundIfNeeded({
+    actorId: userId,
+    snapshotKey,
+    entity,
+    roundState,
+    result,
+    dailyChallengeId,
+  });
+
+  return result;
+}
+
+export async function giveUpRound(
+  input: GiveUpRoundInput,
+  userId: string,
+): Promise<GuessRoundResult> {
+  const { entity, roundState, snapshotKey, dailyChallengeId } =
+    await getRoundEntity(input.token, userId);
+
+  if (dailyChallengeId) {
+    const existingResult = await findDailyResultForActor(dailyChallengeId, userId);
+
+    if (existingResult) {
+      throw new Error("Daily challenge already completed.");
+    }
   }
 
   const result: GuessRoundResult = {

@@ -363,6 +363,47 @@ export function useGameShellController({
     submitGuess();
   }
 
+  function giveUpRound() {
+    if (!round) {
+      return;
+    }
+
+    startTransition(async () => {
+      const response = await fetch(`/api/rounds/${round.roundId}/give-up`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: round.token,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        setMessage(payload?.error ?? "Give up failed.");
+        return;
+      }
+
+      const data = (await response.json()) as GuessRoundResult;
+      setRound(null);
+      setResult({
+        status: "loss",
+        canonicalAnswer: data.canonicalAnswer ?? "Unknown",
+        score: 0,
+        kind: data.kind,
+        category: data.category,
+        mode: data.mode,
+        clues: data.clues,
+        showDialog: false,
+      });
+      setGuess("");
+      setMessage(`Answer: ${data.canonicalAnswer ?? "Unknown"}.`);
+    });
+  }
+
   function clearForCategoryChoice() {
     setRound(null);
     setResult(null);
@@ -384,6 +425,7 @@ export function useGameShellController({
     currentClues,
     currentMode,
     displayScore,
+    giveUpRound,
     guess,
     guessedEntities,
     guessButtonLabel,

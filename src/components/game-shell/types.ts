@@ -24,6 +24,7 @@ export interface RoundOutcome {
   category: EntityCategory;
   mode: GameMode;
   clues: RoundClue[];
+  showDialog?: boolean;
 }
 
 export interface CategoryCardMeta {

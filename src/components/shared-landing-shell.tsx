@@ -720,6 +720,58 @@ export function SharedLandingShell({
     void submitGuess();
   }
 
+  function giveUpRound() {
+    if (!round) {
+      return;
+    }
+
+    startTransition(async () => {
+      const response = await fetch(`/api/rounds/${round.roundId}/give-up`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: round.token,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        setMessage(payload?.error ?? "Give up failed.");
+        return;
+      }
+
+      const payload = (await response.json()) as GuessRoundResult;
+      setRound(null);
+      setResult({
+        status: "loss",
+        canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
+        score: 0,
+        kind: payload.kind,
+        category: payload.category,
+        mode: payload.mode,
+        clues: payload.clues,
+        showDialog: false,
+      });
+      setGuess("");
+
+      if (payload.kind === "daily") {
+        setPlayedOverrides((current) => ({
+          ...current,
+          [getDailyComboKey(payload.category, payload.mode)]: {
+            score: payload.score,
+            completedAt: new Date().toISOString(),
+          },
+        }));
+      }
+
+      setMessage(`Answer: ${payload.canonicalAnswer ?? "Unknown"}.`);
+    });
+  }
+
   if (view !== "menu") {
     const activeKind =
       round?.kind ??
@@ -738,6 +790,7 @@ export function SharedLandingShell({
           currentClues={currentClues}
           currentMode={currentMode}
           displayScore={displayScore}
+          giveUpRound={giveUpRound}
           flowLabel={isDailyFlow ? "Daily" : "Free play"}
           guess={guess}
           guessedEntities={guessedEntities}
@@ -776,7 +829,7 @@ export function SharedLandingShell({
           />
         ) : null}
 
-        {result ? (
+        {result && result.showDialog !== false ? (
           <GameResultDialog
             clearForCategoryChoice={() => clearToHome()}
             currentCategory={currentCategory}
