@@ -1,11 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 
-import { DailyChallengeShell } from "@/src/components/daily-challenge-shell";
-import { GameShell } from "@/src/components/game-shell";
+import { SharedLandingShell } from "@/src/components/shared-landing-shell";
 import { getOptionalActorId } from "@/src/lib/auth/actor";
 import { PENDING_DAILY_CLAIMS_COOKIE } from "@/src/lib/game/daily-claim-cookie";
-import { getDailyHomeData } from "@/src/lib/repository/daily-repository";
+import { getDailyLandingData } from "@/src/lib/repository/daily-repository";
 import {
   buildCategorySummaries,
   getLatestSnapshot,
@@ -23,7 +22,7 @@ export default async function HomePage() {
   const categories = allCategories.filter((category) =>
     ACTIVE_GAME_CATEGORIES.includes(category.id),
   );
-  const dailyHomeData = await getDailyHomeData(actorId);
+  const dailyLandingData = await getDailyLandingData(actorId);
   const countryOptions = [
     ...new Set(
       snapshot.entities
@@ -37,23 +36,13 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-3 pb-4 pt-24 sm:px-4 sm:pb-5 sm:pt-28">
-      <div className="grid gap-6">
-        <DailyChallengeShell
-          countryOptions={countryOptions}
-          data={dailyHomeData}
-          hasPendingClaim={hasPendingClaim}
-          isSignedIn={Boolean(userId)}
-        />
-
-        <section className="grid gap-3">
-          <div className="px-1">
-            <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-              Free play
-            </p>
-          </div>
-          <GameShell categories={categories} countryOptions={countryOptions} />
-        </section>
-      </div>
+      <SharedLandingShell
+        categories={categories}
+        countryOptions={countryOptions}
+        dailyData={dailyLandingData}
+        hasPendingClaim={hasPendingClaim}
+        isSignedIn={Boolean(userId)}
+      />
     </main>
   );
 }

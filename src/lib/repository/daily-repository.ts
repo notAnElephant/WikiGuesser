@@ -13,16 +13,120 @@ import { getPrismaClient } from "@/src/lib/repository/prisma";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
   DailyChallengeCard,
+  DailyChallengeOption,
   DailyComboLeaderboard,
   DailyHomeData,
+  DailyLandingData,
   DailyLeaderboardEntry,
+  DailyLeaderboardPageData,
   EntityCategory,
-  MaterializedSnapshot,
   NormalizedEntity,
   GameMode,
+  MaterializedSnapshot,
 } from "@/src/lib/types";
 import { ACTIVE_GAME_CATEGORIES, GAME_MODES } from "@/src/lib/types";
 const DAILY_LEADERBOARD_LIMIT = 10;
+
+function getDefaultDailySelection<
+  T extends {
+    category: EntityCategory;
+    mode: GameMode;
+    playerStatus: { hasPlayed: boolean };
+  },
+>(options: T[]) {
+  return (
+    options.find((option) => !option.playerStatus.hasPlayed) ??
+    options.find(
+      (option) =>
+        option.category === "countries" && option.mode === "classic",
+    ) ??
+    options[0]!
+  );
+}
+
+async function buildDailyOptions(
+  actorId: string | null,
+  dayKey: string,
+): Promise<DailyChallengeOption[]> {
+  const options: DailyChallengeOption[] = [];
+  const snapshot = await getLatestSnapshot();
+
+  for (const category of ACTIVE_GAME_CATEGORIES) {
+    for (const mode of GAME_MODES) {
+      const challenge = await getOrCreateChallengeForDay(
+        category,
+        mode,
+        dayKey,
+        snapshot,
+      );
+      options.push({
+        challengeId: challenge.id,
+        dayKey: challenge.dayKey,
+        category,
+        mode,
+        playerStatus: {
+          hasPlayed: false,
+          score: null,
+          completedAt: null,
+        },
+      });
+    }
+  }
+
+  if (!actorId) {
+    return options;
+  }
+
+  const prisma = getPrismaClient();
+  const results = await prisma.dailyResult.findMany({
+    where: {
+      playerKey: actorId,
+      dailyChallengeId: {
+        in: options.map((option) => option.challengeId),
+      },
+    },
+    select: {
+      dailyChallengeId: true,
+      score: true,
+      completedAt: true,
+    },
+  });
+  const resultByChallengeId = new Map(
+    results.map((result) => [result.dailyChallengeId, result]),
+  );
+
+  for (const option of options) {
+    const result = resultByChallengeId.get(option.challengeId);
+
+    if (!result) {
+      continue;
+    }
+
+    option.playerStatus = {
+      hasPlayed: true,
+      score: result.score,
+      completedAt: result.completedAt.toISOString(),
+    };
+  }
+
+  return options;
+}
+
+async function buildLeaderboardByCombo(dayKey: string) {
+  const leaderboardByCombo: Record<string, DailyComboLeaderboard> = {};
+
+  for (const category of ACTIVE_GAME_CATEGORIES) {
+    for (const mode of GAME_MODES) {
+      const comboKey = getDailyComboKey(category, mode);
+      leaderboardByCombo[comboKey] = {
+        today: await buildTodayLeaderboard(category, mode, dayKey),
+        total: await buildTotalLeaderboard(category, mode),
+      };
+    }
+  }
+
+  return leaderboardByCombo;
+}
 
 function toDailyEntity(challenge: DailyChallenge): NormalizedEntity {
   return {
@@ -448,91 +552,42 @@ async function buildTotalLeaderboard(category: EntityCategory, mode: GameMode) {
 export async function getDailyHomeData(
   actorId: string | null,
 ): Promise<DailyHomeData> {
+  const landingData = await getDailyLandingData(actorId);
+  const leaderboardByCombo = await buildLeaderboardByCombo(landingData.dayKey);
+
+  return {
+    dayKey: landingData.dayKey,
+    cards: landingData.options,
+    leaderboardByCombo,
+    defaultCategory: landingData.defaultCategory,
+    defaultMode: landingData.defaultMode,
+  };
+}
+
+export async function getDailyLandingData(
+  actorId: string | null,
+): Promise<DailyLandingData> {
   const dayKey = getDailyDayKey();
-  const cards = [] as DailyChallengeCard[];
-  const snapshot = await getLatestSnapshot();
-
-  for (const category of ACTIVE_GAME_CATEGORIES) {
-    for (const mode of GAME_MODES) {
-      const challenge = await getOrCreateChallengeForDay(
-        category,
-        mode,
-        dayKey,
-        snapshot,
-      );
-      cards.push({
-        challengeId: challenge.id,
-        dayKey: challenge.dayKey,
-        category,
-        mode,
-        playerStatus: {
-          hasPlayed: false,
-          score: null,
-          completedAt: null,
-        },
-      });
-    }
-  }
-
-  if (actorId) {
-    const prisma = getPrismaClient();
-    const results = await prisma.dailyResult.findMany({
-      where: {
-        playerKey: actorId,
-        dailyChallengeId: {
-          in: cards.map((card) => card.challengeId),
-        },
-      },
-      select: {
-        dailyChallengeId: true,
-        score: true,
-        completedAt: true,
-      },
-    });
-    const resultByChallengeId = new Map(
-      results.map((result) => [result.dailyChallengeId, result]),
-    );
-
-    for (const card of cards) {
-      const result = resultByChallengeId.get(card.challengeId);
-
-      if (!result) {
-        continue;
-      }
-
-      card.playerStatus = {
-        hasPlayed: true,
-        score: result.score,
-        completedAt: result.completedAt.toISOString(),
-      };
-    }
-  }
-
-  const leaderboardByCombo: Record<string, DailyComboLeaderboard> = {};
-
-  for (const category of ACTIVE_GAME_CATEGORIES) {
-    for (const mode of GAME_MODES) {
-      const comboKey = getDailyComboKey(category, mode);
-      leaderboardByCombo[comboKey] = {
-        today: await buildTodayLeaderboard(category, mode, dayKey),
-        total: await buildTotalLeaderboard(category, mode),
-      };
-    }
-  }
-
-  const defaultCard =
-    cards.find((card) => !card.playerStatus.hasPlayed) ??
-    cards.find(
-      (card) => card.category === "countries" && card.mode === "classic",
-    ) ??
-    cards[0]!;
+  const options = await buildDailyOptions(actorId, dayKey);
+  const defaultOption = getDefaultDailySelection(options);
 
   return {
     dayKey,
-    cards,
+    options,
+    defaultCategory: defaultOption.category,
+    defaultMode: defaultOption.mode,
+  };
+}
+
+export async function getDailyLeaderboardPageData(): Promise<DailyLeaderboardPageData> {
+  const dayKey = getDailyDayKey();
+  const leaderboardByCombo = await buildLeaderboardByCombo(dayKey);
+
+  return {
+    dayKey,
     leaderboardByCombo,
-    defaultCategory: defaultCard.category,
-    defaultMode: defaultCard.mode,
+    defaultCategory: "countries",
+    defaultMode: "classic",
   };
 }
 

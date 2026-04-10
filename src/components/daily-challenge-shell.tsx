@@ -23,7 +23,7 @@ import type {
   RevealClueResult,
   StartRoundResult
 } from "@/src/lib/types";
-import { ArrowRight, CalendarDays, Crown, LoaderCircle, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, CalendarDays, LoaderCircle, Sparkles, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 
@@ -33,8 +33,6 @@ interface DailyChallengeShellProps {
   hasPendingClaim: boolean;
   isSignedIn: boolean;
 }
-
-type LeaderboardPeriod = "today" | "total";
 
 interface PlayedOverride {
   score: number;
@@ -75,8 +73,6 @@ export function DailyChallengeShell({
     data.defaultCategory,
   );
   const [selectedMode, setSelectedMode] = useState<GameMode>(data.defaultMode);
-  const [leaderboardPeriod, setLeaderboardPeriod] =
-    useState<LeaderboardPeriod>("today");
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
@@ -188,13 +184,6 @@ export function DailyChallengeShell({
       (card) =>
         card.category === selectedCategory && card.mode === selectedMode,
     ) ?? cards[0]!;
-  const leaderboard =
-    data.leaderboardByCombo[selectedComboKey] ??
-    data.leaderboardByCombo[
-      getDailyComboKey(data.defaultCategory, data.defaultMode)
-    ]!;
-  const leaderboardEntries =
-    leaderboardPeriod === "today" ? leaderboard.today : leaderboard.total;
   const view = round ? "round" : result ? "result" : "menu";
   const currentMode = round?.mode ?? result?.mode ?? selectedCard.mode;
   const currentClues = round?.clues ?? result?.clues ?? [];
@@ -527,9 +516,7 @@ export function DailyChallengeShell({
               clearToHub({ refresh: true });
             }}
             onSecondaryAction={() => clearToHub()}
-            primaryActionLabel={
-              isSignedIn ? "Daily leaderboard" : "Create account"
-            }
+            primaryActionLabel={isSignedIn ? "Daily hub" : "Create account"}
             result={result}
             secondaryActionLabel="Daily hub"
             startRound={() => startDaily(selectedCard)}
@@ -567,7 +554,7 @@ export function DailyChallengeShell({
               WikiGuesser
             </h1>
             <p className="m-0 mt-4 max-w-xl text-[1.02rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
-              One shared shot per category and mode. Build today. Climb total.
+              One shared shot per category and mode. Build today. Come back tomorrow.
             </p>
           </div>
 
@@ -612,7 +599,7 @@ export function DailyChallengeShell({
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+      <div className="grid gap-4">
         <div className={`${surfaceClass} grid gap-4 p-5 sm:p-6`}>
           <div className="flex items-center justify-between gap-3">
             <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
@@ -691,74 +678,11 @@ export function DailyChallengeShell({
             })}
           </div>
         </div>
-
+        {/* Leaderboard temporarily disabled while it gets reworked.
         <aside className={`${surfaceClass} grid gap-4 p-5 sm:p-6`}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-              <Crown aria-hidden="true" className="size-4" strokeWidth={2.2} />
-              Leaderboard
-            </div>
-            <div className="inline-flex rounded-full border border-black/8 bg-white/76 p-1 dark:border-white/10 dark:bg-white/6">
-              {(["today", "total"] as const).map((period) => (
-                <button
-                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-                    leaderboardPeriod === period
-                      ? "bg-[#0f766e] text-white dark:bg-[#24d4c2] dark:text-[#082825]"
-                      : "text-[#6b6259] dark:text-[#9aa9bb]"
-                  }`}
-                  key={period}
-                  onClick={() => setLeaderboardPeriod(period)}
-                  type="button"
-                >
-                  {period === "today" ? "Today" : "Total"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-black/8 bg-white/76 p-4 dark:border-white/10 dark:bg-white/6">
-            <div className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
-              {toCategoryLabel(selectedCard.category)} ·{" "}
-              {getModeMeta(selectedCard.mode).label}
-            </div>
-            <div className="mt-3 grid gap-2">
-              {leaderboardEntries.length === 0 ? (
-                <div className="rounded-[22px] border border-dashed border-black/10 px-4 py-6 text-center text-sm text-[#6b6259] dark:border-white/10 dark:text-[#9aa9bb]">
-                  No scores yet.
-                </div>
-              ) : (
-                leaderboardEntries.map((entry, index) => (
-                  <div
-                    className="flex items-center justify-between gap-3 rounded-[22px] border border-black/8 bg-white/84 px-4 py-3 dark:border-white/10 dark:bg-[rgba(255,255,255,0.05)]"
-                    key={`${entry.playerKey}-${index}`}
-                  >
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-[#1f1b17] dark:text-[#f5f7fb]">
-                        {index + 1}. {entry.displayName}
-                      </div>
-                      <div className="text-xs text-[#6b6259] dark:text-[#9aa9bb]">
-                        {leaderboardPeriod === "today"
-                          ? entry.completedAt
-                            ? new Date(entry.completedAt).toLocaleTimeString(
-                                [],
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                },
-                              )
-                            : "Today"
-                          : `${entry.roundsWon ?? 0} wins`}
-                      </div>
-                    </div>
-                    <strong className="text-[#115e59] dark:text-[#8ff4e7]">
-                      {entry.score}
-                    </strong>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          ...
         </aside>
+        */}
       </div>
     </section>
   );

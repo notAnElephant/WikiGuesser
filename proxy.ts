@@ -1,4 +1,12 @@
+import { NextResponse } from "next/server";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+
+const canonicalProductionHost = "www.wikiguesser.me";
+const redirectableProductionHosts = new Set([
+  "wikiguesser.me",
+  "wiki-guesser-notanelephants-projects.vercel.app",
+  "wiki-guesser-git-main-notanelephants-projects.vercel.app",
+]);
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -11,6 +19,20 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  const host = req.nextUrl.host;
+
+  if (
+    process.env.NODE_ENV === "production" &&
+    host !== canonicalProductionHost &&
+    (redirectableProductionHosts.has(host) || host.endsWith(".vercel.app"))
+  ) {
+    const redirectUrl = new URL(req.url);
+    redirectUrl.host = canonicalProductionHost;
+    redirectUrl.protocol = "https:";
+
+    return NextResponse.redirect(redirectUrl, 308);
+  }
+
   if (!isPublicRoute(req)) {
     await auth.protect();
   }

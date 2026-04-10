@@ -41,6 +41,14 @@ export default function RootLayout({
                 </Link>
 
                 <div className="flex items-center gap-2">
+                  {/* Leaderboard temporarily disabled while it gets reworked.
+                  <Link
+                    className="inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
+                    href="/leaderboard"
+                  >
+                    Leaderboard
+                  </Link>
+                  */}
                   <ThemeToggle />
                   <Show when="signed-out">
                     <Link

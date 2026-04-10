@@ -202,6 +202,14 @@ export interface DailyChallengeCard {
   playerStatus: DailyChallengePlayerStatus;
 }
 
+export interface DailyChallengeOption {
+  challengeId: string;
+  dayKey: string;
+  category: EntityCategory;
+  mode: GameMode;
+  playerStatus: DailyChallengePlayerStatus;
+}
+
 export interface DailyLeaderboardEntry {
   playerKey: string;
   displayName: string;
@@ -220,6 +228,20 @@ export interface DailyComboLeaderboard {
 export interface DailyHomeData {
   dayKey: string;
   cards: DailyChallengeCard[];
+  leaderboardByCombo: Record<string, DailyComboLeaderboard>;
+  defaultCategory: EntityCategory;
+  defaultMode: GameMode;
+}
+
+export interface DailyLandingData {
+  dayKey: string;
+  options: DailyChallengeOption[];
+  defaultCategory: EntityCategory;
+  defaultMode: GameMode;
+}
+
+export interface DailyLeaderboardPageData {
+  dayKey: string;
   leaderboardByCombo: Record<string, DailyComboLeaderboard>;
   defaultCategory: EntityCategory;
   defaultMode: GameMode;
