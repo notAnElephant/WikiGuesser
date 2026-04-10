@@ -1,6 +1,10 @@
 "use client";
 
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import type {
+  ActiveRound,
+  GameShellProps,
+  RoundOutcome,
+} from "@/src/components/game-shell/types";
 
 import {
   getMenuMessage,
@@ -8,11 +12,7 @@ import {
   isClueLocked,
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
-import type {
-  ActiveRound,
-  GameShellProps,
-  RoundOutcome,
-} from "@/src/components/game-shell/types";
+import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import type {
   GameMode,
   GuessRoundResult,
@@ -345,6 +345,7 @@ export function useGameShellController({
         revealedClues: data.revealedClues,
         remainingClues: data.remainingClues,
         canGuess: data.canGuess,
+        kind: data.kind,
       });
 
       setMessage(

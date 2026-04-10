@@ -48,10 +48,6 @@ export function getPrismaClient(): PrismaClient {
       throw new Error("DATABASE_URL is not configured.");
     }
 
-    if (globalThis.prisma) {
-      void globalThis.prisma.$disconnect().catch(() => {});
-    }
-
     neonConfig.webSocketConstructor = getWebSocketConstructor();
 
     const adapter = new PrismaNeon({ connectionString: env.databaseUrl });
