@@ -48,12 +48,21 @@ npm test
 npm run prisma:generate
 npm run prisma:migrate:deploy
 npm run ingest:discover
+npm run ingest:discover:countries
 npm run ingest:discover:cities
+npm run ingest:discover:people
 npm run ingest:hydrate
+npm run ingest:hydrate:countries
 npm run ingest:hydrate:cities
+npm run ingest:hydrate:people
 npm run ingest:build-snapshot
+npm run ingest:build-snapshot:countries
 npm run ingest:build-snapshot:cities
+npm run ingest:build-snapshot:people
 npm run ingest:build-snapshot:active
+npm run ingest:countries
+npm run ingest:cities
+npm run ingest:people
 ```
 
 ## Data Flow
