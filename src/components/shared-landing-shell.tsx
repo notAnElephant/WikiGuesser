@@ -998,7 +998,11 @@ export function SharedLandingShell({
               2. Category
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div
+              className={`grid gap-3 sm:grid-cols-2 ${
+                showRandomMix ? "xl:grid-cols-3" : "xl:grid-cols-2"
+              }`}
+            >
               {showRandomMix ? (
                 <button
                   className={selectionCardClass(selectedCategory === "random")}
