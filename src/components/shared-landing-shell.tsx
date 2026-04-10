@@ -7,6 +7,7 @@ import { type FormEvent, useEffect, useMemo, useState, useTransition } from "rea
 import {
   ArrowRight,
   CalendarDays,
+  CircleAlert,
   Compass,
   LoaderCircle,
   Shuffle,
@@ -201,6 +202,10 @@ export function SharedLandingShell({
       (option) =>
         option.category === selectedCategory && option.mode === selectedMode,
     ) ?? null;
+  const selectedCategoryDailyOptions =
+    selectedPlayType === "daily" && selectedCategory
+      ? dailyOptions.filter((option) => option.category === selectedCategory)
+      : [];
   const view = round ? "round" : result ? "result" : "menu";
   const totalEntityCount = categories.reduce(
     (sum, category) => sum + category.entityCount,
@@ -303,6 +308,35 @@ export function SharedLandingShell({
       setSelectedMode(dailyData.defaultMode);
     }
   }, [dailyData.defaultMode, selectedMode, selectedPlayType]);
+
+  useEffect(() => {
+    if (
+      selectedPlayType !== "daily" ||
+      !selectedCategory ||
+      !selectedMode ||
+      view !== "menu"
+    ) {
+      return;
+    }
+
+    const currentOption = dailyOptions.find(
+      (option) =>
+        option.category === selectedCategory && option.mode === selectedMode,
+    );
+
+    if (!currentOption?.playerStatus.hasPlayed) {
+      return;
+    }
+
+    const nextAvailableOption = dailyOptions.find(
+      (option) =>
+        option.category === selectedCategory && !option.playerStatus.hasPlayed,
+    );
+
+    if (nextAvailableOption && nextAvailableOption.mode !== selectedMode) {
+      setSelectedMode(nextAvailableOption.mode);
+    }
+  }, [dailyOptions, selectedCategory, selectedMode, selectedPlayType, view]);
 
   useEffect(() => {
     if (view !== "menu") {
@@ -821,6 +855,17 @@ export function SharedLandingShell({
                 <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
                   {selectedPlayType === "daily" ? "Today's daily" : "Free play"}
                 </p>
+                {selectedPlayType === "daily" &&
+                selectedDailyOption?.playerStatus.hasPlayed ? (
+                  <span className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-500/18 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200">
+                    <CircleAlert
+                      aria-hidden="true"
+                      className="size-4"
+                      strokeWidth={2.1}
+                    />
+                    Already played today.
+                  </span>
+                ) : null}
                 <strong className="mt-2 block font-serif-display text-[1.7rem] tracking-[-0.05em] text-[#1f1b17] dark:text-[#f5f7fb]">
                   {selectedPlayType === "daily"
                     ? `${toCategoryLabel(selectedCategory, categories)} · ${selectedModeMeta.label}`
@@ -1030,9 +1075,17 @@ export function SharedLandingShell({
 
             <div className="grid gap-3 lg:grid-cols-2">
               {GAME_MODE_OPTIONS.map((mode) => {
+                const dailyModeOption =
+                  selectedPlayType === "daily" && selectedCategory
+                    ? selectedCategoryDailyOptions.find(
+                        (option) => option.mode === mode.id,
+                      ) ?? null
+                    : null;
                 const isDisabled =
                   !selectedCategory ||
-                  (selectedPlayType === "free-play" && totalSelectedEntityCount === 0);
+                  (selectedPlayType === "free-play" && totalSelectedEntityCount === 0) ||
+                  (selectedPlayType === "daily" &&
+                    (!dailyModeOption || dailyModeOption.playerStatus.hasPlayed));
                 const ModeIcon = mode.icon;
 
                 return (
@@ -1051,9 +1104,16 @@ export function SharedLandingShell({
                           strokeWidth={2.1}
                         />
                       </span>
-                      <span className="rounded-full bg-black/5 px-2.5 py-1 text-xs font-semibold text-[#6b6259] dark:bg-white/8 dark:text-[#9aa9bb]">
-                        {mode.summary}
-                      </span>
+                      {selectedPlayType === "daily" &&
+                      dailyModeOption?.playerStatus.hasPlayed ? (
+                        <span className="rounded-full border border-amber-500/18 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200">
+                          Played
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-black/5 px-2.5 py-1 text-xs font-semibold text-[#6b6259] dark:bg-white/8 dark:text-[#9aa9bb]">
+                          {mode.summary}
+                        </span>
+                      )}
                     </div>
                     <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
                       {mode.label}

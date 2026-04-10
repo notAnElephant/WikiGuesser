@@ -23,7 +23,7 @@ import type {
   RevealClueResult,
   StartRoundResult
 } from "@/src/lib/types";
-import { ArrowRight, CalendarDays, LoaderCircle, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, CalendarDays, CircleAlert, LoaderCircle, Sparkles, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 
@@ -564,6 +564,16 @@ export function DailyChallengeShell({
                 <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
                   Today
                 </p>
+                {selectedCard.playerStatus.hasPlayed ? (
+                  <span className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-500/18 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200">
+                    <CircleAlert
+                      aria-hidden="true"
+                      className="size-4"
+                      strokeWidth={2.1}
+                    />
+                    Already played today.
+                  </span>
+                ) : null}
                 <strong className="mt-2 block font-serif-display text-[1.9rem] tracking-[-0.05em] text-[#1f1b17] dark:text-[#f5f7fb]">
                   {data.dayKey}
                 </strong>
