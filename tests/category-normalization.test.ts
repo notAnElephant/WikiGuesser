@@ -23,15 +23,18 @@ describe("category normalization", () => {
     const entity = categoryDefinitions.cities.normalize(citySourceFixture);
     expect(entity?.canonicalAnswer).toBe("Budapest");
     expect(entity?.clues[0]?.label).toBe("Continent");
-    expect(entity?.clues.at(-1)?.value).toBe("1873");
+    expect(entity?.clues.some((c) => c.label === "Famous location")).toBe(
+      true,
+    );
+    expect(entity?.clues.some((c) => c.label === "Founded")).toBe(false);
 
     const blurredClues = entity?.clues.filter(
       (c) => c.mode === "blurred-lines",
     );
-    expect(blurredClues).toHaveLength(3);
+    expect(blurredClues).toHaveLength(2);
     expect(blurredClues?.some((c) => c.label === "Mayor")).toBe(true);
     expect(blurredClues?.some((c) => c.label === "GDP per capita")).toBe(true);
-    expect(blurredClues?.some((c) => c.label === "Famous location")).toBe(true);
+    expect(entity?.clues.some((c) => c.spoilerLevel === "late")).toBe(false);
   });
 
   it("rejects city entities without enough classic clues", () => {

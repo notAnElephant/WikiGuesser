@@ -41,7 +41,7 @@ Cities also require at least `4` `classic`-eligible clues, so `blurred-lines`-on
 2. `Population`
 3. `Nickname`
 4. `Closest capital`
-5. `Founded` (`late`)
+5. `Famous location`
 
 ### Classic
 
@@ -51,7 +51,7 @@ Cities also require at least `4` `classic`-eligible clues, so `blurred-lines`-on
 2. `Population`
 3. `Nickname`
 4. `Closest capital`
-5. `Founded` (`late`)
+5. `Famous location`
 
 ### Blurred-Lines
 
