@@ -56,14 +56,13 @@ npm run ingest:hydrate:countries
 npm run ingest:hydrate:cities
 npm run ingest:hydrate:people
 npm run ingest:build-snapshot
-npm run ingest:build-snapshot:countries
-npm run ingest:build-snapshot:cities
-npm run ingest:build-snapshot:people
 npm run ingest:build-snapshot:active
-npm run ingest:countries
-npm run ingest:cities
-npm run ingest:people
 ```
+
+Safe snapshot workflow:
+
+- Re-hydrate only the categories you changed, for example `npm run ingest:hydrate:cities`
+- Then rebuild the combined live snapshot with `npm run ingest:build-snapshot:active`
 
 ## Data Flow
 

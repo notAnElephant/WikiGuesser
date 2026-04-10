@@ -21,14 +21,8 @@
     "ingest:hydrate:countries": "tsx src/scripts/hydrate.ts -- --category countries",
     "ingest:hydrate:cities": "tsx src/scripts/hydrate.ts -- --category cities",
     "ingest:hydrate:people": "tsx src/scripts/hydrate.ts -- --category people",
-    "ingest:build-snapshot": "tsx src/scripts/build-snapshot.ts -- --category countries",
-    "ingest:build-snapshot:countries": "tsx src/scripts/build-snapshot.ts -- --category countries",
-    "ingest:build-snapshot:cities": "tsx src/scripts/build-snapshot.ts -- --category cities",
-    "ingest:build-snapshot:people": "tsx src/scripts/build-snapshot.ts -- --category people",
-    "ingest:build-snapshot:active": "tsx src/scripts/build-snapshot.ts -- --category countries,cities",
-    "ingest:countries": "npm run ingest:discover:countries && npm run ingest:hydrate:countries && npm run ingest:build-snapshot:countries",
-    "ingest:cities": "npm run ingest:discover:cities && npm run ingest:hydrate:cities && npm run ingest:build-snapshot:cities",
-    "ingest:people": "npm run ingest:discover:people && npm run ingest:hydrate:people && npm run ingest:build-snapshot:people"
+    "ingest:build-snapshot": "tsx src/scripts/build-snapshot.ts -- --category countries,cities",
+    "ingest:build-snapshot:active": "tsx src/scripts/build-snapshot.ts -- --category countries,cities"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.11",
