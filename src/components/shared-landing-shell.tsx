@@ -851,6 +851,13 @@ export function SharedLandingShell({
             onSecondaryAction={() =>
               result.kind === "daily" ? clearToHome({ refresh: true }) : clearToHome()
             }
+            onTertiaryAction={
+              result.kind === "daily" && !isSignedIn
+                ? () => {
+                    router.push("/sign-in");
+                  }
+                : undefined
+            }
             primaryActionLabel={
               result.kind === "daily"
                 ? isSignedIn
@@ -861,6 +868,9 @@ export function SharedLandingShell({
             result={result}
             secondaryActionLabel="Home"
             startRound={startSelectedFlow}
+            tertiaryActionLabel={
+              result.kind === "daily" && !isSignedIn ? "Log in" : undefined
+            }
           />
         ) : null}
       </>

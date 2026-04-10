@@ -4,7 +4,15 @@ import {
 } from "@/src/components/game-shell/config";
 import { getCategoryMeta } from "@/src/components/game-shell/utils";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
-import { Ban, House, PartyPopper, RotateCcw, Trophy } from "lucide-react";
+import {
+  Ban,
+  House,
+  LogIn,
+  PartyPopper,
+  RotateCcw,
+  Trophy,
+  UserPlus,
+} from "lucide-react";
 
 interface GameResultDialogProps {
   clearForCategoryChoice: () => void;
@@ -13,10 +21,12 @@ interface GameResultDialogProps {
   isBusy: boolean;
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
+  onTertiaryAction?: () => void;
   primaryActionLabel?: string;
   result: RoundOutcome;
   secondaryActionLabel?: string;
   startRound: () => void;
+  tertiaryActionLabel?: string;
 }
 
 export function GameResultDialog({
@@ -26,14 +36,17 @@ export function GameResultDialog({
   isBusy,
   onPrimaryAction,
   onSecondaryAction,
+  onTertiaryAction,
   primaryActionLabel = "Play again",
   result,
   secondaryActionLabel = "Categories",
   startRound,
+  tertiaryActionLabel,
 }: GameResultDialogProps) {
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const handlePrimaryAction = onPrimaryAction ?? startRound;
   const handleSecondaryAction = onSecondaryAction ?? clearForCategoryChoice;
+  const usesCreateAccountAction = primaryActionLabel === "Create account";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,20,14,0.46)] p-4 backdrop-blur-sm dark:bg-[rgba(3,7,14,0.62)]">
@@ -119,11 +132,19 @@ export function GameResultDialog({
             onClick={handlePrimaryAction}
             type="button"
           >
-            <RotateCcw
-              aria-hidden="true"
-              className="size-4"
-              strokeWidth={2.2}
-            />
+            {usesCreateAccountAction ? (
+              <UserPlus
+                aria-hidden="true"
+                className="size-4"
+                strokeWidth={2.2}
+              />
+            ) : (
+              <RotateCcw
+                aria-hidden="true"
+                className="size-4"
+                strokeWidth={2.2}
+              />
+            )}
             {primaryActionLabel}
           </button>
           <button
@@ -136,6 +157,17 @@ export function GameResultDialog({
             {secondaryActionLabel}
           </button>
         </div>
+        {tertiaryActionLabel && onTertiaryAction ? (
+          <button
+            className={`${secondaryButtonClass} mt-3 w-full`}
+            disabled={isBusy}
+            onClick={onTertiaryAction}
+            type="button"
+          >
+            <LogIn aria-hidden="true" className="size-4" strokeWidth={2.2} />
+            {tertiaryActionLabel}
+          </button>
+        ) : null}
       </div>
     </div>
   );

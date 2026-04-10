@@ -565,10 +565,18 @@ export function DailyChallengeShell({
               clearToHub({ refresh: true });
             }}
             onSecondaryAction={() => clearToHub()}
+            onTertiaryAction={
+              !isSignedIn
+                ? () => {
+                    router.push("/sign-in");
+                  }
+                : undefined
+            }
             primaryActionLabel={isSignedIn ? "Daily hub" : "Create account"}
             result={result}
             secondaryActionLabel="Daily hub"
             startRound={() => startDaily(selectedCard)}
+            tertiaryActionLabel={!isSignedIn ? "Log in" : undefined}
           />
         ) : null}
       </>
