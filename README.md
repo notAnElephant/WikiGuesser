@@ -57,6 +57,7 @@ npm run ingest:hydrate:cities
 npm run ingest:hydrate:people
 npm run ingest:build-snapshot
 npm run ingest:build-snapshot:active
+npm run report:properties:cities
 ```
 
 Safe snapshot workflow:

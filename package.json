@@ -22,7 +22,8 @@
     "ingest:hydrate:cities": "tsx src/scripts/hydrate.ts -- --category cities",
     "ingest:hydrate:people": "tsx src/scripts/hydrate.ts -- --category people",
     "ingest:build-snapshot": "tsx src/scripts/build-snapshot.ts -- --category countries,cities",
-    "ingest:build-snapshot:active": "tsx src/scripts/build-snapshot.ts -- --category countries,cities"
+    "ingest:build-snapshot:active": "tsx src/scripts/build-snapshot.ts -- --category countries,cities",
+    "report:properties:cities": "tsx src/scripts/report-property-coverage.ts -- --category cities"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.11",
