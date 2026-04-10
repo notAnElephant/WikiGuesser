@@ -99,7 +99,7 @@ describe("round service", () => {
 
     expect(round.category).toBe("cities");
     expect(round.revealedClues).toHaveLength(1);
-    expect(round.revealedClues[0]?.label).toBe("Country");
+    expect(round.revealedClues[0]?.label).toBe("Continent");
   });
 
   it("reveals the next clue after an incorrect classic guess", async () => {

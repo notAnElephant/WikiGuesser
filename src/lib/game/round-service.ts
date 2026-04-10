@@ -53,22 +53,30 @@ function pickEntity(
   return entities[index]!;
 }
 
+function getEffectiveClues(entity: NormalizedEntity, mode: GameMode) {
+  return entity.clues.filter((clue) => !clue.mode || clue.mode === mode);
+}
+
 function getRevealedClues(
   entity: NormalizedEntity,
   revealedClueKeys: string[],
+  mode: GameMode,
 ) {
   const revealedClueSet = new Set(revealedClueKeys);
-  return entity.clues.filter((clue) => revealedClueSet.has(clue.key));
+  return getEffectiveClues(entity, mode).filter((clue) =>
+    revealedClueSet.has(clue.key),
+  );
 }
 
 function getClues(
   entity: NormalizedEntity,
   revealedClueKeys: string[],
+  mode: GameMode,
   options?: { revealAll?: boolean },
 ): RoundClue[] {
   const revealedClueSet = new Set(revealedClueKeys);
 
-  return entity.clues.map((clue) => {
+  return getEffectiveClues(entity, mode).map((clue) => {
     const isRevealed = options?.revealAll || revealedClueSet.has(clue.key);
 
     return {
@@ -86,16 +94,21 @@ function getClues(
 function getRemainingClues(
   entity: NormalizedEntity,
   revealedClueKeys: string[],
+  mode: GameMode,
 ): number {
-  return Math.max(entity.clues.length - revealedClueKeys.length, 0);
+  return Math.max(
+    getEffectiveClues(entity, mode).length - revealedClueKeys.length,
+    0,
+  );
 }
 
 function hasHiddenSafeClues(
   entity: NormalizedEntity,
   revealedClueKeys: string[],
+  mode: GameMode,
 ): boolean {
   const revealedClueSet = new Set(revealedClueKeys);
-  return entity.clues.some(
+  return getEffectiveClues(entity, mode).some(
     (clue) => clue.spoilerLevel === "safe" && !revealedClueSet.has(clue.key),
   );
 }
@@ -106,7 +119,9 @@ function getNextClassicClueKey(
 ): string | null {
   const revealedClueSet = new Set(roundState.revealedClueKeys);
   return (
-    entity.clues.find((clue) => !revealedClueSet.has(clue.key))?.key ?? null
+    getEffectiveClues(entity, roundState.mode).find(
+      (clue) => !revealedClueSet.has(clue.key),
+    )?.key ?? null
   );
 }
 
@@ -119,9 +134,17 @@ function buildRoundProgress(
     kind: roundState.kind,
     category: entity.category,
     mode: roundState.mode,
-    clues: getClues(entity, roundState.revealedClueKeys, options),
-    revealedClues: getRevealedClues(entity, roundState.revealedClueKeys),
-    remainingClues: getRemainingClues(entity, roundState.revealedClueKeys),
+    clues: getClues(entity, roundState.revealedClueKeys, roundState.mode, options),
+    revealedClues: getRevealedClues(
+      entity,
+      roundState.revealedClueKeys,
+      roundState.mode,
+    ),
+    remainingClues: getRemainingClues(
+      entity,
+      roundState.revealedClueKeys,
+      roundState.mode,
+    ),
     canGuess: roundState.canGuess,
   };
 }
@@ -333,7 +356,7 @@ export async function revealClue(
 
   if (
     selectedClue.spoilerLevel === "late" &&
-    hasHiddenSafeClues(entity, roundState.revealedClueKeys)
+    hasHiddenSafeClues(entity, roundState.revealedClueKeys, roundState.mode)
   ) {
     throw new Error("That field is still locked.");
   }

@@ -62,6 +62,10 @@ npm run ingest:build-snapshot:active
 - Snapshots are persisted to Postgres.
 - Runtime reads from the latest Postgres snapshot only.
 
+## Gameplay Reference
+
+- [Clues by category and mode](./docs/clues-and-modes.md)
+
 ## Repo Layout
 
 - `app/` App Router pages and API routes

@@ -4,10 +4,13 @@ import {
   createClue,
   formatAreaSquareKilometers,
   formatBirthDecade,
+  formatCurrency,
+  formatDistance,
   formatElevationMeters,
   formatList,
   formatPopulation,
   formatYear,
+  getDistance,
   getEntityLabels,
   getFirstCoordinate,
   getFirstQuantity,
@@ -153,63 +156,121 @@ export const categoryDefinitions: Record<
       "P2044",
       "P421",
       "P571",
+      "P30",
+      "P1449",
+      "P625",
+      "P6",
+      "P2131",
+      "P2226",
+      "P527",
     ],
     lateRevealProperties: ["P571"],
     bannedProperties: ["P18", "P242"],
-    clueOrder: ["P17", "P131", "P1082", "P2046", "P2044", "P421", "P571"],
+    clueOrder: [
+      "P30",
+      "P1082",
+      "P1449",
+      "closest-capital",
+      "P6",
+      "P2131",
+      "P527",
+      "P571",
+    ],
     aliasStrategy: {
       includeWikipediaTitle: true,
       includeRedirects: true,
       stripParenthetical: true,
     },
     normalize(source, options) {
+      const coordinate = getFirstCoordinate(source, "P625");
+      let closestCapitalLabel: string | null = null;
+      let closestCapitalDistance: number | null = null;
+
+      if (coordinate && options?.allSourceEntities) {
+        for (const otherSource of options.allSourceEntities) {
+          if (otherSource.qid === source.qid) {
+            continue;
+          }
+
+          const otherCoordinate = getFirstCoordinate(otherSource, "P625");
+          if (!otherCoordinate) {
+            continue;
+          }
+
+          const distance = getDistance(coordinate, otherCoordinate);
+          if (closestCapitalDistance === null || distance < closestCapitalDistance) {
+            closestCapitalDistance = distance;
+            closestCapitalLabel = otherSource.label;
+          }
+        }
+      }
+
+      const gdpValue = getFirstQuantity(source, "P2131") ?? getFirstQuantity(source, "P2226");
+
       return buildNormalizedEntity({
         source,
         category: "cities",
-        minimumClues: 5,
+        minimumClues: 4,
+        minimumCluesByMode: {
+          classic: 4,
+        },
         redirectAliases: options?.redirectAliases,
         clues: [
           createClue(
-            "country",
-            "Country",
-            formatList(getEntityLabels(source, "P17"), 1),
+            "continent",
+            "Continent",
+            formatList(getEntityLabels(source, "P30"), 1),
             1,
-          ),
-          createClue(
-            "admin-region",
-            "Administrative region",
-            formatList(getEntityLabels(source, "P131"), 1),
-            2,
           ),
           createClue(
             "population",
             "Population",
             formatPopulation(getFirstQuantity(source, "P1082")),
+            2,
+          ),
+          createClue(
+            "nickname",
+            "Nickname",
+            formatList(getEntityLabels(source, "P1449"), 1),
             3,
           ),
           createClue(
-            "area",
-            "Area",
-            formatAreaSquareKilometers(getFirstQuantity(source, "P2046")),
+            "closest-capital",
+            "Closest capital",
+            closestCapitalLabel
+              ? `${closestCapitalLabel} (${formatDistance(closestCapitalDistance)})`
+              : null,
             4,
           ),
           createClue(
-            "elevation",
-            "Elevation",
-            formatElevationMeters(getFirstQuantity(source, "P2044")),
+            "gdp",
+            "GDP per capita",
+            formatCurrency(gdpValue),
             5,
+            "safe",
+            "blurred-lines",
           ),
           createClue(
-            "timezone",
-            "Time zone",
-            formatList(getEntityLabels(source, "P421"), 1),
+            "mayor",
+            "Mayor",
+            formatList(getEntityLabels(source, "P6"), 1),
             6,
+            "safe",
+            "blurred-lines",
+          ),
+          createClue(
+            "famous-location",
+            "Famous location",
+            formatList(getEntityLabels(source, "P527"), 1),
+            7,
+            "safe",
+            "blurred-lines",
           ),
           createClue(
             "founded",
             "Founded",
             formatYear(getFirstTimeValue(source, "P571")),
-            7,
+            8,
             "late",
           ),
         ],

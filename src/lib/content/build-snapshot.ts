@@ -30,6 +30,7 @@ export async function normalizeEntitiesForCategory(
         : [];
     const normalizedEntity = definition.normalize(sourceEntity, {
       redirectAliases,
+      allSourceEntities: sourceEntities,
     });
 
     if (normalizedEntity && !seenNormalizedIds.has(normalizedEntity.id)) {

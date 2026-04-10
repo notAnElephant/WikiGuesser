@@ -22,6 +22,7 @@ export interface PlayableClue {
   value: string;
   difficulty: number;
   spoilerLevel: "safe" | "late";
+  mode?: GameMode;
 }
 
 export interface RoundClue {
@@ -107,6 +108,7 @@ export interface CategoryDefinition {
     source: SourceEntity,
     options?: {
       redirectAliases?: string[];
+      allSourceEntities?: SourceEntity[];
     },
   ) => NormalizedEntity | null;
 }

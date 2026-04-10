@@ -6,6 +6,7 @@ import type {
   AcceptedAnswer,
   EntityCategory,
   EntityMetadataValue,
+  GameMode,
   NormalizedEntity,
   PlayableClue,
   SourceClaimValue,
@@ -81,6 +82,23 @@ export function getFirstCoordinate(
   };
 }
 
+export function getDistance(
+  coord1: { latitude: number; longitude: number },
+  coord2: { latitude: number; longitude: number },
+): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((coord2.latitude - coord1.latitude) * Math.PI) / 180;
+  const dLon = ((coord2.longitude - coord1.longitude) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((coord1.latitude * Math.PI) / 180) *
+      Math.cos((coord2.latitude * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export function formatList(values: string[], limit = 3): string | null {
   const uniqueValues = [...new Set(values.filter(Boolean))].slice(0, limit);
 
@@ -125,12 +143,29 @@ export function formatElevationMeters(value: number | null): string | null {
   return `${integerFormat.format(value)} m`;
 }
 
+export function formatCurrency(value: number | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return `$${integerFormat.format(value)}`;
+}
+
+export function formatDistance(value: number | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return `${integerFormat.format(Math.round(value))} km`;
+}
+
 export function createClue(
   key: string,
   label: string,
   value: string | null,
   difficulty: number,
   spoilerLevel: "safe" | "late" = "safe",
+  mode?: GameMode,
 ): PlayableClue | null {
   if (!value) {
     return null;
@@ -142,7 +177,13 @@ export function createClue(
     value,
     difficulty,
     spoilerLevel,
+    mode,
   };
+}
+
+function getModeClueCount(clues: PlayableClue[], mode: GameMode): number {
+  return clues.filter((clue) => clue.mode === undefined || clue.mode === mode)
+    .length;
 }
 
 export function parseYear(value: string | null): number | null {
@@ -243,6 +284,7 @@ export function buildNormalizedEntity(params: {
   category: EntityCategory;
   clues: Array<PlayableClue | null>;
   minimumClues: number;
+  minimumCluesByMode?: Partial<Record<GameMode, number>>;
   metadata?: Record<string, EntityMetadataValue>;
   redirectAliases?: string[];
 }): NormalizedEntity | null {
@@ -252,6 +294,14 @@ export function buildNormalizedEntity(params: {
 
   if (clues.length < params.minimumClues) {
     return null;
+  }
+
+  for (const [mode, minimumClues] of Object.entries(
+    params.minimumCluesByMode ?? {},
+  ) as Array<[GameMode, number]>) {
+    if (getModeClueCount(clues, mode) < minimumClues) {
+      return null;
+    }
   }
 
   const sourceFingerprint = hashString(
