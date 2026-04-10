@@ -844,7 +844,7 @@ export function SharedLandingShell({
               </h1>
               <p className="m-0 mt-3 max-w-2xl text-[1rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
                 Pick a lane, choose a category, then solve from the clues.
-                Daily gives you one shared puzzle. Free play stays unlimited.
+                Daily lets you play each category and mode once. Free play stays unlimited.
               </p>
             </div>
           </div>
@@ -902,7 +902,7 @@ export function SharedLandingShell({
                     <Trophy aria-hidden="true" className="size-4" strokeWidth={2.1} />
                     {selectedDailyOption?.playerStatus.hasPlayed
                       ? `${selectedDailyScore ?? 0} pts today`
-                      : "One shared puzzle for everyone"}
+                      : "One daily run per category and mode"}
                   </span>
                   {/* Leaderboard temporarily disabled while it gets reworked.
                   <Link
@@ -948,7 +948,7 @@ export function SharedLandingShell({
                 {
                   id: "daily" as const,
                   label: "Daily",
-                  hint: "One shared puzzle per category and mode.",
+                  hint: "One daily run per category and mode.",
                   icon: CalendarDays,
                 },
                 {

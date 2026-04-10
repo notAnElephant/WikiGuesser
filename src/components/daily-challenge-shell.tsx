@@ -554,7 +554,7 @@ export function DailyChallengeShell({
               WikiGuesser
             </h1>
             <p className="m-0 mt-4 max-w-xl text-[1.02rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
-              One shared shot per category and mode. Build today. Come back tomorrow.
+              Play each category and mode once today. Come back tomorrow for a reset.
             </p>
           </div>
 
