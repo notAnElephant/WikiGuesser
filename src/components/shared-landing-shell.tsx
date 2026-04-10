@@ -801,11 +801,11 @@ export function SharedLandingShell({
           isCountryRound={isCountryRound}
           message={message}
           result={result}
-          restartButtonLabel={isDailyFlow ? "Restart daily" : "New free-play round"}
           revealClue={revealClue}
           revealedCount={revealedCount}
           round={round}
           setGuess={setGuess}
+          showRestartButton={!isDailyFlow}
           startRound={startSelectedFlow}
           statusAppearance={statusAppearance}
           validationMessage={validationMessage}

@@ -60,6 +60,7 @@ interface GamePlayViewProps {
   restartButtonLabel?: string;
   round: ActiveRound | null;
   setGuess: (value: string) => void;
+  showRestartButton?: boolean;
   startRound: () => void;
   statusAppearance: MessageAppearance;
   validationMessage: string | null;
@@ -92,6 +93,7 @@ export function GamePlayView({
   restartButtonLabel = "New round",
   round,
   setGuess,
+  showRestartButton = true,
   startRound,
   statusAppearance,
   validationMessage,
@@ -518,19 +520,21 @@ export function GamePlayView({
           ) : null}
 
           <div className={`${surfaceClass} grid gap-3 p-4`}>
-            <button
-              className={`${secondaryButtonClass} w-full`}
-              disabled={isBusy}
-              onClick={startRound}
-              type="button"
-            >
-              <RotateCcw
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={2.2}
-              />
-              {restartButtonLabel}
-            </button>
+            {showRestartButton ? (
+              <button
+                className={`${secondaryButtonClass} w-full`}
+                disabled={isBusy}
+                onClick={startRound}
+                type="button"
+              >
+                <RotateCcw
+                  aria-hidden="true"
+                  className="size-4"
+                  strokeWidth={2.2}
+                />
+                {restartButtonLabel}
+              </button>
+            ) : null}
             <button
               className={`${secondaryButtonClass} w-full`}
               disabled={isBusy}

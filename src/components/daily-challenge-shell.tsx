@@ -538,11 +538,11 @@ export function DailyChallengeShell({
           isCountryRound={isCountryRound}
           message={message}
           result={result}
-          restartButtonLabel="Restart daily"
           revealClue={revealClue}
           revealedCount={revealedCount}
           round={round}
           setGuess={setGuess}
+          showRestartButton={false}
           startRound={() => startDaily(selectedCard)}
           statusAppearance={statusAppearance}
           validationMessage={validationMessage}
