@@ -23,15 +23,16 @@ async function main() {
     const target = await writeGeneratedJson(
       {
         category,
-        count: hydrated.length,
+        count: hydrated.entities.length,
         fetchedAt: new Date().toISOString(),
-        entities: hydrated,
+        entities: hydrated.entities,
+        propertyLabels: hydrated.propertyLabels,
       },
       "hydrated",
       `${category}.json`,
     );
     console.log(
-      `Hydrated ${hydrated.length} ${category} entities -> ${target}`,
+      `Hydrated ${hydrated.entities.length} ${category} entities -> ${target}`,
     );
   }
 }

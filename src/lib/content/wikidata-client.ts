@@ -207,9 +207,13 @@ function toSourceEntity(
 export async function hydrateEntities(
   category: EntityCategory,
   qids: string[],
-): Promise<SourceEntity[]> {
+): Promise<{
+  entities: SourceEntity[];
+  propertyLabels: Record<string, string>;
+}> {
   const definition = categoryDefinitions[category];
   const entities: SourceEntity[] = [];
+  const propertyLabels = await fetchEntityLabels(definition.allowedProperties);
 
   for (const qid of qids) {
     const rawEntity = await fetchRawEntity(qid);
@@ -221,5 +225,8 @@ export async function hydrateEntities(
     entities.push(toSourceEntity(rawEntity, labelMap));
   }
 
-  return entities;
+  return {
+    entities,
+    propertyLabels,
+  };
 }
