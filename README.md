@@ -73,6 +73,7 @@ Safe snapshot workflow:
 ## Gameplay Reference
 
 - [Clues by category and mode](./docs/clues-and-modes.md)
+- [Content pipeline](./docs/content-pipeline.md)
 
 ## Repo Layout
 
