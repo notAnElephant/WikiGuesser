@@ -13,19 +13,60 @@ describe("category normalization", () => {
     const entity =
       categoryDefinitions.countries.normalize(countrySourceFixture);
     expect(entity?.canonicalAnswer).toBe("France");
-    expect(entity?.clues).toHaveLength(5);
+    expect(entity?.clues).toHaveLength(6);
     expect(entity?.clues.at(-1)?.label).toBe("Capital");
     expect(entity?.clues.some((clue) => clue.label === "Currency")).toBe(true);
+    expect(
+      entity?.clues.find((clue) => clue.key === "flag-colors")?.value,
+    ).toBe(
+      "https://commons.wikimedia.org/wiki/Special:Redirect/file/Flag%20of%20France.svg?width=640",
+    );
     expect(entity?.metadata.centroidLatitude).toBe(46.2276);
+  });
+
+  it("uses the preferred current country flag", () => {
+    const entity = categoryDefinitions.countries.normalize({
+      ...countrySourceFixture,
+      claims: {
+        ...countrySourceFixture.claims,
+        P41: [
+          { type: "string", value: "Historical flag.svg" },
+          { type: "string", value: "Current flag.svg" },
+        ],
+      },
+      raw: {
+        claims: {
+          P41: [
+            {
+              rank: "normal",
+              mainsnak: {
+                datavalue: { type: "string", value: "Historical flag.svg" },
+              },
+              qualifiers: { P582: [{}] },
+            },
+            {
+              rank: "preferred",
+              mainsnak: {
+                datavalue: { type: "string", value: "Current flag.svg" },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(
+      entity?.clues.find((clue) => clue.key === "flag-colors")?.value,
+    ).toBe(
+      "https://commons.wikimedia.org/wiki/Special:Redirect/file/Current%20flag.svg?width=640",
+    );
   });
 
   it("builds a playable city entity", () => {
     const entity = categoryDefinitions.cities.normalize(citySourceFixture);
     expect(entity?.canonicalAnswer).toBe("Budapest");
     expect(entity?.clues[0]?.label).toBe("Continent");
-    expect(entity?.clues.some((c) => c.label === "Famous location")).toBe(
-      true,
-    );
+    expect(entity?.clues.some((c) => c.label === "Famous location")).toBe(true);
     expect(entity?.clues.some((c) => c.label === "Founded")).toBe(false);
 
     const blurredClues = entity?.clues.filter(

@@ -46,6 +46,19 @@ interface RedirectResponse {
   };
 }
 
+const COUNTRY_TITLE_QID_OVERRIDES: Record<string, string> = {
+  // Simple Wikipedia links "China" to the broad historical/geographical
+  // concept Q29520. Country rounds need the modern sovereign state instead.
+  China: "Q148",
+};
+
+export function resolveCountryQid(
+  title: string,
+  titleToQid: Record<string, string>,
+): string | undefined {
+  return COUNTRY_TITLE_QID_OVERRIDES[title] ?? titleToQid[title];
+}
+
 async function fetchSectionIndex(
   pageTitle: string,
   sectionTitle: string,
@@ -146,7 +159,7 @@ export async function fetchSimpleWikipediaCountryQids(
   const titleToQid = await fetchWikibaseItemsForTitles(scopedTitles);
 
   return scopedTitles
-    .map((title) => titleToQid[title])
+    .map((title) => resolveCountryQid(title, titleToQid))
     .filter((qid): qid is string => Boolean(qid));
 }
 

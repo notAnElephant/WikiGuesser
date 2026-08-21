@@ -4,6 +4,7 @@ import {
   createClue,
   formatAreaSquareKilometers,
   formatBirthDecade,
+  formatCommonsFileUrl,
   formatCurrency,
   formatDistance,
   formatElevationMeters,
@@ -14,6 +15,7 @@ import {
   getFirstCoordinate,
   getFirstQuantity,
   getFirstTimeValue,
+  getPreferredStringValue,
 } from "@/src/lib/content/source-helpers";
 
 const countriesQuery = `
@@ -80,10 +82,10 @@ export const categoryDefinitions: Record<
       query: countriesQuery,
     },
     requiredMinimumClues: 5,
-    allowedProperties: ["P30", "P2046", "P1082", "P38", "P36", "P625"],
+    allowedProperties: ["P30", "P2046", "P1082", "P38", "P41", "P36", "P625"],
     lateRevealProperties: ["P36"],
-    bannedProperties: ["P41", "P94"],
-    clueOrder: ["P30", "P2046", "P1082", "P38", "P36"],
+    bannedProperties: ["P94"],
+    clueOrder: ["P30", "P2046", "P1082", "P38", "P41", "P36"],
     aliasStrategy: {
       includeWikipediaTitle: true,
       includeRedirects: true,
@@ -123,10 +125,16 @@ export const categoryDefinitions: Record<
             4,
           ),
           createClue(
+            "flag-colors",
+            "Flag colors",
+            formatCommonsFileUrl(getPreferredStringValue(source, "P41")),
+            5,
+          ),
+          createClue(
             "capital",
             "Capital",
             getCountryCapitalLabel(source),
-            5,
+            6,
             "late",
           ),
         ],
@@ -195,14 +203,18 @@ export const categoryDefinitions: Record<
           }
 
           const distance = getDistance(coordinate, otherCoordinate);
-          if (closestCapitalDistance === null || distance < closestCapitalDistance) {
+          if (
+            closestCapitalDistance === null ||
+            distance < closestCapitalDistance
+          ) {
             closestCapitalDistance = distance;
             closestCapitalLabel = otherSource.label;
           }
         }
       }
 
-      const gdpValue = getFirstQuantity(source, "P2131") ?? getFirstQuantity(source, "P2226");
+      const gdpValue =
+        getFirstQuantity(source, "P2131") ?? getFirstQuantity(source, "P2226");
 
       return buildNormalizedEntity({
         source,

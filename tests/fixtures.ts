@@ -11,6 +11,7 @@ export const countrySourceFixture: SourceEntity = {
     P2046: [{ type: "quantity", amount: 551695, unit: "km²" }],
     P1082: [{ type: "quantity", amount: 68400000, unit: null }],
     P38: [{ type: "entity", id: "Q4917", label: "euro" }],
+    P41: [{ type: "string", value: "Flag of France.svg" }],
     P36: [{ type: "entity", id: "Q90", label: "Paris" }],
     P625: [
       {

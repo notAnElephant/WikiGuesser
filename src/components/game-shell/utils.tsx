@@ -74,6 +74,21 @@ export function renderClueValue(
     return null;
   }
 
+  if (clue.key === "flag-colors") {
+    return (
+      <span className="block w-full max-w-72 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm dark:border-white/12 dark:bg-white/8">
+        <img
+          alt="Blurred country flag"
+          className="aspect-[3/2] w-full scale-110 object-cover blur-xl"
+          height={320}
+          loading="lazy"
+          src={clue.value}
+          width={480}
+        />
+      </span>
+    );
+  }
+
   if (clue.key !== "currency") {
     return clue.value;
   }
@@ -105,9 +120,18 @@ export function renderClueValue(
 }
 
 export function renderHiddenCluePlaceholder(
-  clue: Pick<RoundClue, "prefetchedValue">,
+  clue: Pick<RoundClue, "key" | "prefetchedValue">,
   isLocked: boolean,
 ): ReactNode {
+  if (clue.key === "flag-colors") {
+    return (
+      <span
+        aria-hidden="true"
+        className={`block aspect-[3/2] w-28 rounded-xl bg-[linear-gradient(135deg,rgba(15,118,110,0.22),rgba(255,219,112,0.2),rgba(56,189,248,0.2))] blur-md ${isLocked ? "opacity-40" : "opacity-70"}`}
+      />
+    );
+  }
+
   return (
     <span
       aria-hidden="true"

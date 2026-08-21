@@ -52,15 +52,23 @@ export const demoSnapshot: MaterializedSnapshot = {
           spoilerLevel: "safe",
         },
         {
+          key: "flag-colors",
+          label: "Flag colors",
+          value:
+            "https://commons.wikimedia.org/wiki/Special:Redirect/file/Flag%20of%20France.svg?width=640",
+          difficulty: 5,
+          spoilerLevel: "safe",
+        },
+        {
           key: "capital",
           label: "Capital",
           value: "Paris",
-          difficulty: 5,
+          difficulty: 6,
           spoilerLevel: "late",
         },
       ],
       metadata: {
-        clueCount: 5,
+        clueCount: 6,
         centroidLatitude: 46.2276,
         centroidLongitude: 2.2137,
       },
@@ -107,15 +115,23 @@ export const demoSnapshot: MaterializedSnapshot = {
           spoilerLevel: "safe",
         },
         {
+          key: "flag-colors",
+          label: "Flag colors",
+          value:
+            "https://commons.wikimedia.org/wiki/Special:Redirect/file/Flag%20of%20Japan.svg?width=640",
+          difficulty: 5,
+          spoilerLevel: "safe",
+        },
+        {
           key: "capital",
           label: "Capital",
           value: "Tokyo",
-          difficulty: 5,
+          difficulty: 6,
           spoilerLevel: "late",
         },
       ],
       metadata: {
-        clueCount: 5,
+        clueCount: 6,
         centroidLatitude: 36.2048,
         centroidLongitude: 138.2529,
       },

@@ -19,7 +19,8 @@ Minimum playable clues: `5`
 2. `Area`
 3. `Population`
 4. `Currency`
-5. `Capital` (`late`)
+5. `Flag colors` (temporarily shown as a blurred flag)
+6. `Capital` (`late`)
 
 ### Classic
 

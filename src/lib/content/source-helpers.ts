@@ -63,6 +63,57 @@ export function getFirstTimeValue(
   return match?.value ?? null;
 }
 
+export function getPreferredStringValue(
+  entity: SourceEntity,
+  propertyId: string,
+): string | null {
+  const rawEntity = entity.raw as {
+    claims?: Record<
+      string,
+      Array<{
+        rank?: string;
+        mainsnak?: { datavalue?: { type?: string; value?: unknown } };
+        qualifiers?: Record<string, unknown[]>;
+      }>
+    >;
+  };
+  const statements = rawEntity.claims?.[propertyId] ?? [];
+  const usableStatements = statements.filter(
+    (statement) =>
+      statement.rank !== "deprecated" &&
+      statement.mainsnak?.datavalue?.type === "string" &&
+      typeof statement.mainsnak.datavalue.value === "string",
+  );
+  const preferredStatement = usableStatements.find(
+    (statement) => statement.rank === "preferred",
+  );
+  const currentStatement = usableStatements.find(
+    (statement) => !statement.qualifiers?.P582?.length,
+  );
+  const rawValue =
+    preferredStatement?.mainsnak?.datavalue?.value ??
+    currentStatement?.mainsnak?.datavalue?.value;
+
+  if (typeof rawValue === "string") {
+    return rawValue;
+  }
+
+  const fallback = getClaims(entity, propertyId).find(
+    (claim): claim is Extract<SourceClaimValue, { type: "string" }> =>
+      claim.type === "string",
+  );
+
+  return fallback?.value ?? null;
+}
+
+export function formatCommonsFileUrl(filename: string | null): string | null {
+  if (!filename) {
+    return null;
+  }
+
+  return `https://commons.wikimedia.org/wiki/Special:Redirect/file/${encodeURIComponent(filename)}?width=640`;
+}
+
 export function getFirstCoordinate(
   entity: SourceEntity,
   propertyId: string,
