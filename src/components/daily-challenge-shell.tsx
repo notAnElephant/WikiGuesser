@@ -1,16 +1,23 @@
 "use client";
 
-import { primaryButtonClass, surfaceClass } from "@/src/components/game-shell/config";
+import {
+  primaryButtonClass,
+  surfaceClass,
+} from "@/src/components/game-shell/config";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
-import type { ActiveRound, RoundOutcome } from "@/src/components/game-shell/types";
+import type {
+  ActiveRound,
+  GuessAttempt,
+  RoundOutcome,
+} from "@/src/components/game-shell/types";
 import {
   getCategoryMeta,
   getMenuMessage,
   getMessageAppearance,
   getModeMeta,
   isClueLocked,
-  toPlayableClues
+  toPlayableClues,
 } from "@/src/components/game-shell/utils";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import { getDailyComboKey } from "@/src/lib/game/daily";
@@ -21,11 +28,24 @@ import type {
   GameMode,
   GuessRoundResult,
   RevealClueResult,
-  StartRoundResult
+  StartRoundResult,
 } from "@/src/lib/types";
-import { ArrowRight, CalendarDays, CircleAlert, LoaderCircle, Sparkles, Trophy } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  CircleAlert,
+  LoaderCircle,
+  Sparkles,
+  Trophy,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 
 interface DailyChallengeShellProps {
   countryOptions: string[];
@@ -76,7 +96,7 @@ export function DailyChallengeShell({
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
-  const [guessedEntities, setGuessedEntities] = useState<string[]>([]);
+  const [guessedEntities, setGuessedEntities] = useState<GuessAttempt[]>([]);
   const [message, setMessage] = useState("Daily challenge");
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
@@ -192,7 +212,7 @@ export function DailyChallengeShell({
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
   const normalizedGuessedEntities = new Set(
-    guessedEntities.map((entry) => normalizeGuess(entry)),
+    guessedEntities.map((entry) => normalizeGuess(entry.name)),
   );
   const isCountryGuessValid =
     !isCountryRound || validCountryLookup.has(normalizedGuess);
@@ -413,7 +433,10 @@ export function DailyChallengeShell({
       }
 
       const payload = (await response.json()) as GuessRoundResult;
-      setGuessedEntities((current) => [...current, submittedGuess]);
+      setGuessedEntities((current) => [
+        ...current,
+        { name: submittedGuess, direction: payload.direction ?? null },
+      ]);
       setScore(payload.score || null);
       setGuess("");
 
@@ -611,7 +634,8 @@ export function DailyChallengeShell({
               WikiGuesser
             </h1>
             <p className="m-0 mt-4 max-w-xl text-[1.02rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
-              Play each category and mode once today. Come back tomorrow for a reset.
+              Play each category and mode once today. Come back tomorrow for a
+              reset.
             </p>
           </div>
 

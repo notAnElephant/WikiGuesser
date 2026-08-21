@@ -5,6 +5,15 @@ export const DAILY_RESET_TIME_ZONE = "Europe/Budapest";
 export type EntityCategory = (typeof ENTITY_CATEGORIES)[number];
 export type GameMode = (typeof GAME_MODES)[number];
 export type RoundKind = "standard" | "daily";
+export type GuessDirection =
+  | "north"
+  | "northeast"
+  | "east"
+  | "southeast"
+  | "south"
+  | "southwest"
+  | "west"
+  | "northwest";
 export const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = [
   "countries",
   "cities",
@@ -191,6 +200,7 @@ export interface GuessRoundResult {
   remainingClues: number;
   canGuess: boolean;
   score: number;
+  direction?: GuessDirection | null;
   pendingClaimId?: string | null;
 }
 

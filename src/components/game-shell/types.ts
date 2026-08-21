@@ -6,6 +6,7 @@ import type {
   RoundKind,
   RoundClue,
   StartRoundResult,
+  GuessDirection,
 } from "@/src/lib/types";
 import type { LucideIcon } from "lucide-react";
 
@@ -25,6 +26,11 @@ export interface RoundOutcome {
   mode: GameMode;
   clues: RoundClue[];
   showDialog?: boolean;
+}
+
+export interface GuessAttempt {
+  name: string;
+  direction: GuessDirection | null;
 }
 
 export interface CategoryCardMeta {

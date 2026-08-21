@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti";
-import { type FormEvent, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import {
   ArrowRight,
   CalendarDays,
@@ -23,7 +29,11 @@ import {
 } from "@/src/components/game-shell/config";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
-import type { ActiveRound, RoundOutcome } from "@/src/components/game-shell/types";
+import type {
+  ActiveRound,
+  GuessAttempt,
+  RoundOutcome,
+} from "@/src/components/game-shell/types";
 import { useViewportSize } from "@/src/components/game-shell/use-viewport-size";
 import {
   getCategoryMeta,
@@ -80,13 +90,17 @@ function getTimeUntilBudapestMidnight() {
   return `${String(23 - hours).padStart(2, "0")}:${String(59 - minutes).padStart(2, "0")}`;
 }
 
-function toCategoryLabel(category: string | null, categories: CategorySummary[]) {
+function toCategoryLabel(
+  category: string | null,
+  categories: CategorySummary[],
+) {
   if (category === "random") {
     return "Mixed category";
   }
 
   return (
-    categories.find((entry) => entry.id === category)?.label ?? "Pick a category"
+    categories.find((entry) => entry.id === category)?.label ??
+    "Pick a category"
   );
 }
 
@@ -157,7 +171,7 @@ export function SharedLandingShell({
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
-  const [guessedEntities, setGuessedEntities] = useState<string[]>([]);
+  const [guessedEntities, setGuessedEntities] = useState<GuessAttempt[]>([]);
   const [message, setMessage] = useState("Start today's daily.");
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
@@ -216,7 +230,8 @@ export function SharedLandingShell({
       ? totalEntityCount
       : (categories.find((category) => category.id === selectedCategory)
           ?.entityCount ?? 0);
-  const showRandomMix = selectedPlayType === "free-play" && categories.length > 1;
+  const showRandomMix =
+    selectedPlayType === "free-play" && categories.length > 1;
   const currentMode = round?.mode ?? result?.mode ?? selectedMode;
   const currentClues = round?.clues ?? result?.clues ?? [];
   const visibleClassicClues = currentClues.filter((clue) => clue.isRevealed);
@@ -224,7 +239,7 @@ export function SharedLandingShell({
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
   const normalizedGuessedEntities = new Set(
-    guessedEntities.map((entry) => normalizeGuess(entry)),
+    guessedEntities.map((entry) => normalizeGuess(entry.name)),
   );
   const isCountryGuessValid =
     !isCountryRound || validCountryLookup.has(normalizedGuess);
@@ -235,14 +250,15 @@ export function SharedLandingShell({
   );
   const canSubmitGuess = Boolean(
     round &&
-      round.canGuess &&
-      hasGuess &&
-      isCountryGuessValid &&
-      !isAlreadyGuessed &&
-      !isPending &&
-      !isSyncingReveal,
+    round.canGuess &&
+    hasGuess &&
+    isCountryGuessValid &&
+    !isAlreadyGuessed &&
+    !isPending &&
+    !isSyncingReveal,
   );
-  const currentCategory = round?.category ?? result?.category ?? selectedCategory;
+  const currentCategory =
+    round?.category ?? result?.category ?? selectedCategory;
   const currentCategoryLabel = toCategoryLabel(currentCategory, categories);
   const revealedCount = currentClues.filter((clue) => clue.isRevealed).length;
   const displayScore = result?.score ?? score ?? 0;
@@ -268,9 +284,9 @@ export function SharedLandingShell({
     selectedPlayType === "daily"
       ? Boolean(
           selectedDailyOption &&
-            !selectedDailyOption.playerStatus.hasPlayed &&
-            !isClaimingPending &&
-            !isPending,
+          !selectedDailyOption.playerStatus.hasPlayed &&
+          !isClaimingPending &&
+          !isPending,
         )
       : Boolean(
           selectedCategory &&
@@ -279,8 +295,7 @@ export function SharedLandingShell({
           !isPending,
         );
   const selectedModeMeta = getModeMeta(selectedMode);
-  const selectedDailyScore =
-    selectedDailyOption?.playerStatus.score ?? null;
+  const selectedDailyScore = selectedDailyOption?.playerStatus.score ?? null;
   const StatusIcon = statusAppearance.icon;
 
   useEffect(() => {
@@ -469,7 +484,9 @@ export function SharedLandingShell({
     });
   }
 
-  function startDaily(option: DailyChallengeOption | null = selectedDailyOption) {
+  function startDaily(
+    option: DailyChallengeOption | null = selectedDailyOption,
+  ) {
     if (!option) {
       setMessage("Daily challenge unavailable.");
       return;
@@ -518,7 +535,9 @@ export function SharedLandingShell({
 
       const payload = (await response.json()) as StartRoundResult;
       setRound(payload);
-      setMessage(payload.mode === "blurred-lines" ? "Tap a row." : "Daily live.");
+      setMessage(
+        payload.mode === "blurred-lines" ? "Tap a row." : "Daily live.",
+      );
     });
   }
 
@@ -644,7 +663,10 @@ export function SharedLandingShell({
       }
 
       const payload = (await response.json()) as GuessRoundResult;
-      setGuessedEntities((current) => [...current, submittedGuess]);
+      setGuessedEntities((current) => [
+        ...current,
+        { name: submittedGuess, direction: payload.direction ?? null },
+      ]);
       setScore(payload.score || null);
       setGuess("");
 
@@ -849,7 +871,9 @@ export function SharedLandingShell({
               clearToHome({ refresh: true });
             }}
             onSecondaryAction={() =>
-              result.kind === "daily" ? clearToHome({ refresh: true }) : clearToHome()
+              result.kind === "daily"
+                ? clearToHome({ refresh: true })
+                : clearToHome()
             }
             onTertiaryAction={
               result.kind === "daily" && !isSignedIn
@@ -906,8 +930,9 @@ export function SharedLandingShell({
                 WikiGuesser
               </h1>
               <p className="m-0 mt-3 max-w-2xl text-[1rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
-                Pick a lane, choose a category, then solve from the clues.
-                Daily lets you play each category and mode once. Free play stays unlimited.
+                Pick a lane, choose a category, then solve from the clues. Daily
+                lets you play each category and mode once. Free play stays
+                unlimited.
               </p>
             </div>
           </div>
@@ -962,7 +987,11 @@ export function SharedLandingShell({
               {selectedPlayType === "daily" ? (
                 <>
                   <span className="inline-flex items-center gap-2 rounded-full bg-black/5 px-3 py-1.5 dark:bg-white/8">
-                    <Trophy aria-hidden="true" className="size-4" strokeWidth={2.1} />
+                    <Trophy
+                      aria-hidden="true"
+                      className="size-4"
+                      strokeWidth={2.1}
+                    />
                     {selectedDailyOption?.playerStatus.hasPlayed
                       ? `${selectedDailyScore ?? 0} pts today`
                       : "One daily run per category and mode"}
@@ -979,7 +1008,11 @@ export function SharedLandingShell({
                 </>
               ) : (
                 <span className="inline-flex items-center gap-2 rounded-full bg-black/5 px-3 py-1.5 dark:bg-white/8">
-                  <Shuffle aria-hidden="true" className="size-4" strokeWidth={2.1} />
+                  <Shuffle
+                    aria-hidden="true"
+                    className="size-4"
+                    strokeWidth={2.1}
+                  />
                   Unlimited rounds. Mixed category available.
                 </span>
               )}
@@ -1007,25 +1040,29 @@ export function SharedLandingShell({
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {([
-                {
-                  id: "daily" as const,
-                  label: "Daily",
-                  hint: "One daily run per category and mode.",
-                  icon: CalendarDays,
-                },
-                {
-                  id: "free-play" as const,
-                  label: "Free play",
-                  hint: "Unlimited rounds with mixed category available.",
-                  icon: Shuffle,
-                },
-              ] as const).map((option) => {
+              {(
+                [
+                  {
+                    id: "daily" as const,
+                    label: "Daily",
+                    hint: "One daily run per category and mode.",
+                    icon: CalendarDays,
+                  },
+                  {
+                    id: "free-play" as const,
+                    label: "Free play",
+                    hint: "Unlimited rounds with mixed category available.",
+                    icon: Shuffle,
+                  },
+                ] as const
+              ).map((option) => {
                 const OptionIcon = option.icon;
 
                 return (
                   <button
-                    className={selectionCardClass(selectedPlayType === option.id)}
+                    className={selectionCardClass(
+                      selectedPlayType === option.id,
+                    )}
                     key={option.id}
                     onClick={() => setSelectedPlayType(option.id)}
                     type="button"
@@ -1144,20 +1181,25 @@ export function SharedLandingShell({
               {GAME_MODE_OPTIONS.map((mode) => {
                 const dailyModeOption =
                   selectedPlayType === "daily" && selectedCategory
-                    ? selectedCategoryDailyOptions.find(
+                    ? (selectedCategoryDailyOptions.find(
                         (option) => option.mode === mode.id,
-                      ) ?? null
+                      ) ?? null)
                     : null;
                 const isDisabled =
                   !selectedCategory ||
-                  (selectedPlayType === "free-play" && totalSelectedEntityCount === 0) ||
+                  (selectedPlayType === "free-play" &&
+                    totalSelectedEntityCount === 0) ||
                   (selectedPlayType === "daily" &&
-                    (!dailyModeOption || dailyModeOption.playerStatus.hasPlayed));
+                    (!dailyModeOption ||
+                      dailyModeOption.playerStatus.hasPlayed));
                 const ModeIcon = mode.icon;
 
                 return (
                   <button
-                    className={selectionCardClass(selectedMode === mode.id, isDisabled)}
+                    className={selectionCardClass(
+                      selectedMode === mode.id,
+                      isDisabled,
+                    )}
                     disabled={isDisabled}
                     key={mode.id}
                     onClick={() => setSelectedMode(mode.id)}

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
+import { getGuessDirection } from "@/src/lib/game/guess-direction";
 import {
   createRoundState,
   parseRoundState,
@@ -134,7 +135,12 @@ function buildRoundProgress(
     kind: roundState.kind,
     category: entity.category,
     mode: roundState.mode,
-    clues: getClues(entity, roundState.revealedClueKeys, roundState.mode, options),
+    clues: getClues(
+      entity,
+      roundState.revealedClueKeys,
+      roundState.mode,
+      options,
+    ),
     revealedClues: getRevealedClues(
       entity,
       roundState.revealedClueKeys,
@@ -377,9 +383,19 @@ export async function submitGuess(
   const { entity, roundState, snapshotKey, dailyChallengeId } =
     await getRoundEntity(input.token, userId);
   const isCorrect = matchesEntityGuess(entity, input.guess);
+  const direction = isCorrect
+    ? null
+    : getGuessDirection(
+        input.guess,
+        entity,
+        (await getLatestSnapshot()).entities,
+      );
 
   if (dailyChallengeId) {
-    const existingResult = await findDailyResultForActor(dailyChallengeId, userId);
+    const existingResult = await findDailyResultForActor(
+      dailyChallengeId,
+      userId,
+    );
 
     if (existingResult) {
       throw new Error("Daily challenge already completed.");
@@ -399,6 +415,7 @@ export async function submitGuess(
       isComplete: true,
       canonicalAnswer: entity.canonicalAnswer,
       score: getScoreForRevealCount(roundState.revealedClueKeys.length),
+      direction,
       pendingClaimId: null,
     };
 
@@ -429,6 +446,7 @@ export async function submitGuess(
         isComplete: false,
         canonicalAnswer: null,
         score: 0,
+        direction,
         pendingClaimId: null,
       };
     }
@@ -441,6 +459,7 @@ export async function submitGuess(
       isComplete: true,
       canonicalAnswer: entity.canonicalAnswer,
       score: 0,
+      direction,
       pendingClaimId: null,
     };
 
@@ -473,6 +492,7 @@ export async function submitGuess(
       isComplete: false,
       canonicalAnswer: null,
       score: 0,
+      direction,
       pendingClaimId: null,
     };
   }
@@ -485,6 +505,7 @@ export async function submitGuess(
     isComplete: true,
     canonicalAnswer: entity.canonicalAnswer,
     score: 0,
+    direction,
     pendingClaimId: null,
   };
 
@@ -508,7 +529,10 @@ export async function giveUpRound(
     await getRoundEntity(input.token, userId);
 
   if (dailyChallengeId) {
-    const existingResult = await findDailyResultForActor(dailyChallengeId, userId);
+    const existingResult = await findDailyResultForActor(
+      dailyChallengeId,
+      userId,
+    );
 
     if (existingResult) {
       throw new Error("Daily challenge already completed.");
