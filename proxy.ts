@@ -15,6 +15,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/rounds/start",
   "/api/rounds/(.*)/guess",
   "/api/rounds/(.*)/reveal",
+  "/api/rounds/(.*)/give-up",
   "/api/daily/start",
 ]);
 
