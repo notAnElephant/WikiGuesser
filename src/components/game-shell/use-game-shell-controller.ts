@@ -3,6 +3,7 @@
 import type {
   ActiveRound,
   GameShellProps,
+  GuessAttempt,
   RoundOutcome,
 } from "@/src/components/game-shell/types";
 
@@ -35,7 +36,7 @@ export function useGameShellController({
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
-  const [guessedEntities, setGuessedEntities] = useState<string[]>([]);
+  const [guessedEntities, setGuessedEntities] = useState<GuessAttempt[]>([]);
   const [message, setMessage] = useState(
     getMenuMessage(defaultCategory, "classic"),
   );
@@ -66,7 +67,7 @@ export function useGameShellController({
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
   const normalizedGuessedEntities = new Set(
-    guessedEntities.map((entry) => normalizeGuess(entry)),
+    guessedEntities.map((entry) => normalizeGuess(entry.name)),
   );
   const isCountryGuessValid =
     !isCountryRound || validCountryLookup.has(normalizedGuess);
@@ -302,7 +303,10 @@ export function useGameShellController({
       }
 
       const data = (await response.json()) as GuessRoundResult;
-      setGuessedEntities((current) => [...current, submittedGuess]);
+      setGuessedEntities((current) => [
+        ...current,
+        { name: submittedGuess, direction: data.direction ?? null },
+      ]);
       setScore(data.score || null);
       setGuess("");
 

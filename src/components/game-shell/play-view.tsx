@@ -12,13 +12,22 @@ import {
   renderHiddenCluePlaceholder,
 } from "@/src/components/game-shell/utils";
 import type {
+  GuessAttempt,
   MessageAppearance,
   RoundOutcome,
 } from "@/src/components/game-shell/types";
 import type { ActiveRound } from "@/src/components/game-shell/types";
-import type { GameMode, RoundClue } from "@/src/lib/types";
+import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import type { GameMode, GuessDirection, RoundClue } from "@/src/lib/types";
 import {
+  ArrowDown,
+  ArrowDownLeft,
+  ArrowDownRight,
+  ArrowLeft,
   ArrowRight,
+  ArrowUp,
+  ArrowUpLeft,
+  ArrowUpRight,
   Ban,
   CircleAlert,
   Eye,
@@ -31,9 +40,22 @@ import {
   Search,
   Sparkles,
   Target,
-  X,
 } from "lucide-react";
-import type { FormEvent } from "react";
+import { type FormEvent, useDeferredValue, useState } from "react";
+
+const DIRECTION_META: Record<
+  GuessDirection,
+  { icon: typeof ArrowUp; label: string }
+> = {
+  north: { icon: ArrowUp, label: "north" },
+  northeast: { icon: ArrowUpRight, label: "northeast" },
+  east: { icon: ArrowRight, label: "east" },
+  southeast: { icon: ArrowDownRight, label: "southeast" },
+  south: { icon: ArrowDown, label: "south" },
+  southwest: { icon: ArrowDownLeft, label: "southwest" },
+  west: { icon: ArrowLeft, label: "west" },
+  northwest: { icon: ArrowUpLeft, label: "northwest" },
+};
 
 interface GamePlayViewProps {
   availableCountryOptions: string[];
@@ -47,7 +69,7 @@ interface GamePlayViewProps {
   giveUpRound: () => void;
   flowLabel?: string;
   guess: string;
-  guessedEntities: string[];
+  guessedEntities: GuessAttempt[];
   guessButtonLabel: string;
   handleGuessSubmit: (event: FormEvent<HTMLFormElement>) => void;
   homeButtonLabel?: string;
@@ -104,6 +126,14 @@ export function GamePlayView({
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const CurrentModeIcon = currentModeMeta.icon;
   const StatusIcon = statusAppearance.icon;
+  const [isCountryListOpen, setIsCountryListOpen] = useState(false);
+  const deferredGuess = useDeferredValue(guess);
+  const normalizedSearch = normalizeGuess(deferredGuess);
+  const matchingCountryOptions = isCountryRound
+    ? availableCountryOptions
+        .filter((option) => normalizeGuess(option).includes(normalizedSearch))
+        .slice(0, 8)
+    : [];
 
   return (
     <div className="grid min-h-[calc(100dvh-1rem)] gap-4 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
@@ -408,17 +438,55 @@ export function GamePlayView({
                     strokeWidth={2.2}
                   />
                   <input
+                    aria-autocomplete={isCountryRound ? "list" : undefined}
+                    aria-controls={
+                      isCountryRound ? "country-guess-options" : undefined
+                    }
+                    aria-expanded={
+                      isCountryRound ? isCountryListOpen : undefined
+                    }
                     aria-label="Submit your entity guess"
+                    autoComplete="off"
                     className="w-full rounded-[20px] border border-black/10 bg-white/86 px-12 py-4 text-[#1f1b17] outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-[rgba(15,118,110,0.22)] dark:border-white/10 dark:bg-[rgba(255,255,255,0.06)] dark:text-[#f5f7fb] dark:focus:border-[#24d4c2] dark:focus:ring-[rgba(36,212,194,0.22)]"
-                    list={isCountryRound ? "country-guess-options" : undefined}
                     disabled={isBusy}
-                    onChange={(event) => setGuess(event.target.value)}
+                    onBlur={() => setIsCountryListOpen(false)}
+                    onChange={(event) => {
+                      setGuess(event.target.value);
+                      setIsCountryListOpen(true);
+                    }}
+                    onFocus={() => setIsCountryListOpen(true)}
                     placeholder={
                       isCountryRound ? "Search country" : "Type answer"
                     }
                     type="text"
                     value={guess}
                   />
+                  {isCountryRound &&
+                  isCountryListOpen &&
+                  matchingCountryOptions.length > 0 ? (
+                    <div
+                      aria-label="Country suggestions"
+                      className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-64 overflow-y-auto rounded-[20px] border border-black/10 bg-white p-1.5 shadow-[0_18px_45px_rgba(31,27,23,0.2)] dark:border-white/12 dark:bg-[#172231]"
+                      id="country-guess-options"
+                      role="listbox"
+                    >
+                      {matchingCountryOptions.map((option) => (
+                        <button
+                          className="block w-full rounded-2xl px-3 py-3 text-left text-sm font-medium text-[#1f1b17] hover:bg-[#0f766e]/8 focus:bg-[#0f766e]/8 focus:outline-none dark:text-[#f5f7fb] dark:hover:bg-white/8 dark:focus:bg-white/8"
+                          key={option}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => {
+                            setGuess(option);
+                            setIsCountryListOpen(false);
+                          }}
+                          role="option"
+                          type="button"
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
                 {validationMessage ? (
@@ -491,32 +559,39 @@ export function GamePlayView({
                   <div className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
                     Tried
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {guessedEntities.map((entity) => (
-                      <span
-                        className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(220,38,38,0.14)] bg-[rgba(254,242,242,0.95)] px-3 py-1 text-xs font-medium text-[#991b1b] dark:border-[rgba(248,113,113,0.2)] dark:bg-[rgba(127,29,29,0.18)] dark:text-[#fca5a5]"
-                        key={entity}
-                      >
-                        <X
-                          aria-hidden="true"
-                          className="size-3.5 shrink-0 text-[#dc2626] dark:text-[#f87171]"
-                          strokeWidth={2.25}
-                        />
-                        <span>{entity}</span>
-                      </span>
-                    ))}
-                  </div>
+                  <ol className="grid gap-2">
+                    {guessedEntities.map((attempt) => {
+                      const directionMeta = attempt.direction
+                        ? DIRECTION_META[attempt.direction]
+                        : null;
+                      const DirectionIcon = directionMeta?.icon;
+
+                      return (
+                        <li
+                          className="flex items-center justify-between gap-3 rounded-[18px] border border-[rgba(220,38,38,0.14)] bg-[rgba(254,242,242,0.95)] px-3 py-2.5 text-sm font-medium text-[#991b1b] dark:border-[rgba(248,113,113,0.2)] dark:bg-[rgba(127,29,29,0.18)] dark:text-[#fca5a5]"
+                          key={attempt.name}
+                        >
+                          <span>{attempt.name}</span>
+                          {DirectionIcon && directionMeta ? (
+                            <span
+                              aria-label={`The goal country is ${directionMeta.label} of ${attempt.name}`}
+                              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-white/80 text-[#b91c1c] shadow-sm dark:bg-white/10 dark:text-[#fca5a5]"
+                              title={`Goal is ${directionMeta.label}`}
+                            >
+                              <DirectionIcon
+                                aria-hidden="true"
+                                className="size-4.5"
+                                strokeWidth={2.5}
+                              />
+                            </span>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ol>
                 </div>
               ) : null}
             </div>
-          ) : null}
-
-          {isCountryRound ? (
-            <datalist id="country-guess-options">
-              {availableCountryOptions.map((option) => (
-                <option key={option} value={option} />
-              ))}
-            </datalist>
           ) : null}
 
           <div className={`${surfaceClass} grid gap-3 p-4`}>
