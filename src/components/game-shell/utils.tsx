@@ -124,12 +124,7 @@ export function renderHiddenCluePlaceholder(
   isLocked: boolean,
 ): ReactNode {
   if (clue.key === "flag-colors") {
-    return (
-      <span
-        aria-hidden="true"
-        className={`block aspect-[3/2] w-28 rounded-xl bg-[linear-gradient(135deg,rgba(15,118,110,0.22),rgba(255,219,112,0.2),rgba(56,189,248,0.2))] blur-md ${isLocked ? "opacity-40" : "opacity-70"}`}
-      />
-    );
+    return null;
   }
 
   return (

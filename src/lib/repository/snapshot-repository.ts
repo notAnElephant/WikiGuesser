@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import type { SnapshotEntity } from "@prisma/client";
 
 import { env } from "@/src/lib/env";
+import { getKnownEntityLabel } from "@/src/lib/content/entity-labels";
 import { getPrismaClient } from "@/src/lib/repository/prisma";
 import type {
   CategorySummary,
@@ -10,6 +11,8 @@ import type {
 } from "@/src/lib/types";
 
 function toNormalizedEntity(record: SnapshotEntity): NormalizedEntity {
+  const storedClues = record.clues as unknown as NormalizedEntity["clues"];
+
   return {
     id: record.id,
     qid: record.qid,
@@ -18,7 +21,10 @@ function toNormalizedEntity(record: SnapshotEntity): NormalizedEntity {
     wikipediaTitle: record.wikipediaTitle,
     acceptedAnswers:
       record.acceptedAnswers as unknown as NormalizedEntity["acceptedAnswers"],
-    clues: record.clues as unknown as NormalizedEntity["clues"],
+    clues: storedClues.map((clue) => ({
+      ...clue,
+      value: getKnownEntityLabel(clue.value) ?? clue.value,
+    })),
     metadata: (record.metadata ??
       {}) as unknown as NormalizedEntity["metadata"],
     sourceFingerprint: record.sourceFingerprint,

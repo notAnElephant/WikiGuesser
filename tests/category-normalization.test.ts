@@ -62,6 +62,23 @@ describe("category normalization", () => {
     );
   });
 
+  it("uses euro instead of a Wikidata ID when its English label is missing", () => {
+    const entity = categoryDefinitions.countries.normalize({
+      ...countrySourceFixture,
+      qid: "Q211",
+      label: "Latvia",
+      wikipediaTitle: "Latvia",
+      claims: {
+        ...countrySourceFixture.claims,
+        P38: [{ type: "entity", id: "Q4916", label: null }],
+      },
+    });
+
+    expect(entity?.clues.find((clue) => clue.key === "currency")?.value).toBe(
+      "euro",
+    );
+  });
+
   it("builds a playable city entity", () => {
     const entity = categoryDefinitions.cities.normalize(citySourceFixture);
     expect(entity?.canonicalAnswer).toBe("Budapest");

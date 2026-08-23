@@ -78,6 +78,7 @@ async function fetchEntityLabels(
       ids: chunk.join("|"),
       props: "labels",
       languages: "en",
+      languagefallback: "1",
       origin: "*",
     });
     const data = await fetchWikimediaJson<{

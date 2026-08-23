@@ -2,6 +2,7 @@ import {
   dedupeAcceptedAnswers,
   normalizeGuess,
 } from "@/src/lib/game/answer-matching";
+import { getKnownEntityLabel } from "@/src/lib/content/entity-labels";
 import type {
   AcceptedAnswer,
   EntityCategory,
@@ -35,8 +36,8 @@ export function getEntityLabels(
       (claim): claim is Extract<SourceClaimValue, { type: "entity" }> =>
         claim.type === "entity",
     )
-    .map((claim) => claim.label ?? claim.id)
-    .filter(Boolean);
+    .map((claim) => claim.label ?? getKnownEntityLabel(claim.id))
+    .filter((label): label is string => Boolean(label));
 }
 
 export function getFirstQuantity(

@@ -20,7 +20,7 @@ describe("game shell clue rendering", () => {
     expect(markup).toContain("blur-xl");
   });
 
-  it("does not expose the flag URL in an unrevealed clue row", () => {
+  it("does not render a flag placeholder before the clue is revealed", () => {
     const markup = renderToStaticMarkup(
       renderHiddenCluePlaceholder(
         { key: "flag-colors", prefetchedValue: flagUrl },
@@ -29,6 +29,6 @@ describe("game shell clue rendering", () => {
     );
 
     expect(markup).not.toContain(flagUrl);
-    expect(markup).toContain("blur-md");
+    expect(markup).toBe("");
   });
 });
