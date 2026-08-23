@@ -10,6 +10,7 @@ const redirectableProductionHosts = new Set([
 
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/leaderboard",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/rounds/start",

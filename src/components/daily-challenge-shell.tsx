@@ -769,11 +769,7 @@ export function DailyChallengeShell({
             })}
           </div>
         </div>
-        {/* Leaderboard temporarily disabled while it gets reworked.
-        <aside className={`${surfaceClass} grid gap-4 p-5 sm:p-6`}>
-          ...
-        </aside>
-        */}
+        <aside className={`${surfaceClass} grid gap-4 p-5 sm:p-6`}>...</aside>
       </div>
     </section>
   );

@@ -1,12 +1,11 @@
-import Link from "next/link";
-import type { Metadata } from "next";
+import { ThemeProvider } from "@/src/components/theme-provider";
+import { ThemeToggle } from "@/src/components/theme-toggle";
 import { ClerkProvider, Show, UserButton } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Dice5, LogIn } from "lucide-react";
-
-import { ThemeProvider } from "@/src/components/theme-provider";
-import { ThemeToggle } from "@/src/components/theme-toggle";
+import type { Metadata } from "next";
+import Link from "next/link";
 
 import "./globals.css";
 
@@ -25,7 +24,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ClerkProvider>
             <header className="fixed inset-x-0 top-0 z-40 p-3 sm:p-4">
-              <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-[24px] border border-black/8 bg-white/72 px-3 py-2 shadow-[0_18px_40px_rgba(53,36,22,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgba(9,16,26,0.76)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.34)]">
+              <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-3xl border border-black/8 bg-white/72 px-3 py-2 shadow-[0_18px_40px_rgba(53,36,22,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgba(9,16,26,0.76)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.34)]">
                 <Link
                   className="inline-flex items-center gap-2 rounded-full px-2 py-1.5 text-sm font-semibold text-[#1f1b17] transition hover:bg-white/70 dark:text-[#f5f7fb] dark:hover:bg-white/10"
                   href="/"
@@ -41,14 +40,12 @@ export default function RootLayout({
                 </Link>
 
                 <div className="flex items-center gap-2">
-                  {/* Leaderboard temporarily disabled while it gets reworked.
                   <Link
                     className="inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
                     href="/leaderboard"
                   >
                     Leaderboard
                   </Link>
-                  */}
                   <ThemeToggle />
                   <Show when="signed-out">
                     <Link

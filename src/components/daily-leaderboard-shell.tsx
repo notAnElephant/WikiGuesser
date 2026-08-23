@@ -15,7 +15,6 @@ import { getDailyComboKey } from "@/src/lib/game/daily";
 import type {
   CategorySummary,
   DailyLeaderboardPageData,
-  EntityCategory,
   GameMode,
 } from "@/src/lib/types";
 
@@ -24,7 +23,6 @@ type LeaderboardPeriod = "today" | "total";
 interface DailyLeaderboardShellProps {
   categories: CategorySummary[];
   data: DailyLeaderboardPageData;
-  initialCategory: EntityCategory;
   initialMode: GameMode;
   initialPeriod: LeaderboardPeriod;
 }
@@ -32,14 +30,12 @@ interface DailyLeaderboardShellProps {
 export function DailyLeaderboardShell({
   categories,
   data,
-  initialCategory,
   initialMode,
   initialPeriod,
 }: DailyLeaderboardShellProps) {
-  const [selectedCategory, setSelectedCategory] =
-    useState<EntityCategory>(initialCategory);
   const [selectedMode, setSelectedMode] = useState<GameMode>(initialMode);
   const [period, setPeriod] = useState<LeaderboardPeriod>(initialPeriod);
+  const selectedCategory = data.defaultCategory;
   const comboKey = getDailyComboKey(selectedCategory, selectedMode);
   const leaderboard =
     data.leaderboardByCombo[comboKey] ??
@@ -49,6 +45,9 @@ export function DailyLeaderboardShell({
   const entries = period === "today" ? leaderboard.today : leaderboard.total;
   const selectedCategoryMeta = getCategoryMeta(selectedCategory);
   const selectedModeMeta = getModeMeta(selectedMode);
+  const selectedCategoryLabel =
+    categories.find((entry) => entry.id === selectedCategory)?.label ??
+    selectedCategory;
   const SelectedCategoryIcon = selectedCategoryMeta.icon;
   const SelectedModeIcon = selectedModeMeta.icon;
 
@@ -77,8 +76,8 @@ export function DailyLeaderboardShell({
                 See how today stacks up
               </h1>
               <p className="m-0 mt-3 max-w-2xl text-[1rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
-                Filter by category and mode, then switch between today's board
-                and the long-run total standings.
+                Switch between game modes, then compare today's board with the
+                long-run total standings.
               </p>
             </div>
           </div>
@@ -104,8 +103,7 @@ export function DailyLeaderboardShell({
                   Selection
                 </p>
                 <strong className="mt-1 block font-serif-display text-[1.4rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                  {categories.find((entry) => entry.id === selectedCategory)?.label} ·{" "}
-                  {selectedModeMeta.label}
+                  {selectedCategoryLabel} · {selectedModeMeta.label}
                 </strong>
               </div>
             </div>
@@ -120,51 +118,6 @@ export function DailyLeaderboardShell({
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(340px,0.9fr)]">
         <section className={`${surfaceClass} grid gap-5 p-5 sm:p-6`}>
-          <div className="grid gap-3">
-            <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-              <Sparkles
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={2.2}
-              />
-              Category
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              {categories.map((category) => {
-                const categoryMeta = getCategoryMeta(category.id);
-                const CategoryIcon = categoryMeta.icon;
-
-                return (
-                  <button
-                    className={selectionCardClass(selectedCategory === category.id)}
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    type="button"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <span
-                        className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${categoryMeta.accent}`}
-                      >
-                        <CategoryIcon
-                          aria-hidden="true"
-                          className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
-                          strokeWidth={2.1}
-                        />
-                      </span>
-                    </div>
-                    <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                      {category.label}
-                    </strong>
-                    <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-                      {categoryMeta.shortLabel}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           <div className="grid gap-3">
             <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
               <Sparkles
@@ -237,8 +190,7 @@ export function DailyLeaderboardShell({
 
           <div className="rounded-[28px] border border-black/8 bg-white/76 p-4 dark:border-white/10 dark:bg-white/6">
             <div className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
-              {categories.find((entry) => entry.id === selectedCategory)?.label} ·{" "}
-              {selectedModeMeta.label}
+              {selectedCategoryLabel} · {selectedModeMeta.label}
             </div>
             <div className="mt-3 grid gap-2">
               {entries.length === 0 ? (
