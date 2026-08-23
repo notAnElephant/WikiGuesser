@@ -76,7 +76,7 @@ export const GAME_MODE_OPTIONS: GameModeOption[] = [
   },
   {
     id: "blurred-lines",
-    label: "Blurred",
+    label: "Choose Clues",
     icon: ScanSearch,
     summary: "Pick each reveal",
     hint: "Open only what you need.",

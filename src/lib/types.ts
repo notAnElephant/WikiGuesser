@@ -14,10 +14,7 @@ export type GuessDirection =
   | "southwest"
   | "west"
   | "northwest";
-export const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = [
-  "countries",
-  "cities",
-];
+export const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = ["countries"];
 
 export interface AcceptedAnswer {
   kind: "canonical" | "alias" | "wikipedia-title" | "redirect";

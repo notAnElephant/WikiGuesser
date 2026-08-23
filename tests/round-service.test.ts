@@ -91,15 +91,10 @@ describe("round service", () => {
     expect(firstRound.canGuess).toBe(true);
   });
 
-  it("starts city rounds once the category is enabled", async () => {
-    const round = await startRound(
-      { category: "cities", seed: "alpha" },
-      "user_test_alpha",
-    );
-
-    expect(round.category).toBe("cities");
-    expect(round.revealedClues).toHaveLength(1);
-    expect(round.revealedClues[0]?.label).toBe("Continent");
+  it("rejects city rounds while the category is disabled", async () => {
+    await expect(
+      startRound({ category: "cities", seed: "alpha" }, "user_test_alpha"),
+    ).rejects.toThrow("That category is temporarily unavailable.");
   });
 
   it("reveals the next clue after an incorrect classic guess", async () => {
@@ -379,7 +374,10 @@ describe("round service", () => {
     } as Awaited<ReturnType<typeof dailyRepository.findDailyResultForActor>>);
 
     await expect(
-      startDailyRound({ category: "countries", mode: "classic" }, "user_repeat"),
+      startDailyRound(
+        { category: "countries", mode: "classic" },
+        "user_repeat",
+      ),
     ).rejects.toThrow("Daily challenge already completed.");
   });
 });

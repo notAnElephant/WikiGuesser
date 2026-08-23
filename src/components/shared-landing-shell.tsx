@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti";
 import {
@@ -10,22 +9,11 @@ import {
   useState,
   useTransition,
 } from "react";
-import {
-  ArrowRight,
-  CalendarDays,
-  CircleAlert,
-  Compass,
-  LoaderCircle,
-  Shuffle,
-  Sparkles,
-  Trophy,
-} from "lucide-react";
+import { CalendarDays, Gamepad2, LoaderCircle, Play } from "lucide-react";
 
 import {
   GAME_MODE_OPTIONS,
-  CATEGORY_META,
   primaryButtonClass,
-  surfaceClass,
 } from "@/src/components/game-shell/config";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
@@ -36,12 +24,9 @@ import type {
 } from "@/src/components/game-shell/types";
 import { useViewportSize } from "@/src/components/game-shell/use-viewport-size";
 import {
-  getCategoryMeta,
-  getMenuMessage,
   getMessageAppearance,
   getModeMeta,
   isClueLocked,
-  selectionCardClass,
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
@@ -69,6 +54,242 @@ type PlayType = "daily" | "free-play";
 interface PlayedOverride {
   score: number;
   completedAt: string;
+}
+
+const launcherModeCopy: Record<
+  GameMode,
+  {
+    dailyDescription: string;
+    dailyTitle: string;
+    freeDescription: string;
+    freeTitle: string;
+  }
+> = {
+  classic: {
+    dailyDescription: "Clues reveal after every miss.",
+    dailyTitle: "Classic Daily",
+    freeDescription: "Guess, miss, reveal.",
+    freeTitle: "Classic",
+  },
+  "blurred-lines": {
+    dailyDescription: "Reveal only what you need.",
+    dailyTitle: "Choose Clues Daily",
+    freeDescription: "Open only what you need.",
+    freeTitle: "Choose Clues",
+  },
+};
+
+const launcherSecondaryButtonClass =
+  "inline-flex items-center justify-center gap-2 rounded-full border border-[#0f766e]/36 px-5 py-3 text-sm font-semibold text-[#0f766e] transition hover:-translate-y-0.5 hover:border-[#0f766e]/56 hover:bg-[#0f766e]/6 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 dark:border-[#24d4c2]/42 dark:text-[#55e7d5] dark:hover:border-[#24d4c2]/64 dark:hover:bg-[#24d4c2]/7";
+
+interface GameLauncherProps {
+  claimBanner: string | null;
+  dailyOptions: DailyChallengeOption[];
+  isBusy: boolean;
+  isClaimingPending: boolean;
+  onStartDaily: (option: DailyChallengeOption) => void;
+  onStartFreePlay: (mode: GameMode) => void;
+  resetCountdown: string;
+}
+
+function GameLauncher({
+  claimBanner,
+  dailyOptions,
+  isBusy,
+  isClaimingPending,
+  onStartDaily,
+  onStartFreePlay,
+  resetCountdown,
+}: GameLauncherProps) {
+  return (
+    <section className="grid gap-5 pb-3 sm:gap-7">
+      <header className="flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between">
+        <h1 className="m-0 font-serif-display text-[clamp(3rem,9vw,5.4rem)] font-semibold leading-[0.88] tracking-[-0.065em] text-[#1f1b17] dark:text-[#f5f7fb]">
+          Pick your game
+        </h1>
+        <div className="inline-flex items-center gap-2 pb-1 text-sm font-medium text-[#6b6259] dark:text-[#9aa9bb]">
+          <CalendarDays
+            aria-hidden="true"
+            className="size-4 text-[#0f766e] dark:text-[#24d4c2]"
+            strokeWidth={2.1}
+          />
+          Daily resets in
+          <strong className="font-semibold text-[#0f766e] dark:text-[#55e7d5]">
+            {resetCountdown}
+          </strong>
+        </div>
+      </header>
+
+      {claimBanner ? (
+        <div className="rounded-2xl border border-emerald-500/18 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-400/18 dark:bg-emerald-400/10 dark:text-emerald-200">
+          {claimBanner}
+        </div>
+      ) : null}
+
+      <div className="grid gap-4">
+        <LauncherBand
+          description="Two chances. One country each."
+          isDaily
+          title="Today"
+        >
+          {GAME_MODE_OPTIONS.map((mode) => {
+            const option = dailyOptions.find(
+              (candidate) => candidate.mode === mode.id,
+            );
+            const hasPlayed = option?.playerStatus.hasPlayed ?? false;
+            const isDisabled =
+              !option || hasPlayed || isBusy || isClaimingPending;
+
+            return (
+              <LauncherRow
+                actionLabel={hasPlayed ? "Played" : "Play daily"}
+                description={launcherModeCopy[mode.id].dailyDescription}
+                disabled={isDisabled}
+                icon={mode.icon}
+                key={mode.id}
+                onClick={() => {
+                  if (option) {
+                    onStartDaily(option);
+                  }
+                }}
+                status={
+                  hasPlayed
+                    ? `Played · ${option?.playerStatus.score ?? 0} pts`
+                    : "Not played"
+                }
+                title={launcherModeCopy[mode.id].dailyTitle}
+                variant="primary"
+              />
+            );
+          })}
+        </LauncherBand>
+
+        <LauncherBand description="Unlimited country rounds." title="Free play">
+          {GAME_MODE_OPTIONS.map((mode) => (
+            <LauncherRow
+              actionLabel={`Play ${launcherModeCopy[mode.id].freeTitle}`}
+              description={launcherModeCopy[mode.id].freeDescription}
+              disabled={isBusy}
+              icon={mode.icon}
+              key={mode.id}
+              onClick={() => onStartFreePlay(mode.id)}
+              title={launcherModeCopy[mode.id].freeTitle}
+              variant="secondary"
+            />
+          ))}
+        </LauncherBand>
+      </div>
+    </section>
+  );
+}
+
+interface LauncherBandProps {
+  children: React.ReactNode;
+  description: string;
+  isDaily?: boolean;
+  title: string;
+}
+
+function LauncherBand({
+  children,
+  description,
+  isDaily = false,
+  title,
+}: LauncherBandProps) {
+  const BandIcon = isDaily ? CalendarDays : Gamepad2;
+
+  return (
+    <section
+      className={`overflow-hidden rounded-[30px] border ${
+        isDaily
+          ? "border-[#0f766e]/24 bg-[linear-gradient(145deg,rgba(15,118,110,0.08),rgba(255,255,255,0.8))] shadow-[0_20px_48px_rgba(15,118,110,0.08)] dark:border-[#24d4c2]/22 dark:bg-[linear-gradient(145deg,rgba(36,212,194,0.075),rgba(13,21,32,0.92))] dark:shadow-[0_20px_48px_rgba(0,0,0,0.22)]"
+          : "border-black/10 bg-white/62 dark:border-white/10 dark:bg-white/[0.025]"
+      }`}
+    >
+      <div className="grid lg:grid-cols-[minmax(230px,0.72fr)_minmax(0,1.6fr)]">
+        <div className="flex flex-col justify-center border-b border-black/8 p-5 dark:border-white/10 sm:p-6 lg:border-b-0 lg:border-r">
+          <span className="mb-4 hidden size-12 items-center justify-center rounded-full border border-[#0f766e]/24 text-[#0f766e] dark:border-[#24d4c2]/32 dark:text-[#55e7d5] lg:inline-flex">
+            <BandIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />
+          </span>
+          <h2 className="m-0 font-serif-display text-[clamp(2.15rem,6vw,3.45rem)] font-semibold tracking-[-0.055em] text-[#1f1b17] dark:text-[#f5f7fb]">
+            {title}
+          </h2>
+          <p className="m-0 mt-2 text-[0.98rem] leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
+            {description}
+          </p>
+        </div>
+        <div className="divide-y divide-black/8 px-4 dark:divide-white/10 sm:px-6">
+          {children}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+interface LauncherRowProps {
+  actionLabel: string;
+  description: string;
+  disabled: boolean;
+  icon: (typeof GAME_MODE_OPTIONS)[number]["icon"];
+  onClick: () => void;
+  status?: string;
+  title: string;
+  variant: "primary" | "secondary";
+}
+
+function LauncherRow({
+  actionLabel,
+  description,
+  disabled,
+  icon: ModeIcon,
+  onClick,
+  status,
+  title,
+  variant,
+}: LauncherRowProps) {
+  return (
+    <div className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:py-6">
+      <div className="flex min-w-0 items-center gap-4">
+        <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-full border border-[#0f766e]/24 text-[#0f766e] dark:border-[#24d4c2]/32 dark:text-[#55e7d5]">
+          <ModeIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />
+        </span>
+        <div className="min-w-0">
+          <h3 className="m-0 font-serif-display text-[1.55rem] font-semibold tracking-[-0.035em] text-[#1f1b17] dark:text-[#f5f7fb]">
+            {title}
+          </h3>
+          <p className="m-0 mt-1 text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
+            {description}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
+        {status ? (
+          <span className="whitespace-nowrap text-sm font-medium text-[#6b6259] dark:text-[#9aa9bb]">
+            {status}
+          </span>
+        ) : null}
+        <button
+          aria-label={`${actionLabel}: ${title}`}
+          className={`${variant === "primary" ? primaryButtonClass : launcherSecondaryButtonClass} w-full min-w-40 whitespace-nowrap px-5 disabled:hover:translate-y-0 sm:w-auto`}
+          disabled={disabled}
+          onClick={onClick}
+          type="button"
+        >
+          {disabled && actionLabel !== "Played" ? (
+            <LoaderCircle
+              aria-hidden="true"
+              className="size-4 animate-spin"
+              strokeWidth={2.2}
+            />
+          ) : (
+            <Play aria-hidden="true" className="size-4" strokeWidth={2.2} />
+          )}
+          {actionLabel}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function getTimeUntilBudapestMidnight() {
@@ -102,40 +323,6 @@ function toCategoryLabel(
     categories.find((entry) => entry.id === category)?.label ??
     "Pick a category"
   );
-}
-
-function getSelectionMessage(params: {
-  playType: PlayType;
-  selectedCategory: string | null;
-  selectedMode: GameMode | null;
-  selectedDailyOption: DailyChallengeOption | null;
-  isClaimingPending: boolean;
-}) {
-  if (params.playType === "free-play") {
-    return getMenuMessage(params.selectedCategory, params.selectedMode);
-  }
-
-  if (params.isClaimingPending) {
-    return "Syncing claimed scores.";
-  }
-
-  if (!params.selectedCategory) {
-    return "Pick a category.";
-  }
-
-  if (!params.selectedMode) {
-    return "Pick a mode.";
-  }
-
-  if (!params.selectedDailyOption) {
-    return "Daily challenge unavailable.";
-  }
-
-  if (params.selectedDailyOption.playerStatus.hasPlayed) {
-    return "Already played today.";
-  }
-
-  return "Start today's daily.";
 }
 
 function getMissMessage(data: GuessRoundResult) {
@@ -216,22 +403,7 @@ export function SharedLandingShell({
       (option) =>
         option.category === selectedCategory && option.mode === selectedMode,
     ) ?? null;
-  const selectedCategoryDailyOptions =
-    selectedPlayType === "daily" && selectedCategory
-      ? dailyOptions.filter((option) => option.category === selectedCategory)
-      : [];
   const view = round ? "round" : result ? "result" : "menu";
-  const totalEntityCount = categories.reduce(
-    (sum, category) => sum + category.entityCount,
-    0,
-  );
-  const totalSelectedEntityCount =
-    selectedCategory === "random"
-      ? totalEntityCount
-      : (categories.find((category) => category.id === selectedCategory)
-          ?.entityCount ?? 0);
-  const showRandomMix =
-    selectedPlayType === "free-play" && categories.length > 1;
   const currentMode = round?.mode ?? result?.mode ?? selectedMode;
   const currentClues = round?.clues ?? result?.clues ?? [];
   const visibleClassicClues = currentClues.filter((clue) => clue.isRevealed);
@@ -280,101 +452,6 @@ export function SharedLandingShell({
       : isAlreadyGuessed
         ? "Already tried."
         : null;
-  const canStartSelection =
-    selectedPlayType === "daily"
-      ? Boolean(
-          selectedDailyOption &&
-          !selectedDailyOption.playerStatus.hasPlayed &&
-          !isClaimingPending &&
-          !isPending,
-        )
-      : Boolean(
-          selectedCategory &&
-          selectedMode &&
-          totalSelectedEntityCount > 0 &&
-          !isPending,
-        );
-  const selectedModeMeta = getModeMeta(selectedMode);
-  const selectedDailyScore = selectedDailyOption?.playerStatus.score ?? null;
-  const StatusIcon = statusAppearance.icon;
-
-  useEffect(() => {
-    if (selectedPlayType === "daily" && selectedCategory === "random") {
-      setSelectedCategory(dailyData.defaultCategory);
-      return;
-    }
-
-    if (!selectedCategory) {
-      setSelectedCategory(
-        selectedPlayType === "daily"
-          ? dailyData.defaultCategory
-          : defaultFreePlayCategory,
-      );
-    }
-  }, [
-    defaultFreePlayCategory,
-    dailyData.defaultCategory,
-    selectedCategory,
-    selectedPlayType,
-  ]);
-
-  useEffect(() => {
-    if (selectedPlayType === "daily" && !selectedMode) {
-      setSelectedMode(dailyData.defaultMode);
-    }
-  }, [dailyData.defaultMode, selectedMode, selectedPlayType]);
-
-  useEffect(() => {
-    if (
-      selectedPlayType !== "daily" ||
-      !selectedCategory ||
-      !selectedMode ||
-      view !== "menu"
-    ) {
-      return;
-    }
-
-    const currentOption = dailyOptions.find(
-      (option) =>
-        option.category === selectedCategory && option.mode === selectedMode,
-    );
-
-    if (!currentOption?.playerStatus.hasPlayed) {
-      return;
-    }
-
-    const nextAvailableOption = dailyOptions.find(
-      (option) =>
-        option.category === selectedCategory && !option.playerStatus.hasPlayed,
-    );
-
-    if (nextAvailableOption && nextAvailableOption.mode !== selectedMode) {
-      setSelectedMode(nextAvailableOption.mode);
-    }
-  }, [dailyOptions, selectedCategory, selectedMode, selectedPlayType, view]);
-
-  useEffect(() => {
-    if (view !== "menu") {
-      return;
-    }
-
-    setMessage(
-      getSelectionMessage({
-        playType: selectedPlayType,
-        selectedCategory,
-        selectedMode,
-        selectedDailyOption,
-        isClaimingPending,
-      }),
-    );
-  }, [
-    isClaimingPending,
-    selectedCategory,
-    selectedDailyOption,
-    selectedMode,
-    selectedPlayType,
-    view,
-  ]);
 
   useEffect(() => {
     setResetCountdown(getTimeUntilBudapestMidnight());
@@ -447,12 +524,15 @@ export function SharedLandingShell({
     }
   }
 
-  function startFreePlay() {
-    if (!selectedCategory || !selectedMode) {
-      setMessage(getMenuMessage(selectedCategory, selectedMode));
+  function startFreePlay(mode: GameMode = selectedMode ?? "classic") {
+    if (!defaultFreePlayCategory) {
+      setMessage("Free play unavailable.");
       return;
     }
 
+    setSelectedPlayType("free-play");
+    setSelectedCategory(defaultFreePlayCategory);
+    setSelectedMode(mode);
     setGuess("");
     setGuessedEntities([]);
     setScore(null);
@@ -466,8 +546,8 @@ export function SharedLandingShell({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          category: selectedCategory,
-          mode: selectedMode,
+          category: defaultFreePlayCategory,
+          mode,
         }),
       });
 
@@ -547,7 +627,7 @@ export function SharedLandingShell({
       return;
     }
 
-    void startFreePlay();
+    void startFreePlay(selectedMode ?? "classic");
   }
 
   function revealClue(clueKey: string) {
@@ -798,7 +878,23 @@ export function SharedLandingShell({
     });
   }
 
-  if (view !== "menu") {
+  if (view === "menu") {
+    return (
+      <GameLauncher
+        claimBanner={claimBanner}
+        dailyOptions={dailyOptions.filter(
+          (option) => option.category === dailyData.defaultCategory,
+        )}
+        isBusy={isBusy}
+        isClaimingPending={isClaimingPending}
+        onStartDaily={(option) => void startDaily(option)}
+        onStartFreePlay={(mode) => void startFreePlay(mode)}
+        resetCountdown={resetCountdown}
+      />
+    );
+  }
+
+  {
     const activeKind =
       round?.kind ??
       result?.kind ??
@@ -904,378 +1000,4 @@ export function SharedLandingShell({
       </>
     );
   }
-
-  return (
-    <section className="grid gap-4">
-      <header className={`${surfaceClass} overflow-hidden p-5 sm:p-6`}>
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] lg:items-end">
-          <div className="grid gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/12 bg-[#0f766e]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:border-[#24d4c2]/14 dark:bg-[#24d4c2]/8 dark:text-[#8ff4e7]">
-                <Sparkles
-                  aria-hidden="true"
-                  className="size-3.5"
-                  strokeWidth={2.2}
-                />
-                Choose your run
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/76 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb]">
-                <CalendarDays
-                  aria-hidden="true"
-                  className="size-3.5"
-                  strokeWidth={2.2}
-                />
-                Resets in {resetCountdown}
-              </span>
-            </div>
-
-            <div>
-              <h1 className="m-0 font-serif-display text-[clamp(2.5rem,8vw,4.3rem)] font-semibold leading-[0.92] tracking-[-0.065em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                WikiGuesser
-              </h1>
-              <p className="m-0 mt-3 max-w-2xl text-[1rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
-                Pick a lane, choose a category, then solve from the clues. Daily
-                lets you play each category and mode once. Free play stays
-                unlimited.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-3 rounded-[28px] border border-black/8 bg-white/78 p-4 dark:border-white/10 dark:bg-white/6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
-                  {selectedPlayType === "daily" ? "Today's daily" : "Free play"}
-                </p>
-                {selectedPlayType === "daily" &&
-                selectedDailyOption?.playerStatus.hasPlayed ? (
-                  <span className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-500/18 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200">
-                    <CircleAlert
-                      aria-hidden="true"
-                      className="size-4"
-                      strokeWidth={2.1}
-                    />
-                    Already played today.
-                  </span>
-                ) : null}
-                <strong className="mt-2 block font-serif-display text-[1.7rem] tracking-[-0.05em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                  {selectedPlayType === "daily"
-                    ? `${toCategoryLabel(selectedCategory, categories)} · ${selectedModeMeta.label}`
-                    : `${toCategoryLabel(selectedCategory, categories)} · ${selectedModeMeta.label}`}
-                </strong>
-              </div>
-              <button
-                className={primaryButtonClass}
-                disabled={!canStartSelection || isBusy}
-                onClick={startSelectedFlow}
-                type="button"
-              >
-                {isBusy ? (
-                  <LoaderCircle
-                    aria-hidden="true"
-                    className="size-4 animate-spin"
-                    strokeWidth={2.2}
-                  />
-                ) : (
-                  <ArrowRight
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={2.2}
-                  />
-                )}
-                Start
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-              {selectedPlayType === "daily" ? (
-                <>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-black/5 px-3 py-1.5 dark:bg-white/8">
-                    <Trophy
-                      aria-hidden="true"
-                      className="size-4"
-                      strokeWidth={2.1}
-                    />
-                    {selectedDailyOption?.playerStatus.hasPlayed
-                      ? `${selectedDailyScore ?? 0} pts today`
-                      : "One daily run per category and mode"}
-                  </span>
-                  {/* Leaderboard temporarily disabled while it gets reworked.
-                  <Link
-                    className={`${secondaryButtonClass} px-3 py-2`}
-                    href="/leaderboard"
-                  >
-                    <Crown aria-hidden="true" className="size-4" strokeWidth={2.1} />
-                    Leaderboard
-                  </Link>
-                  */}
-                </>
-              ) : (
-                <span className="inline-flex items-center gap-2 rounded-full bg-black/5 px-3 py-1.5 dark:bg-white/8">
-                  <Shuffle
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={2.1}
-                  />
-                  Unlimited rounds. Mixed category available.
-                </span>
-              )}
-            </div>
-
-            {claimBanner ? (
-              <div className="rounded-full border border-emerald-500/18 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-400/18 dark:bg-emerald-400/10 dark:text-emerald-200">
-                {claimBanner}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </header>
-
-      <section className={`${surfaceClass} p-5 sm:p-6`}>
-        <div className="grid gap-5">
-          <div className="grid gap-3">
-            <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-              <Sparkles
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={2.2}
-              />
-              1. Play type
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              {(
-                [
-                  {
-                    id: "daily" as const,
-                    label: "Daily",
-                    hint: "One daily run per category and mode.",
-                    icon: CalendarDays,
-                  },
-                  {
-                    id: "free-play" as const,
-                    label: "Free play",
-                    hint: "Unlimited rounds with mixed category available.",
-                    icon: Shuffle,
-                  },
-                ] as const
-              ).map((option) => {
-                const OptionIcon = option.icon;
-
-                return (
-                  <button
-                    className={selectionCardClass(
-                      selectedPlayType === option.id,
-                    )}
-                    key={option.id}
-                    onClick={() => setSelectedPlayType(option.id)}
-                    type="button"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="inline-flex rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] p-2.5 dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))]">
-                        <OptionIcon
-                          aria-hidden="true"
-                          className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
-                          strokeWidth={2.1}
-                        />
-                      </span>
-                    </div>
-                    <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                      {option.label}
-                    </strong>
-                    <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-                      {option.hint}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid gap-3">
-            <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-              <Compass
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={2.2}
-              />
-              2. Category
-            </div>
-
-            <div
-              className={`grid gap-3 sm:grid-cols-2 ${
-                showRandomMix ? "xl:grid-cols-3" : "xl:grid-cols-2"
-              }`}
-            >
-              {showRandomMix ? (
-                <button
-                  className={selectionCardClass(selectedCategory === "random")}
-                  onClick={() => setSelectedCategory("random")}
-                  type="button"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <span
-                      className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${CATEGORY_META.random.accent}`}
-                    >
-                      <Shuffle
-                        aria-hidden="true"
-                        className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
-                        strokeWidth={2.1}
-                      />
-                    </span>
-                  </div>
-                  <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                    Mixed category
-                  </strong>
-                  <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-                    Random across every live category.
-                  </span>
-                </button>
-              ) : null}
-
-              {categories.map((category) => {
-                const categoryMeta = getCategoryMeta(category.id);
-                const CategoryIcon = categoryMeta.icon;
-
-                return (
-                  <button
-                    className={selectionCardClass(
-                      selectedCategory === category.id,
-                      category.entityCount === 0,
-                    )}
-                    disabled={category.entityCount === 0}
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    type="button"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <span
-                        className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${categoryMeta.accent}`}
-                      >
-                        <CategoryIcon
-                          aria-hidden="true"
-                          className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
-                          strokeWidth={2.1}
-                        />
-                      </span>
-                    </div>
-                    <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                      {category.label}
-                    </strong>
-                    <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-                      {categoryMeta.shortLabel}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid gap-3">
-            <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-              <Sparkles
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={2.2}
-              />
-              3. Mode
-            </div>
-
-            <div className="grid gap-3 lg:grid-cols-2">
-              {GAME_MODE_OPTIONS.map((mode) => {
-                const dailyModeOption =
-                  selectedPlayType === "daily" && selectedCategory
-                    ? (selectedCategoryDailyOptions.find(
-                        (option) => option.mode === mode.id,
-                      ) ?? null)
-                    : null;
-                const isDisabled =
-                  !selectedCategory ||
-                  (selectedPlayType === "free-play" &&
-                    totalSelectedEntityCount === 0) ||
-                  (selectedPlayType === "daily" &&
-                    (!dailyModeOption ||
-                      dailyModeOption.playerStatus.hasPlayed));
-                const ModeIcon = mode.icon;
-
-                return (
-                  <button
-                    className={selectionCardClass(
-                      selectedMode === mode.id,
-                      isDisabled,
-                    )}
-                    disabled={isDisabled}
-                    key={mode.id}
-                    onClick={() => setSelectedMode(mode.id)}
-                    type="button"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="inline-flex rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] p-2.5 dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))]">
-                        <ModeIcon
-                          aria-hidden="true"
-                          className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
-                          strokeWidth={2.1}
-                        />
-                      </span>
-                      {selectedPlayType === "daily" &&
-                      dailyModeOption?.playerStatus.hasPlayed ? (
-                        <span className="rounded-full border border-amber-500/18 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200">
-                          Played
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-black/5 px-2.5 py-1 text-xs font-semibold text-[#6b6259] dark:bg-white/8 dark:text-[#9aa9bb]">
-                          {mode.summary}
-                        </span>
-                      )}
-                    </div>
-                    <strong className="font-serif-display text-[1.55rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                      {mode.label}
-                    </strong>
-                    <span className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-                      {mode.hint}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 border-t border-black/8 pt-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-            <div
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${statusAppearance.className}`}
-            >
-              <StatusIcon
-                aria-hidden="true"
-                className="size-4 shrink-0"
-                strokeWidth={2.2}
-              />
-              <span>{message}</span>
-            </div>
-
-            <button
-              className={primaryButtonClass}
-              disabled={!canStartSelection || isBusy}
-              onClick={startSelectedFlow}
-              type="button"
-            >
-              {isBusy ? (
-                <LoaderCircle
-                  aria-hidden="true"
-                  className="size-4 animate-spin"
-                  strokeWidth={2.2}
-                />
-              ) : (
-                <ArrowRight
-                  aria-hidden="true"
-                  className="size-4"
-                  strokeWidth={2.2}
-                />
-              )}
-              Start
-            </button>
-          </div>
-        </div>
-      </section>
-    </section>
-  );
 }
