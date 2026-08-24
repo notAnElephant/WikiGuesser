@@ -4,6 +4,7 @@ import {
 } from "@/src/components/game-shell/config";
 import { getCategoryMeta } from "@/src/components/game-shell/utils";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
+import type { LucideIcon } from "lucide-react";
 import {
   Ban,
   House,
@@ -22,9 +23,10 @@ interface GameResultDialogProps {
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
   onTertiaryAction?: () => void;
+  primaryActionIcon?: LucideIcon;
   primaryActionLabel?: string;
   result: RoundOutcome;
-  secondaryActionLabel?: string;
+  secondaryActionLabel?: string | null;
   startRound: () => void;
   tertiaryActionLabel?: string;
 }
@@ -37,6 +39,7 @@ export function GameResultDialog({
   onPrimaryAction,
   onSecondaryAction,
   onTertiaryAction,
+  primaryActionIcon,
   primaryActionLabel = "Play again",
   result,
   secondaryActionLabel = "Categories",
@@ -47,6 +50,11 @@ export function GameResultDialog({
   const handlePrimaryAction = onPrimaryAction ?? startRound;
   const handleSecondaryAction = onSecondaryAction ?? clearForCategoryChoice;
   const usesCreateAccountAction = primaryActionLabel === "Create account";
+  const usesHomeAction =
+    primaryActionLabel === "Home" || primaryActionLabel === "Daily hub";
+  const PrimaryActionIcon =
+    primaryActionIcon ??
+    (usesCreateAccountAction ? UserPlus : usesHomeAction ? House : RotateCcw);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,20,14,0.46)] p-4 backdrop-blur-sm dark:bg-[rgba(3,7,14,0.62)]">
@@ -132,30 +140,24 @@ export function GameResultDialog({
             onClick={handlePrimaryAction}
             type="button"
           >
-            {usesCreateAccountAction ? (
-              <UserPlus
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={2.2}
-              />
-            ) : (
-              <RotateCcw
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={2.2}
-              />
-            )}
+            <PrimaryActionIcon
+              aria-hidden="true"
+              className="size-4"
+              strokeWidth={2.2}
+            />
             {primaryActionLabel}
           </button>
-          <button
-            className={`${secondaryButtonClass} flex-1`}
-            disabled={isBusy}
-            onClick={handleSecondaryAction}
-            type="button"
-          >
-            <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
-            {secondaryActionLabel}
-          </button>
+          {secondaryActionLabel ? (
+            <button
+              className={`${secondaryButtonClass} flex-1`}
+              disabled={isBusy}
+              onClick={handleSecondaryAction}
+              type="button"
+            >
+              <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
+              {secondaryActionLabel}
+            </button>
+          ) : null}
         </div>
         {tertiaryActionLabel && onTertiaryAction ? (
           <button

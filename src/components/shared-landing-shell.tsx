@@ -30,7 +30,10 @@ import {
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
-import { getDailyComboKey } from "@/src/lib/game/daily";
+import {
+  findOtherAvailableDaily,
+  getDailyComboKey,
+} from "@/src/lib/game/daily";
 import type {
   CategorySummary,
   DailyChallengeOption,
@@ -403,6 +406,10 @@ export function SharedLandingShell({
       (option) =>
         option.category === selectedCategory && option.mode === selectedMode,
     ) ?? null;
+  const otherAvailableDailyOption =
+    result?.kind === "daily"
+      ? findOtherAvailableDaily(dailyOptions, result)
+      : null;
   const view = round ? "round" : result ? "result" : "menu";
   const currentMode = round?.mode ?? result?.mode ?? selectedMode;
   const currentClues = round?.clues ?? result?.clues ?? [];
@@ -963,6 +970,11 @@ export function SharedLandingShell({
                 return;
               }
 
+              if (otherAvailableDailyOption) {
+                void startDaily(otherAvailableDailyOption);
+                return;
+              }
+
               if (!isSignedIn) {
                 router.push("/sign-up");
                 return;
@@ -976,24 +988,43 @@ export function SharedLandingShell({
                 : clearToHome()
             }
             onTertiaryAction={
-              result.kind === "daily" && !isSignedIn
+              result.kind === "daily" &&
+              !isSignedIn &&
+              !otherAvailableDailyOption
                 ? () => {
                     router.push("/sign-in");
                   }
                 : undefined
             }
+            primaryActionIcon={
+              result.kind === "daily" && otherAvailableDailyOption
+                ? Play
+                : undefined
+            }
             primaryActionLabel={
               result.kind === "daily"
-                ? isSignedIn
-                  ? "Home"
-                  : "Create account"
+                ? otherAvailableDailyOption
+                  ? `Play ${launcherModeCopy[otherAvailableDailyOption.mode].dailyTitle}`
+                  : isSignedIn
+                    ? "Home"
+                    : "Create account"
                 : "Play again"
             }
             result={result}
-            secondaryActionLabel="Home"
+            secondaryActionLabel={
+              result.kind === "daily" &&
+              isSignedIn &&
+              !otherAvailableDailyOption
+                ? null
+                : "Home"
+            }
             startRound={startSelectedFlow}
             tertiaryActionLabel={
-              result.kind === "daily" && !isSignedIn ? "Log in" : undefined
+              result.kind === "daily" &&
+              !isSignedIn &&
+              !otherAvailableDailyOption
+                ? "Log in"
+                : undefined
             }
           />
         ) : null}

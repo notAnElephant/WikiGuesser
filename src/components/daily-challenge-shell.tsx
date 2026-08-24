@@ -20,7 +20,10 @@ import {
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
-import { getDailyComboKey } from "@/src/lib/game/daily";
+import {
+  findOtherAvailableDaily,
+  getDailyComboKey,
+} from "@/src/lib/game/daily";
 import type {
   DailyChallengeCard,
   DailyHomeData,
@@ -35,6 +38,7 @@ import {
   CalendarDays,
   CircleAlert,
   LoaderCircle,
+  Play,
   Sparkles,
   Trophy,
 } from "lucide-react";
@@ -204,6 +208,8 @@ export function DailyChallengeShell({
       (card) =>
         card.category === selectedCategory && card.mode === selectedMode,
     ) ?? cards[0]!;
+  const otherAvailableDailyCard =
+    result?.kind === "daily" ? findOtherAvailableDaily(cards, result) : null;
   const view = round ? "round" : result ? "result" : "menu";
   const currentMode = round?.mode ?? result?.mode ?? selectedCard.mode;
   const currentClues = round?.clues ?? result?.clues ?? [];
@@ -580,6 +586,11 @@ export function DailyChallengeShell({
             currentCategoryLabel={currentCategoryLabel}
             isBusy={isBusy}
             onPrimaryAction={() => {
+              if (otherAvailableDailyCard) {
+                startDaily(otherAvailableDailyCard);
+                return;
+              }
+
               if (!isSignedIn) {
                 router.push("/sign-up");
                 return;
@@ -589,17 +600,28 @@ export function DailyChallengeShell({
             }}
             onSecondaryAction={() => clearToHub()}
             onTertiaryAction={
-              !isSignedIn
+              !isSignedIn && !otherAvailableDailyCard
                 ? () => {
                     router.push("/sign-in");
                   }
                 : undefined
             }
-            primaryActionLabel={isSignedIn ? "Daily hub" : "Create account"}
+            primaryActionIcon={otherAvailableDailyCard ? Play : undefined}
+            primaryActionLabel={
+              otherAvailableDailyCard
+                ? `Play ${getModeMeta(otherAvailableDailyCard.mode).label} Daily`
+                : isSignedIn
+                  ? "Daily hub"
+                  : "Create account"
+            }
             result={result}
-            secondaryActionLabel="Daily hub"
+            secondaryActionLabel={
+              isSignedIn && !otherAvailableDailyCard ? null : "Daily hub"
+            }
             startRound={() => startDaily(selectedCard)}
-            tertiaryActionLabel={!isSignedIn ? "Log in" : undefined}
+            tertiaryActionLabel={
+              !isSignedIn && !otherAvailableDailyCard ? "Log in" : undefined
+            }
           />
         ) : null}
       </>

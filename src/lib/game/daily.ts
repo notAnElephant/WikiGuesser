@@ -1,4 +1,8 @@
-import type { EntityCategory, GameMode, NormalizedEntity } from "@/src/lib/types";
+import type {
+  EntityCategory,
+  GameMode,
+  NormalizedEntity,
+} from "@/src/lib/types";
 import { DAILY_RESET_TIME_ZONE } from "@/src/lib/types";
 
 const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", {
@@ -14,6 +18,23 @@ export function getDailyDayKey(date: Date = new Date()) {
 
 export function getDailyComboKey(category: EntityCategory, mode: GameMode) {
   return `${category}:${mode}`;
+}
+
+export function findOtherAvailableDaily<
+  T extends {
+    category: EntityCategory;
+    mode: GameMode;
+    playerStatus: { hasPlayed: boolean };
+  },
+>(options: T[], current: { category: EntityCategory; mode: GameMode }) {
+  return (
+    options.find(
+      (option) =>
+        option.category === current.category &&
+        option.mode !== current.mode &&
+        !option.playerStatus.hasPlayed,
+    ) ?? null
+  );
 }
 
 function hashSeed(value: string) {
@@ -33,7 +54,9 @@ export function selectDailyChallengeEntity(
   category: EntityCategory,
   mode: GameMode,
 ) {
-  const matchingEntities = entities.filter((entity) => entity.category === category);
+  const matchingEntities = entities.filter(
+    (entity) => entity.category === category,
+  );
 
   if (matchingEntities.length === 0) {
     throw new Error("No playable entities are available for that category.");

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
 import {
+  findOtherAvailableDaily,
   getDailyComboKey,
   getDailyDayKey,
   selectDailyChallengeEntity,
@@ -10,6 +11,50 @@ import {
 describe("daily helpers", () => {
   it("builds combo keys from category and mode", () => {
     expect(getDailyComboKey("countries", "classic")).toBe("countries:classic");
+  });
+
+  it("finds the other unplayed daily in the same category", () => {
+    const options = [
+      {
+        category: "countries" as const,
+        mode: "classic" as const,
+        playerStatus: { hasPlayed: true },
+      },
+      {
+        category: "countries" as const,
+        mode: "blurred-lines" as const,
+        playerStatus: { hasPlayed: false },
+      },
+    ];
+
+    expect(
+      findOtherAvailableDaily(options, {
+        category: "countries",
+        mode: "classic",
+      }),
+    ).toBe(options[1]);
+  });
+
+  it("returns null when the other daily has already been played", () => {
+    const options = [
+      {
+        category: "countries" as const,
+        mode: "classic" as const,
+        playerStatus: { hasPlayed: true },
+      },
+      {
+        category: "countries" as const,
+        mode: "blurred-lines" as const,
+        playerStatus: { hasPlayed: true },
+      },
+    ];
+
+    expect(
+      findOtherAvailableDaily(options, {
+        category: "countries",
+        mode: "classic",
+      }),
+    ).toBeNull();
   });
 
   it("uses the Budapest calendar day across DST boundaries", () => {
