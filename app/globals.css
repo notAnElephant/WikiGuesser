@@ -59,8 +59,14 @@
     line-height: 1;
     white-space: nowrap;
     box-shadow: 0 8px 22px rgba(127, 29, 29, 0.2);
-    pointer-events: none;
+    cursor: pointer;
+    pointer-events: auto;
     transform: translate(-50%, calc(-100% - 0.45rem));
+  }
+
+  .map-guess-marker:focus-visible {
+    outline: 2px solid #0f766e;
+    outline-offset: 3px;
   }
 
   .map-guess-marker::after {
@@ -116,6 +122,7 @@
   }
 
   .map-country--guessed {
+    cursor: pointer;
     fill: rgba(220, 38, 38, 0.36);
     stroke: #dc2626;
     stroke-width: 1.7px;

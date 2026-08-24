@@ -650,11 +650,13 @@ export function GamePlayView({
           </div>
         </aside>
       </div>
-      <WorldMapDialog
-        guessedCountries={guessedCountries}
-        isExpanded={isMapExpanded}
-        onExpandedChange={setIsMapExpanded}
-      />
+      {view === "round" ? (
+        <WorldMapDialog
+          guessedCountries={guessedCountries}
+          isExpanded={isMapExpanded}
+          onExpandedChange={setIsMapExpanded}
+        />
+      ) : null}
     </div>
   );
 }

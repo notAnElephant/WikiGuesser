@@ -11,7 +11,7 @@ import {
   type ZoomTransform,
 } from "d3-zoom";
 import type { FeatureCollection, Geometry } from "geojson";
-import { ChevronDown, ChevronUp, Minus, Plus, RotateCcw } from "lucide-react";
+import { ChevronDown, ChevronUp, Focus, Minus, Plus, Scan } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
@@ -123,6 +123,17 @@ export function WorldMapDialog({
       ),
     [guessedCountries],
   );
+  const guessedCountryByName = useMemo(() => {
+    const countriesByName = new Map<string, GuessedCountryMapData>();
+
+    for (const country of guessedCountries) {
+      for (const mapName of country.mapNames) {
+        countriesByName.set(normalizeGuess(mapName), country);
+      }
+    }
+
+    return countriesByName;
+  }, [guessedCountries]);
   const projection = useMemo(() => {
     if (mapSize.width <= 0 || mapSize.height <= 0) {
       return null;
@@ -182,7 +193,7 @@ export function WorldMapDialog({
     }
 
     const behavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 8])
+      .scaleExtent([1, 20])
       .extent([
         [0, 0],
         [mapSize.width, mapSize.height],
@@ -219,6 +230,70 @@ export function WorldMapDialog({
     if (svg && behavior) {
       select(svg).call(behavior.transform, zoomIdentity);
     }
+  }
+
+  function focusCountries(
+    targetNames: ReadonlySet<string>,
+    maximumScale: number,
+    viewportCoverage: number,
+  ) {
+    const svg = svgRef.current;
+    const behavior = zoomBehaviorRef.current;
+
+    if (!svg || !behavior || !path || targetNames.size === 0) {
+      return;
+    }
+
+    let left = Number.POSITIVE_INFINITY;
+    let top = Number.POSITIVE_INFINITY;
+    let right = Number.NEGATIVE_INFINITY;
+    let bottom = Number.NEGATIVE_INFINITY;
+
+    for (const country of COUNTRY_DATA.features) {
+      if (!targetNames.has(country.properties.normalizedName)) {
+        continue;
+      }
+
+      const [[countryLeft, countryTop], [countryRight, countryBottom]] =
+        path.bounds(country);
+      left = Math.min(left, countryLeft);
+      top = Math.min(top, countryTop);
+      right = Math.max(right, countryRight);
+      bottom = Math.max(bottom, countryBottom);
+    }
+
+    if (![left, top, right, bottom].every(Number.isFinite)) {
+      return;
+    }
+
+    const boundsWidth = Math.max(1, right - left);
+    const boundsHeight = Math.max(1, bottom - top);
+    const scale = Math.min(
+      maximumScale,
+      Math.max(
+        1,
+        Math.min(
+          (mapSize.width * viewportCoverage) / boundsWidth,
+          (mapSize.height * viewportCoverage) / boundsHeight,
+        ),
+      ),
+    );
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+    const transform = zoomIdentity
+      .translate(mapSize.width / 2, mapSize.height / 2)
+      .scale(scale)
+      .translate(-centerX, -centerY);
+
+    select(svg).call(behavior.transform, transform);
+  }
+
+  function fitGuessedCountries() {
+    focusCountries(guessedNames, 10, 0.72);
+  }
+
+  function focusCountry(country: GuessedCountryMapData) {
+    focusCountries(new Set(country.mapNames.map(normalizeGuess)), 7, 0.56);
   }
 
   function handleDialogKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
@@ -335,17 +410,22 @@ export function WorldMapDialog({
                 ? COUNTRY_DATA.features.map((country, index) => {
                     const name = country.properties.normalizedName;
                     const countryPath = path(country);
-                    const isGuessed = guessedNames.has(name);
+                    const guessedCountry = guessedCountryByName.get(name);
 
                     return countryPath ? (
                       <path
                         className={
-                          isGuessed
+                          guessedCountry
                             ? "map-country map-country--guessed"
                             : "map-country"
                         }
                         d={countryPath}
                         key={`${country.id ?? name}-${index}`}
+                        onClick={
+                          guessedCountry
+                            ? () => focusCountry(guessedCountry)
+                            : undefined
+                        }
                         vectorEffect="non-scaling-stroke"
                       />
                     ) : null;
@@ -365,17 +445,19 @@ export function WorldMapDialog({
                 const [left, top] = mapTransform.apply(point);
 
                 return (
-                  <div
+                  <button
                     aria-label={`${country.name}. Goal is ${DIRECTION_LABEL[country.direction]}.`}
                     className="map-guess-marker absolute z-[5]"
                     key={country.qid}
+                    onClick={() => focusCountry(country)}
                     style={{ left, top }}
+                    type="button"
                   >
                     <span>{country.name}</span>
                     <span className="map-guess-marker-arrow">
                       <DirectionArrow direction={country.direction} />
                     </span>
-                  </div>
+                  </button>
                 );
               })
             : null}
@@ -404,16 +486,23 @@ export function WorldMapDialog({
               </button>
             </div>
             <button
-              className="inline-flex items-center gap-2 rounded-2xl border border-black/16 bg-[#fbf7ef]/94 px-3 py-2.5 text-sm font-semibold text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/16 dark:bg-[#132131]/94 dark:text-[#e9f2f8] dark:hover:bg-[#1a2c3f]"
-              onClick={resetWorld}
+              aria-label="Fit all guessed countries"
+              className="inline-flex size-11 items-center justify-center rounded-2xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/16 dark:bg-[#132131]/94 dark:text-[#e9f2f8] dark:hover:bg-[#1a2c3f]"
+              disabled={guessedCountries.length === 0}
+              onClick={fitGuessedCountries}
+              title="Fit all guessed countries"
               type="button"
             >
-              <RotateCcw
-                aria-hidden="true"
-                className="size-4"
-                strokeWidth={2.2}
-              />
-              Reset world
+              <Focus aria-hidden="true" className="size-5" strokeWidth={2.2} />
+            </button>
+            <button
+              aria-label="Reset map zoom"
+              className="inline-flex size-11 items-center justify-center rounded-2xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/16 dark:bg-[#132131]/94 dark:text-[#e9f2f8] dark:hover:bg-[#1a2c3f]"
+              onClick={resetWorld}
+              title="Reset map zoom"
+              type="button"
+            >
+              <Scan aria-hidden="true" className="size-5" strokeWidth={2.2} />
             </button>
           </div>
 
