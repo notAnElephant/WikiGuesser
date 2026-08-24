@@ -67,7 +67,7 @@ describe("daily result dialog actions", () => {
     expect(markup).toContain("Home</button>");
   });
 
-  it("renders a close control and the completed round's clear flag", () => {
+  it("renders the completed round's flag without forcing a backdrop or aspect ratio", () => {
     const markup = renderToStaticMarkup(
       <GameResultDialog
         {...sharedProps}
@@ -79,8 +79,8 @@ describe("daily result dialog actions", () => {
     expect(markup).toContain('aria-label="Close result"');
     expect(markup).toContain('alt="Flag of Netherlands"');
     expect(markup).toContain("Flag%20of%20the%20Netherlands.svg");
-    expect(markup).toContain(
-      'class="aspect-[3/2] w-full rounded-[14px] object-contain"',
-    );
+    expect(markup).toContain('class="mt-5 flex justify-center"');
+    expect(markup).toContain("block h-auto max-h-64 w-auto max-w-full");
+    expect(markup).not.toContain("aspect-[3/2]");
   });
 });

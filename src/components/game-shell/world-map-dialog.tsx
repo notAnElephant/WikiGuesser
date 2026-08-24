@@ -1,13 +1,13 @@
 "use client";
 
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
-import type { GuessedCountryMapData, GuessDirection } from "@/src/lib/types";
+import type { GuessDirection, GuessedCountryMapData } from "@/src/lib/types";
 import { geoMercator, geoPath } from "d3-geo";
 import { select } from "d3-selection";
 import {
   zoom,
-  zoomIdentity,
   type ZoomBehavior,
+  zoomIdentity,
   type ZoomTransform,
 } from "d3-zoom";
 import type { FeatureCollection, Geometry } from "geojson";
@@ -112,6 +112,9 @@ export function WorldMapDialog({
   const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
     null,
   );
+  const mapTransformRef = useRef<ZoomTransform>(zoomIdentity);
+  const animationFrameRef = useRef<number | null>(null);
+  const previousGuessedCountryCountRef = useRef(guessedCountries.length);
   const [mapSize, setMapSize] = useState<MapSize>({ width: 0, height: 0 });
   const [mapTransform, setMapTransform] = useState<ZoomTransform>(zoomIdentity);
   const guessedNames = useMemo(
@@ -202,34 +205,104 @@ export function WorldMapDialog({
         [0, 0],
         [mapSize.width, mapSize.height],
       ])
-      .on("zoom", (event) => setMapTransform(event.transform));
+      .on("start.animation", (event) => {
+        if (event.sourceEvent && animationFrameRef.current !== null) {
+          window.cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+      })
+      .on("zoom", (event) => {
+        mapTransformRef.current = event.transform;
+        setMapTransform(event.transform);
+      });
     const selection = select(svg);
     selection.call(behavior);
-    selection.call(behavior.transform, zoomIdentity);
+    selection.call(behavior.transform, mapTransformRef.current);
     zoomBehaviorRef.current = behavior;
 
     return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
       selection.on(".zoom", null);
       zoomBehaviorRef.current = null;
     };
   }, [mapSize]);
 
   function changeZoom(factor: number) {
-    const svg = svgRef.current;
-    const behavior = zoomBehaviorRef.current;
+    const currentTransform = mapTransformRef.current;
+    const centerX = mapSize.width / 2;
+    const centerY = mapSize.height / 2;
+    const [mapCenterX, mapCenterY] = currentTransform.invert([
+      centerX,
+      centerY,
+    ]);
+    const scale = Math.min(20, Math.max(1, currentTransform.k * factor));
+    const targetTransform = zoomIdentity
+      .translate(centerX, centerY)
+      .scale(scale)
+      .translate(-mapCenterX, -mapCenterY);
 
-    if (svg && behavior) {
-      select(svg).call(behavior.scaleBy, factor);
-    }
+    animateToTransform(targetTransform);
   }
 
   function resetWorld() {
+    animateToTransform(zoomIdentity);
+  }
+
+  function animateToTransform(targetTransform: ZoomTransform) {
     const svg = svgRef.current;
     const behavior = zoomBehaviorRef.current;
 
-    if (svg && behavior) {
-      select(svg).call(behavior.transform, zoomIdentity);
+    if (!svg || !behavior) {
+      return;
     }
+
+    if (animationFrameRef.current !== null) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    const selection = select(svg);
+    const startTransform = mapTransformRef.current;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (reduceMotion) {
+      selection.call(behavior.transform, targetTransform);
+      animationFrameRef.current = null;
+      return;
+    }
+
+    const duration = 480;
+    const startedAt = performance.now();
+
+    const updateTransform = (timestamp: number) => {
+      const progress = Math.min(1, (timestamp - startedAt) / duration);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      const scale =
+        startTransform.k *
+        Math.pow(targetTransform.k / startTransform.k, easedProgress);
+      const x =
+        startTransform.x +
+        (targetTransform.x - startTransform.x) * easedProgress;
+      const y =
+        startTransform.y +
+        (targetTransform.y - startTransform.y) * easedProgress;
+      const interpolatedTransform = zoomIdentity.translate(x, y).scale(scale);
+
+      selection.call(behavior.transform, interpolatedTransform);
+
+      if (progress < 1) {
+        animationFrameRef.current =
+          window.requestAnimationFrame(updateTransform);
+      } else {
+        animationFrameRef.current = null;
+      }
+    };
+
+    animationFrameRef.current = window.requestAnimationFrame(updateTransform);
   }
 
   function focusCountries(
@@ -285,7 +358,7 @@ export function WorldMapDialog({
       .scale(scale)
       .translate(-centerX, -centerY);
 
-    select(svg).call(behavior.transform, transform);
+    animateToTransform(transform);
   }
 
   function fitGuessedCountries() {
@@ -295,6 +368,26 @@ export function WorldMapDialog({
   function focusCountry(country: GuessedCountryMapData) {
     focusCountries(new Set(country.mapNames.map(normalizeGuess)), 7, 0.56);
   }
+
+  useEffect(() => {
+    const previousCount = previousGuessedCountryCountRef.current;
+    previousGuessedCountryCountRef.current = guessedCountries.length;
+
+    if (guessedCountries.length <= previousCount) {
+      return;
+    }
+
+    fitGuessedCountries();
+  }, [guessedCountries]);
+
+  useEffect(
+    () => () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    },
+    [],
+  );
 
   function handleDialogKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (isExpanded && event.key === "Escape") {
@@ -333,7 +426,7 @@ export function WorldMapDialog({
       className={
         isExpanded
           ? "fixed inset-0 z-[80] grid place-items-center bg-[rgba(20,26,28,0.54)] p-2 backdrop-blur-[3px] sm:p-5"
-          : "pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-2 sm:justify-end sm:px-5"
+          : "pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-2 sm:justify-end sm:px-5 lg:pointer-events-auto lg:static lg:z-auto lg:block lg:px-0"
       }
       onMouseDown={(event) => {
         if (isExpanded && event.target === event.currentTarget) {
@@ -343,35 +436,29 @@ export function WorldMapDialog({
     >
       <div
         aria-describedby="world-map-help"
-        aria-labelledby="world-map-title"
+        aria-label="World map"
         aria-modal={isExpanded ? true : undefined}
-        className={`pointer-events-auto grid w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden border border-black/16 bg-[#fbf7ef] shadow-[0_18px_60px_rgba(17,24,39,0.3)] outline-none transition-[height,width,border-radius] duration-300 dark:border-white/14 dark:bg-[#101a27] dark:shadow-[0_18px_60px_rgba(0,0,0,0.58)] ${
+        className={`pointer-events-auto grid w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden border border-black/16 bg-[#fbf7ef] shadow-[0_18px_60px_rgba(17,24,39,0.3)] outline-none transition-[height,width,border-radius] duration-300 dark:border-white/14 dark:bg-[#101a27] dark:shadow-[0_18px_60px_rgba(0,0,0,0.58)] ${
           isExpanded
             ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-[28px] sm:h-[min(760px,calc(100dvh-2.5rem))]"
-            : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-[26px] sm:border-b"
+            : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-[26px] sm:border-b lg:mb-0 lg:h-[clamp(320px,42dvh,460px)] lg:max-w-none"
         }`}
         onKeyDown={handleDialogKeyDown}
         ref={dialogRef}
         role={isExpanded ? "dialog" : "region"}
       >
-        <header
-          className={`flex items-center justify-between gap-4 border-b border-black/10 bg-white/76 dark:border-white/10 dark:bg-white/5 ${
-            isExpanded ? "px-4 py-3 sm:px-6 sm:py-4" : "px-4 py-2.5"
-          }`}
+        <div
+          aria-label="Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
+          className="map-world-canvas relative min-h-0 overflow-hidden"
+          ref={mapContainerRef}
+          role="application"
         >
-          <h2
-            className={`m-0 font-serif-display font-semibold leading-none tracking-[-0.05em] text-[#1f1b17] dark:text-[#f5f7fb] ${
-              isExpanded ? "text-[clamp(1.8rem,5vw,3rem)]" : "text-xl"
-            }`}
-            id="world-map-title"
-          >
-            {isExpanded ? "World map" : "Map · drag and zoom"}
-          </h2>
           <button
             aria-label={isExpanded ? "Minimize world map" : "Expand world map"}
-            className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-black/10 bg-white/82 px-3 text-sm font-semibold text-[#1f1b17] transition hover:-translate-y-0.5 hover:border-[#0f766e]/30 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-white/7 dark:text-[#f5f7fb] dark:hover:border-[#24d4c2]/35 dark:hover:text-[#8ff4e7]"
+            className="absolute right-4 top-4 z-10 inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-black/10 bg-white/90 px-3 text-sm font-semibold text-[#1f1b17] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-[#0f766e]/30 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-[#132131]/90 dark:text-[#f5f7fb] dark:hover:border-[#24d4c2]/35 dark:hover:text-[#8ff4e7]"
             onClick={() => onExpandedChange(!isExpanded)}
             ref={expandButtonRef}
+            title={isExpanded ? "Minimize world map" : "Expand world map"}
             type="button"
           >
             {isExpanded ? (
@@ -389,14 +476,6 @@ export function WorldMapDialog({
             )}
             {isExpanded ? "Minimize" : "Expand"}
           </button>
-        </header>
-
-        <div
-          aria-label="Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
-          className="map-world-canvas relative min-h-0 overflow-hidden"
-          ref={mapContainerRef}
-          role="application"
-        >
           <svg
             aria-hidden="true"
             className="size-full touch-none select-none"
@@ -447,10 +526,11 @@ export function WorldMapDialog({
                 return (
                   <button
                     aria-label={`${country.name}. Goal is ${DIRECTION_LABEL[country.direction]}.`}
-                    className="map-guess-marker absolute z-[5]"
+                    className="map-guess-marker absolute z-5"
                     key={country.qid}
                     onClick={() => focusCountry(country)}
                     style={{ left, top }}
+                    title={`Focus ${country.name}`}
                     type="button"
                   >
                     <span>{country.name}</span>
@@ -463,19 +543,21 @@ export function WorldMapDialog({
             : null}
 
           <div className="absolute bottom-4 left-4 z-10 grid gap-2">
-            <div className="grid w-11 overflow-hidden rounded-2xl border border-black/16 bg-[#fbf7ef]/94 shadow-lg backdrop-blur dark:border-white/16 dark:bg-[#132131]/94">
+            <div className="grid w-11 overflow-hidden rounded-2xl border border-black/16 bg-[#fbf7ef]/94 shadow-lg backdrop-blur">
               <button
                 aria-label="Zoom in"
-                className="inline-flex size-11 items-center justify-center text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:text-[#e9f2f8] dark:hover:bg-white/10"
+                className="inline-flex size-11 items-center justify-center text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:hover:bg-white/10"
                 onClick={() => changeZoom(1.45)}
+                title="Zoom in"
                 type="button"
               >
                 <Plus aria-hidden="true" className="size-5" strokeWidth={2.2} />
               </button>
               <button
                 aria-label="Zoom out"
-                className="inline-flex size-11 items-center justify-center border-t border-black/12 text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:border-white/12 dark:text-[#e9f2f8] dark:hover:bg-white/10"
+                className="inline-flex size-11 items-center justify-center border-t border-black/12 text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:hover:bg-white/10"
                 onClick={() => changeZoom(1 / 1.45)}
+                title="Zoom out"
                 type="button"
               >
                 <Minus
@@ -487,7 +569,7 @@ export function WorldMapDialog({
             </div>
             <button
               aria-label="Fit all guessed countries"
-              className="inline-flex size-11 items-center justify-center rounded-2xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/16 dark:bg-[#132131]/94 dark:text-[#e9f2f8] dark:hover:bg-[#1a2c3f]"
+              className="inline-flex size-11 items-center justify-center rounded-2xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 disabled:cursor-not-allowed disabled:opacity-45  dark:hover:bg-[#1a2c3f]"
               disabled={guessedCountries.length === 0}
               onClick={fitGuessedCountries}
               title="Fit all guessed countries"
@@ -497,7 +579,7 @@ export function WorldMapDialog({
             </button>
             <button
               aria-label="Reset map zoom"
-              className="inline-flex size-11 items-center justify-center rounded-2xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/16 dark:bg-[#132131]/94 dark:text-[#e9f2f8] dark:hover:bg-[#1a2c3f]"
+              className="inline-flex size-11 items-center justify-center rounded-2xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35  dark:hover:bg-[#1a2c3f]"
               onClick={resetWorld}
               title="Reset map zoom"
               type="button"

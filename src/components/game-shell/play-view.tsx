@@ -5,6 +5,12 @@ import {
   secondaryButtonClass,
   surfaceClass,
 } from "@/src/components/game-shell/config";
+import type {
+  ActiveRound,
+  GuessAttempt,
+  MessageAppearance,
+  RoundOutcome,
+} from "@/src/components/game-shell/types";
 import {
   getCategoryMeta,
   getClueIcon,
@@ -13,12 +19,6 @@ import {
   renderClueValue,
   renderHiddenCluePlaceholder,
 } from "@/src/components/game-shell/utils";
-import type {
-  GuessAttempt,
-  MessageAppearance,
-  RoundOutcome,
-} from "@/src/components/game-shell/types";
-import type { ActiveRound } from "@/src/components/game-shell/types";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import type { GameMode, GuessDirection, RoundClue } from "@/src/lib/types";
 import {
@@ -36,7 +36,6 @@ import {
   House,
   LoaderCircle,
   Lock,
-  Map,
   PartyPopper,
   Play,
   RotateCcw,
@@ -217,7 +216,7 @@ export function GamePlayView({
         </div>
       </header>
 
-      <div className="grid flex-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_340px]">
+      <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(400px,0.75fr)]">
         <section
           className={`${surfaceClass} grid content-start gap-4 p-4 sm:p-5`}
         >
@@ -435,6 +434,14 @@ export function GamePlayView({
         </section>
 
         <aside className="grid content-start gap-4">
+          {view === "round" ? (
+            <WorldMapDialog
+              guessedCountries={guessedCountries}
+              isExpanded={isMapExpanded}
+              onExpandedChange={setIsMapExpanded}
+            />
+          ) : null}
+
           {round ? (
             <div className={`${surfaceClass} grid gap-4 p-4`}>
               <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
@@ -557,18 +564,6 @@ export function GamePlayView({
                 </button>
                 <button
                   className={`${secondaryButtonClass} w-full`}
-                  onClick={() => setIsMapExpanded(true)}
-                  type="button"
-                >
-                  <Map
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={2.2}
-                  />
-                  Expand map
-                </button>
-                <button
-                  className={`${secondaryButtonClass} w-full`}
                   disabled={isBusy}
                   onClick={giveUpRound}
                   type="button"
@@ -650,13 +645,6 @@ export function GamePlayView({
           </div>
         </aside>
       </div>
-      {view === "round" ? (
-        <WorldMapDialog
-          guessedCountries={guessedCountries}
-          isExpanded={isMapExpanded}
-          onExpandedChange={setIsMapExpanded}
-        />
-      ) : null}
     </div>
   );
 }

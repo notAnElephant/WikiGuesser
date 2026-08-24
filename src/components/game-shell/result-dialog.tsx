@@ -116,10 +116,10 @@ export function GameResultDialog({
         </div>
 
         {flagUrl ? (
-          <div className="mt-5 overflow-hidden rounded-[22px] border border-black/8 bg-white/78 p-3 dark:border-white/10 dark:bg-white/6">
+          <div className="mt-5 flex justify-center">
             <img
               alt={`Flag of ${result.canonicalAnswer}`}
-              className="aspect-[3/2] w-full rounded-[14px] object-contain"
+              className="block h-auto max-h-64 w-auto max-w-full object-contain drop-shadow-[0_1px_1px_rgba(31,27,23,0.22)] sm:max-h-72 dark:drop-shadow-[0_1px_1px_rgba(255,255,255,0.2)]"
               height={320}
               src={flagUrl}
               width={480}
