@@ -68,6 +68,14 @@ export function toPlayableClues(clues: RoundClue[]): PlayableClue[] {
     }));
 }
 
+export function getFlagImageUrl(
+  clues: Array<Pick<RoundClue, "key" | "prefetchedValue">>,
+): string | null {
+  return (
+    clues.find((clue) => clue.key === "flag-colors")?.prefetchedValue ?? null
+  );
+}
+
 export function renderClueValue(
   clue: Pick<RoundClue, "key" | "value">,
 ): ReactNode {

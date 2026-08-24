@@ -14,6 +14,7 @@ import type {
 import {
   getCategoryMeta,
   getClueIcon,
+  getFlagImageUrl,
   getModeMeta,
   isClueLocked,
   renderClueValue,
@@ -43,6 +44,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { type FormEvent, useDeferredValue, useState } from "react";
+import { preload } from "react-dom";
 
 const WorldMapDialog = dynamic(
   () =>
@@ -131,6 +133,12 @@ export function GamePlayView({
   view,
   visibleClassicClues,
 }: GamePlayViewProps) {
+  const flagImageUrl = getFlagImageUrl(currentClues);
+
+  if (flagImageUrl) {
+    preload(flagImageUrl, { as: "image" });
+  }
+
   const currentModeMeta = getModeMeta(currentMode);
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const CurrentModeIcon = currentModeMeta.icon;
