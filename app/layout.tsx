@@ -1,7 +1,8 @@
 import { ThemeProvider } from "@/src/components/theme-provider";
 import { ThemeToggle } from "@/src/components/theme-toggle";
 import { PostHogIdentity } from "@/src/components/posthog-identity";
-import { ClerkProvider, Show, UserButton } from "@clerk/nextjs";
+import { AccountUserButton } from "@/src/components/account-user-button";
+import { ClerkProvider, Show } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Dice5, LogIn } from "lucide-react";
@@ -69,7 +70,7 @@ export default function RootLayout({
                     </Link>
                   </Show>
                   <Show when="signed-in">
-                    <UserButton />
+                    <AccountUserButton />
                   </Show>
                 </div>
               </div>
