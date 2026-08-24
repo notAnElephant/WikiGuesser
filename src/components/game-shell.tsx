@@ -93,6 +93,7 @@ export function GameShell(props: GameShellProps) {
             currentCategory={game.currentCategory}
             currentCategoryLabel={game.currentCategoryLabel}
             isBusy={game.isBusy}
+            onClose={game.dismissResultDialog}
             primaryActionLabel="Play again"
             result={game.result}
             secondaryActionLabel="Free play"

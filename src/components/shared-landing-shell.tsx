@@ -30,10 +30,7 @@ import {
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
-import {
-  captureAnalyticsEvent,
-  toGameContext,
-} from "@/src/lib/analytics";
+import { captureAnalyticsEvent, toGameContext } from "@/src/lib/analytics";
 import {
   findOtherAvailableDaily,
   getDailyComboKey,
@@ -921,7 +918,6 @@ export function SharedLandingShell({
           category: payload.category,
           mode: payload.mode,
           clues: payload.clues,
-          showDialog: false,
         });
         setGuess("");
 
@@ -999,7 +995,10 @@ export function SharedLandingShell({
           visibleClassicClues={visibleClassicClues}
         />
 
-        {result?.status === "win" && viewportWidth > 0 && viewportHeight > 0 ? (
+        {result?.status === "win" &&
+        result.showDialog !== false &&
+        viewportWidth > 0 &&
+        viewportHeight > 0 ? (
           <Confetti
             gravity={0.16}
             height={viewportHeight}
@@ -1021,6 +1020,11 @@ export function SharedLandingShell({
             currentCategory={currentCategory}
             currentCategoryLabel={currentCategoryLabel}
             isBusy={isBusy}
+            onClose={() =>
+              setResult((current) =>
+                current ? { ...current, showDialog: false } : current,
+              )
+            }
             onPrimaryAction={() => {
               if (result.kind !== "daily") {
                 startSelectedFlow();

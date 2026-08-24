@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Trophy,
   UserPlus,
+  X,
 } from "lucide-react";
 
 interface GameResultDialogProps {
@@ -20,6 +21,7 @@ interface GameResultDialogProps {
   currentCategory: string | null;
   currentCategoryLabel: string;
   isBusy: boolean;
+  onClose: () => void;
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
   onTertiaryAction?: () => void;
@@ -36,6 +38,7 @@ export function GameResultDialog({
   currentCategory,
   currentCategoryLabel,
   isBusy,
+  onClose,
   onPrimaryAction,
   onSecondaryAction,
   onTertiaryAction,
@@ -47,6 +50,9 @@ export function GameResultDialog({
   tertiaryActionLabel,
 }: GameResultDialogProps) {
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
+  const flagUrl = result.clues.find(
+    (clue) => clue.key === "flag-colors",
+  )?.value;
   const handlePrimaryAction = onPrimaryAction ?? startRound;
   const handleSecondaryAction = onSecondaryAction ?? clearForCategoryChoice;
   const usesCreateAccountAction = primaryActionLabel === "Create account";
@@ -61,10 +67,19 @@ export function GameResultDialog({
       <div
         aria-labelledby="round-result-title"
         aria-modal="true"
-        className="w-full max-w-md rounded-4xl border border-[rgba(17,94,89,0.14)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(255,247,238,0.95))] p-6 shadow-[0_30px_80px_rgba(29,22,14,0.26)] dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(14,22,34,0.98),rgba(19,29,43,0.95))] dark:shadow-[0_30px_80px_rgba(0,0,0,0.46)] sm:p-7"
+        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-4xl border border-[rgba(17,94,89,0.14)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(255,247,238,0.95))] p-6 shadow-[0_30px_80px_rgba(29,22,14,0.26)] dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(14,22,34,0.98),rgba(19,29,43,0.95))] dark:shadow-[0_30px_80px_rgba(0,0,0,0.46)] sm:p-7"
         role="dialog"
       >
-        <div className="flex items-start gap-4">
+        <button
+          aria-label="Close result"
+          className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full border border-black/8 bg-white/72 text-[#6b6259] transition hover:bg-white hover:text-[#1f1b17] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f766e] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb] dark:hover:bg-white/10 dark:hover:text-[#f5f7fb]"
+          onClick={onClose}
+          type="button"
+        >
+          <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
+        </button>
+
+        <div className="flex items-start gap-4 pr-10">
           <span
             className={`inline-flex size-14 shrink-0 items-center justify-center rounded-[22px] ${
               result.status === "win"
@@ -99,6 +114,18 @@ export function GameResultDialog({
             </h2>
           </div>
         </div>
+
+        {flagUrl ? (
+          <div className="mt-5 overflow-hidden rounded-[22px] border border-black/8 bg-white/78 p-3 dark:border-white/10 dark:bg-white/6">
+            <img
+              alt={`Flag of ${result.canonicalAnswer}`}
+              className="aspect-[3/2] w-full rounded-[14px] object-contain"
+              height={320}
+              src={flagUrl}
+              width={480}
+            />
+          </div>
+        ) : null}
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <div className="flex items-center gap-3 rounded-[22px] border border-black/8 bg-white/78 p-4 dark:border-white/10 dark:bg-white/6">

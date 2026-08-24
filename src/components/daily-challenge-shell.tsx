@@ -530,7 +530,6 @@ export function DailyChallengeShell({
         category: payload.category,
         mode: payload.mode,
         clues: payload.clues,
-        showDialog: false,
       });
       setGuess("");
       setPlayedOverrides((current) => ({
@@ -585,6 +584,11 @@ export function DailyChallengeShell({
             currentCategory={currentCategory}
             currentCategoryLabel={currentCategoryLabel}
             isBusy={isBusy}
+            onClose={() =>
+              setResult((current) =>
+                current ? { ...current, showDialog: false } : current,
+              )
+            }
             onPrimaryAction={() => {
               if (otherAvailableDailyCard) {
                 startDaily(otherAvailableDailyCard);

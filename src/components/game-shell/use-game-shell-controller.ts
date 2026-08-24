@@ -401,7 +401,6 @@ export function useGameShellController({
         category: data.category,
         mode: data.mode,
         clues: data.clues,
-        showDialog: false,
       });
       setGuess("");
       setMessage(`Answer: ${data.canonicalAnswer ?? "Unknown"}.`);
@@ -418,12 +417,19 @@ export function useGameShellController({
     setMessage(getMenuMessage(selectedCategory, selectedMode));
   }
 
+  function dismissResultDialog() {
+    setResult((current) =>
+      current ? { ...current, showDialog: false } : current,
+    );
+  }
+
   return {
     categories,
     availableCountryOptions,
     canStartRound,
     canSubmitGuess,
     clearForCategoryChoice,
+    dismissResultDialog,
     currentCategory,
     currentCategoryLabel,
     currentClues,
