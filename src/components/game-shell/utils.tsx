@@ -1,5 +1,6 @@
 import { splitCurrencyRevealSegments } from "@/src/lib/game/currency-censor";
 
+import { FlagColorsClue } from "@/src/components/game-shell/flag-colors-clue";
 import {
   CATEGORY_META,
   CLUE_ICON_MAP,
@@ -75,18 +76,7 @@ export function renderClueValue(
   }
 
   if (clue.key === "flag-colors") {
-    return (
-      <span className="block w-full max-w-72 overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm dark:border-white/12 dark:bg-white/8">
-        <img
-          alt="Blurred country flag"
-          className="aspect-[3/2] w-full scale-110 object-cover blur-xl"
-          height={320}
-          loading="lazy"
-          src={clue.value}
-          width={480}
-        />
-      </span>
-    );
+    return <FlagColorsClue src={clue.value} />;
   }
 
   if (clue.key !== "currency") {

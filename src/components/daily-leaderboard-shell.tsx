@@ -67,16 +67,22 @@ export function DailyLeaderboardShell({
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#c7d3e2] dark:hover:bg-white/8 dark:hover:text-white"
             href="/"
           >
-            <ArrowLeft aria-hidden="true" className="size-4" strokeWidth={2.2} />
+            <ArrowLeft
+              aria-hidden="true"
+              className="size-4"
+              strokeWidth={2.2}
+            />
             Back home
           </Link>
         </div>
 
         <h1 className="m-0 mt-3 max-w-3xl font-serif-display text-[clamp(2.15rem,9vw,3.6rem)] font-semibold leading-[0.94] tracking-[-0.06em] text-[#1f1b17] dark:text-[#f5f7fb]">
-          See how today stacks up
+          {period === "today" ? "Today's leaderboard" : "All-time leaderboard"}
         </h1>
         <p className="m-0 mt-3 hidden max-w-2xl text-[0.98rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb] sm:block">
-          Compare today's board with the long-run standings.
+          {period === "today"
+            ? "See the top scores from today's challenge."
+            : "See the top players across every completed challenge."}
         </p>
       </header>
 
@@ -84,7 +90,7 @@ export function DailyLeaderboardShell({
         <div className="flex items-center justify-between gap-3">
           <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
             <Trophy aria-hidden="true" className="size-4" strokeWidth={2.2} />
-            Standings
+            Rankings
           </div>
           <div className={segmentedControlClass}>
             {(["today", "total"] as const).map((entryPeriod) => (
@@ -95,7 +101,7 @@ export function DailyLeaderboardShell({
                 onClick={() => setPeriod(entryPeriod)}
                 type="button"
               >
-                {entryPeriod === "today" ? "Today" : "Total"}
+                {entryPeriod === "today" ? "Today" : "All time"}
               </button>
             ))}
           </div>

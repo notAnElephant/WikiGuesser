@@ -36,8 +36,6 @@ import {
   House,
   LoaderCircle,
   Lock,
-  PartyPopper,
-  Play,
   RotateCcw,
   Search,
   Sparkles,
@@ -152,70 +150,6 @@ export function GamePlayView({
 
   return (
     <div className="grid min-h-[calc(100dvh-1rem)] gap-4 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
-      <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/12 bg-[#0f766e]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:border-[#24d4c2]/14 dark:bg-[#24d4c2]/8 dark:text-[#8ff4e7]">
-            {result?.status === "win" ? (
-              <PartyPopper
-                aria-hidden="true"
-                className="size-3.5"
-                strokeWidth={2.2}
-              />
-            ) : (
-              <Play aria-hidden="true" className="size-3.5" strokeWidth={2.2} />
-            )}
-            {view === "round"
-              ? `${flowLabel} live`
-              : result?.status === "win"
-                ? "Solved"
-                : "Answer shown"}
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/78 px-3 py-1.5 text-sm font-medium text-[#115e59] dark:bg-white/6 dark:text-[#8ff4e7]">
-            <CurrentCategoryIcon
-              aria-hidden="true"
-              className="size-4"
-              strokeWidth={2.2}
-            />
-            {currentCategoryLabel}
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/78 px-3 py-1.5 text-sm font-medium text-[#115e59] dark:bg-white/6 dark:text-[#8ff4e7]">
-            <CurrentModeIcon
-              aria-hidden="true"
-              className="size-4"
-              strokeWidth={2.2}
-            />
-            {currentModeMeta.label}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 sm:w-auto">
-          <div className="rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 dark:border-white/10 dark:bg-white/6">
-            <span className="block text-[0.7rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
-              Score
-            </span>
-            <strong className="text-[1.2rem] text-[#1f1b17] dark:text-[#f5f7fb]">
-              {displayScore}
-            </strong>
-          </div>
-          <div className="rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 dark:border-white/10 dark:bg-white/6">
-            <span className="block text-[0.7rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
-              Left
-            </span>
-            <strong className="text-[1.2rem] text-[#1f1b17] dark:text-[#f5f7fb]">
-              {round?.remainingClues ?? 0}
-            </strong>
-          </div>
-          <div className="rounded-[20px] border border-black/8 bg-white/78 px-3 py-2 dark:border-white/10 dark:bg-white/6">
-            <span className="block text-[0.7rem] uppercase tracking-[0.16em] text-[#6b6259] dark:text-[#9aa9bb]">
-              Tried
-            </span>
-            <strong className="text-[1.2rem] text-[#1f1b17] dark:text-[#f5f7fb]">
-              {guessedEntities.length}
-            </strong>
-          </div>
-        </div>
-      </header>
-
       <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(400px,0.75fr)]">
         <section
           className={`${surfaceClass} grid content-start gap-4 p-4 sm:p-5`}
@@ -305,20 +239,9 @@ export function GamePlayView({
                         </th>
                         <td className="border-t border-[#c8ccd1] px-4 py-3 align-top dark:border-white/10">
                           {clue.isRevealed ? (
-                            <div className="flex w-full items-start justify-between gap-3">
-                              <span className="min-w-0 text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">
+                            <div className="w-full">
+                              <span className="block min-w-0 text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">
                                 {renderClueValue(clue)}
-                              </span>
-                              <span
-                                aria-hidden="true"
-                                className="pointer-events-none inline-flex select-none items-center gap-1 rounded-full px-2 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-0"
-                              >
-                                <Eye
-                                  aria-hidden="true"
-                                  className="size-3"
-                                  strokeWidth={2.2}
-                                />
-                                Reveal
                               </span>
                             </div>
                           ) : round ? (
