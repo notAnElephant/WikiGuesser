@@ -45,7 +45,7 @@ import {
   Target,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { type FormEvent, useDeferredValue, useRef, useState } from "react";
+import { type FormEvent, useDeferredValue, useState } from "react";
 
 const WorldMapDialog = dynamic(
   () =>
@@ -139,8 +139,7 @@ export function GamePlayView({
   const CurrentModeIcon = currentModeMeta.icon;
   const StatusIcon = statusAppearance.icon;
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
-  const [isMapOpen, setIsMapOpen] = useState(false);
-  const mapButtonRef = useRef<HTMLButtonElement>(null);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
   const deferredGuess = useDeferredValue(guess);
   const normalizedSearch = normalizeGuess(deferredGuess);
   const matchingCountryOptions = isCountryRound
@@ -151,11 +150,6 @@ export function GamePlayView({
   const guessedCountries = guessedEntities.flatMap((attempt) =>
     attempt.mapData ? [attempt.mapData] : [],
   );
-
-  function closeMap() {
-    setIsMapOpen(false);
-    window.requestAnimationFrame(() => mapButtonRef.current?.focus());
-  }
 
   return (
     <div className="grid min-h-[calc(100dvh-1rem)] gap-4 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
@@ -260,7 +254,7 @@ export function GamePlayView({
                 {revealedCount}/{currentClues.length || 0}
               </span>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-flow-col auto-cols-fr gap-2">
               {currentClues.map((clue) => (
                 <span
                   className={`h-2 rounded-full ${
@@ -563,8 +557,7 @@ export function GamePlayView({
                 </button>
                 <button
                   className={`${secondaryButtonClass} w-full`}
-                  onClick={() => setIsMapOpen(true)}
-                  ref={mapButtonRef}
+                  onClick={() => setIsMapExpanded(true)}
                   type="button"
                 >
                   <Map
@@ -572,7 +565,7 @@ export function GamePlayView({
                     className="size-4"
                     strokeWidth={2.2}
                   />
-                  Open map
+                  Expand map
                 </button>
                 <button
                   className={`${secondaryButtonClass} w-full`}
@@ -657,12 +650,11 @@ export function GamePlayView({
           </div>
         </aside>
       </div>
-      {isMapOpen ? (
-        <WorldMapDialog
-          guessedCountries={guessedCountries}
-          onClose={closeMap}
-        />
-      ) : null}
+      <WorldMapDialog
+        guessedCountries={guessedCountries}
+        isExpanded={isMapExpanded}
+        onExpandedChange={setIsMapExpanded}
+      />
     </div>
   );
 }

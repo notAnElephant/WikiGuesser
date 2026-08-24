@@ -11,7 +11,7 @@ import {
   type ZoomTransform,
 } from "d3-zoom";
 import type { FeatureCollection, Geometry } from "geojson";
-import { Minus, Plus, RotateCcw, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Minus, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
@@ -24,7 +24,8 @@ interface CountryProperties {
 
 interface WorldMapDialogProps {
   guessedCountries: GuessedCountryMapData[];
-  onClose: () => void;
+  isExpanded: boolean;
+  onExpandedChange: (isExpanded: boolean) => void;
 }
 
 interface MapSize {
@@ -101,12 +102,13 @@ function DirectionArrow({ direction }: { direction: GuessDirection }) {
 
 export function WorldMapDialog({
   guessedCountries,
-  onClose,
+  isExpanded,
+  onExpandedChange,
 }: WorldMapDialogProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const expandButtonRef = useRef<HTMLButtonElement>(null);
   const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
     null,
   );
@@ -140,14 +142,18 @@ export function WorldMapDialog({
   );
 
   useEffect(() => {
+    if (!isExpanded) {
+      return;
+    }
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
+    expandButtonRef.current?.focus();
 
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, []);
+  }, [isExpanded]);
 
   useEffect(() => {
     const container = mapContainerRef.current;
@@ -216,13 +222,13 @@ export function WorldMapDialog({
   }
 
   function handleDialogKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape") {
+    if (isExpanded && event.key === "Escape") {
       event.preventDefault();
-      onClose();
+      onExpandedChange(false);
       return;
     }
 
-    if (event.key !== "Tab" || !dialogRef.current) {
+    if (!isExpanded || event.key !== "Tab" || !dialogRef.current) {
       return;
     }
 
@@ -249,37 +255,64 @@ export function WorldMapDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[80] grid place-items-center bg-[rgba(20,26,28,0.54)] p-2 backdrop-blur-[3px] sm:p-5"
+      className={
+        isExpanded
+          ? "fixed inset-0 z-[80] grid place-items-center bg-[rgba(20,26,28,0.54)] p-2 backdrop-blur-[3px] sm:p-5"
+          : "pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-2 sm:justify-end sm:px-5"
+      }
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
+        if (isExpanded && event.target === event.currentTarget) {
+          onExpandedChange(false);
         }
       }}
     >
       <div
         aria-describedby="world-map-help"
         aria-labelledby="world-map-title"
-        aria-modal="true"
-        className="grid h-[min(780px,calc(100dvh-1rem))] w-full max-w-[1120px] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-[28px] border border-black/16 bg-[#fbf7ef] shadow-[0_28px_90px_rgba(17,24,39,0.34)] outline-none dark:border-white/14 dark:bg-[#101a27] dark:shadow-[0_28px_90px_rgba(0,0,0,0.62)] sm:h-[min(760px,calc(100dvh-2.5rem))]"
+        aria-modal={isExpanded ? true : undefined}
+        className={`pointer-events-auto grid w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden border border-black/16 bg-[#fbf7ef] shadow-[0_18px_60px_rgba(17,24,39,0.3)] outline-none transition-[height,width,border-radius] duration-300 dark:border-white/14 dark:bg-[#101a27] dark:shadow-[0_18px_60px_rgba(0,0,0,0.58)] ${
+          isExpanded
+            ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-[28px] sm:h-[min(760px,calc(100dvh-2.5rem))]"
+            : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-[26px] sm:border-b"
+        }`}
         onKeyDown={handleDialogKeyDown}
         ref={dialogRef}
-        role="dialog"
+        role={isExpanded ? "dialog" : "region"}
       >
-        <header className="flex items-center justify-between gap-4 border-b border-black/10 bg-white/76 px-4 py-3 dark:border-white/10 dark:bg-white/5 sm:px-6 sm:py-4">
+        <header
+          className={`flex items-center justify-between gap-4 border-b border-black/10 bg-white/76 dark:border-white/10 dark:bg-white/5 ${
+            isExpanded ? "px-4 py-3 sm:px-6 sm:py-4" : "px-4 py-2.5"
+          }`}
+        >
           <h2
-            className="m-0 font-serif-display text-[clamp(1.8rem,5vw,3rem)] font-semibold leading-none tracking-[-0.05em] text-[#1f1b17] dark:text-[#f5f7fb]"
+            className={`m-0 font-serif-display font-semibold leading-none tracking-[-0.05em] text-[#1f1b17] dark:text-[#f5f7fb] ${
+              isExpanded ? "text-[clamp(1.8rem,5vw,3rem)]" : "text-xl"
+            }`}
             id="world-map-title"
           >
-            World map
+            {isExpanded ? "World map" : "Map · drag and zoom"}
           </h2>
           <button
-            aria-label="Close world map"
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl border border-black/10 bg-white/82 text-[#1f1b17] transition hover:-translate-y-0.5 hover:border-[#0f766e]/30 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-white/7 dark:text-[#f5f7fb] dark:hover:border-[#24d4c2]/35 dark:hover:text-[#8ff4e7]"
-            onClick={onClose}
-            ref={closeButtonRef}
+            aria-label={isExpanded ? "Minimize world map" : "Expand world map"}
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-black/10 bg-white/82 px-3 text-sm font-semibold text-[#1f1b17] transition hover:-translate-y-0.5 hover:border-[#0f766e]/30 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-white/7 dark:text-[#f5f7fb] dark:hover:border-[#24d4c2]/35 dark:hover:text-[#8ff4e7]"
+            onClick={() => onExpandedChange(!isExpanded)}
+            ref={expandButtonRef}
             type="button"
           >
-            <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
+            {isExpanded ? (
+              <ChevronDown
+                aria-hidden="true"
+                className="size-5"
+                strokeWidth={2.2}
+              />
+            ) : (
+              <ChevronUp
+                aria-hidden="true"
+                className="size-5"
+                strokeWidth={2.2}
+              />
+            )}
+            {isExpanded ? "Minimize" : "Expand"}
           </button>
         </header>
 
@@ -390,7 +423,9 @@ export function WorldMapDialog({
         </div>
 
         <footer
-          className="border-t border-black/10 bg-white/76 px-4 py-3 text-center text-sm text-[#5f5a54] dark:border-white/10 dark:bg-white/5 dark:text-[#aab8c6]"
+          className={`border-t border-black/10 bg-white/76 text-center text-sm text-[#5f5a54] dark:border-white/10 dark:bg-white/5 dark:text-[#aab8c6] ${
+            isExpanded ? "px-4 py-3" : "sr-only"
+          }`}
           id="world-map-help"
         >
           Drag to explore · Scroll or pinch to zoom
