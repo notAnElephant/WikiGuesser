@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@/src/components/theme-provider";
 import { ThemeToggle } from "@/src/components/theme-toggle";
+import { PostHogIdentity } from "@/src/components/posthog-identity";
 import { ClerkProvider, Show, UserButton } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(15,118,110,0.2),transparent_34%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.18),transparent_24%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.32),transparent_28%),linear-gradient(180deg,#fbf5eb_0%,#f2eadb_100%)] font-sans text-[#1f1b17] transition-colors dark:bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.14),transparent_22%),radial-gradient(circle_at_bottom,rgba(36,212,194,0.08),transparent_24%),linear-gradient(180deg,#08111b_0%,#0f1724_54%,#16202d_100%)] dark:text-[#f5f7fb]">
         <ThemeProvider>
           <ClerkProvider>
+            <PostHogIdentity />
             <header className="fixed inset-x-0 top-0 z-40 p-3 sm:p-4">
               <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-3xl border border-black/8 bg-white/72 px-3 py-2 shadow-[0_18px_40px_rgba(53,36,22,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgba(9,16,26,0.76)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.34)]">
                 <Link

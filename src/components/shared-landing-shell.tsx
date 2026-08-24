@@ -31,6 +31,10 @@ import {
 } from "@/src/components/game-shell/utils";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import {
+  captureAnalyticsEvent,
+  toGameContext,
+} from "@/src/lib/analytics";
+import {
   findOtherAvailableDaily,
   getDailyComboKey,
 } from "@/src/lib/game/daily";
@@ -564,6 +568,9 @@ export function SharedLandingShell({
       }
 
       const payload = (await response.json()) as StartRoundResult;
+      captureAnalyticsEvent("game_started", {
+        ...toGameContext(payload.kind, payload.category, payload.mode),
+      });
       setRound(payload);
       setMessage(
         payload.mode === "blurred-lines" ? "Tap a row." : "Round live.",
@@ -621,6 +628,9 @@ export function SharedLandingShell({
       }
 
       const payload = (await response.json()) as StartRoundResult;
+      captureAnalyticsEvent("game_started", {
+        ...toGameContext(payload.kind, payload.category, payload.mode),
+      });
       setRound(payload);
       setMessage(
         payload.mode === "blurred-lines" ? "Tap a row." : "Daily live.",
@@ -688,6 +698,12 @@ export function SharedLandingShell({
         }
 
         const payload = (await response.json()) as RevealClueResult;
+        captureAnalyticsEvent("clue_revealed", {
+          ...toGameContext(payload.kind, payload.category, payload.mode),
+          clue_key: clueKey,
+          clues_revealed: payload.clues.filter((entry) => entry.isRevealed)
+            .length,
+        });
         setRound(payload);
         setMessage(
           payload.remainingClues === 0 ? "Last clue." : "Clue unlocked.",
@@ -750,6 +766,27 @@ export function SharedLandingShell({
       }
 
       const payload = (await response.json()) as GuessRoundResult;
+      const attemptNumber = guessedEntities.length + 1;
+      const cluesRevealed = payload.clues.filter(
+        (entry) => entry.isRevealed,
+      ).length;
+      captureAnalyticsEvent("guess_submitted", {
+        ...toGameContext(payload.kind, payload.category, payload.mode),
+        attempt_number: attemptNumber,
+        completed: payload.isComplete,
+        correct: payload.isCorrect,
+      });
+
+      if (payload.isComplete) {
+        captureAnalyticsEvent("game_completed", {
+          ...toGameContext(payload.kind, payload.category, payload.mode),
+          clues_revealed: cluesRevealed,
+          guesses: attemptNumber,
+          outcome: payload.isCorrect ? "win" : "loss",
+          score: payload.score,
+        });
+      }
+
       setGuessedEntities((current) => [
         ...current,
         { name: submittedGuess, direction: payload.direction ?? null },
@@ -855,6 +892,26 @@ export function SharedLandingShell({
         }
 
         const payload = (await response.json()) as GuessRoundResult;
+        const cluesRevealed = payload.clues.filter(
+          (entry) => entry.isRevealed,
+        ).length;
+        const gameContext = toGameContext(
+          payload.kind,
+          payload.category,
+          payload.mode,
+        );
+        captureAnalyticsEvent("game_given_up", {
+          ...gameContext,
+          clues_revealed: cluesRevealed,
+          guesses: guessedEntities.length,
+        });
+        captureAnalyticsEvent("game_completed", {
+          ...gameContext,
+          clues_revealed: cluesRevealed,
+          guesses: guessedEntities.length,
+          outcome: "loss",
+          score: payload.score,
+        });
         setRound(null);
         setResult({
           status: "loss",

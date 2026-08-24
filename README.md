@@ -9,7 +9,7 @@ Fast Wikipedia-inspired guessing game built with Next.js, Prisma, Clerk, and a W
 - Modes: `classic`, `blurred-lines`
 - Theme: dark by default, user-toggleable
 - Auth: Clerk
-- Analytics: Vercel Analytics
+- Analytics: Vercel Analytics and PostHog product analytics
 
 ## Stack
 
@@ -33,6 +33,8 @@ npm install
 
 - `DATABASE_URL`
 - `ROUND_TOKEN_SECRET` (optional in local development; falls back to a local default)
+- `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` and `NEXT_PUBLIC_POSTHOG_HOST` (optional; analytics stays disabled when the token is absent)
+- `NEXT_PUBLIC_POSTHOG_SESSION_REPLAY=true` (optional; replay is off by default and inputs are masked)
 
 3. Start the app:
 
