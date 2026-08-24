@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
-import { getGuessDirection } from "@/src/lib/game/guess-direction";
+import { getGuessedCountryMapData } from "@/src/lib/game/guess-direction";
 import {
   createRoundState,
   parseRoundState,
@@ -383,13 +383,11 @@ export async function submitGuess(
   const { entity, roundState, snapshotKey, dailyChallengeId } =
     await getRoundEntity(input.token, userId);
   const isCorrect = matchesEntityGuess(entity, input.guess);
-  const direction = isCorrect
-    ? null
-    : getGuessDirection(
-        input.guess,
-        entity,
-        (await getLatestSnapshot()).entities,
-      );
+  const snapshot = isCorrect ? null : await getLatestSnapshot();
+  const guessedCountry = snapshot
+    ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
+    : null;
+  const direction = guessedCountry?.direction ?? null;
 
   if (dailyChallengeId) {
     const existingResult = await findDailyResultForActor(
@@ -416,6 +414,7 @@ export async function submitGuess(
       canonicalAnswer: entity.canonicalAnswer,
       score: getScoreForRevealCount(roundState.revealedClueKeys.length),
       direction,
+      guessedCountry,
       pendingClaimId: null,
     };
 
@@ -447,6 +446,7 @@ export async function submitGuess(
         canonicalAnswer: null,
         score: 0,
         direction,
+        guessedCountry,
         pendingClaimId: null,
       };
     }
@@ -460,6 +460,7 @@ export async function submitGuess(
       canonicalAnswer: entity.canonicalAnswer,
       score: 0,
       direction,
+      guessedCountry,
       pendingClaimId: null,
     };
 
@@ -493,6 +494,7 @@ export async function submitGuess(
       canonicalAnswer: null,
       score: 0,
       direction,
+      guessedCountry,
       pendingClaimId: null,
     };
   }
@@ -506,6 +508,7 @@ export async function submitGuess(
     canonicalAnswer: entity.canonicalAnswer,
     score: 0,
     direction,
+    guessedCountry,
     pendingClaimId: null,
   };
 

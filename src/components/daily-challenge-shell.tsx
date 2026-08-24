@@ -441,7 +441,11 @@ export function DailyChallengeShell({
       const payload = (await response.json()) as GuessRoundResult;
       setGuessedEntities((current) => [
         ...current,
-        { name: submittedGuess, direction: payload.direction ?? null },
+        {
+          name: payload.guessedCountry?.name ?? submittedGuess,
+          direction: payload.direction ?? null,
+          mapData: payload.guessedCountry ?? null,
+        },
       ]);
       setScore(payload.score || null);
       setGuess("");

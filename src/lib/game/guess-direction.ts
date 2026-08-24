@@ -1,5 +1,9 @@
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
-import type { GuessDirection, NormalizedEntity } from "@/src/lib/types";
+import type {
+  GuessedCountryMapData,
+  GuessDirection,
+  NormalizedEntity,
+} from "@/src/lib/types";
 
 interface Coordinate {
   latitude: number;
@@ -15,30 +19,24 @@ function getCoordinate(entity: NormalizedEntity): Coordinate | null {
     : null;
 }
 
-export function getGuessDirection(
+function findGuessedCountry(
   guess: string,
-  goal: NormalizedEntity,
   entities: NormalizedEntity[],
-): GuessDirection | null {
-  if (goal.category !== "countries") {
-    return null;
-  }
-
+): NormalizedEntity | null {
   const normalizedGuess = normalizeGuess(guess);
-  const guessedEntity = entities.find(
-    (candidate) =>
-      candidate.category === "countries" &&
-      candidate.acceptedAnswers.some(
-        (answer) => answer.normalized === normalizedGuess,
-      ),
+
+  return (
+    entities.find(
+      (candidate) =>
+        candidate.category === "countries" &&
+        candidate.acceptedAnswers.some(
+          (answer) => answer.normalized === normalizedGuess,
+        ),
+    ) ?? null
   );
-  const from = guessedEntity ? getCoordinate(guessedEntity) : null;
-  const to = getCoordinate(goal);
+}
 
-  if (!from || !to) {
-    return null;
-  }
-
+function getDirection(from: Coordinate, to: Coordinate): GuessDirection {
   const fromLatitude = (from.latitude * Math.PI) / 180;
   const toLatitude = (to.latitude * Math.PI) / 180;
   const longitudeDelta = ((to.longitude - from.longitude) * Math.PI) / 180;
@@ -60,4 +58,44 @@ export function getGuessDirection(
   ];
 
   return directions[Math.round(normalizedBearing / 45) % 8]!;
+}
+
+export function getGuessedCountryMapData(
+  guess: string,
+  goal: NormalizedEntity,
+  entities: NormalizedEntity[],
+): GuessedCountryMapData | null {
+  if (goal.category !== "countries") {
+    return null;
+  }
+
+  const guessedEntity = findGuessedCountry(guess, entities);
+  const from = guessedEntity ? getCoordinate(guessedEntity) : null;
+  const to = getCoordinate(goal);
+
+  if (!guessedEntity || !from || !to) {
+    return null;
+  }
+
+  return {
+    qid: guessedEntity.qid,
+    name: guessedEntity.canonicalAnswer,
+    mapNames: Array.from(
+      new Set([
+        guessedEntity.canonicalAnswer,
+        ...guessedEntity.acceptedAnswers.map((answer) => answer.value),
+      ]),
+    ),
+    latitude: from.latitude,
+    longitude: from.longitude,
+    direction: getDirection(from, to),
+  };
+}
+
+export function getGuessDirection(
+  guess: string,
+  goal: NormalizedEntity,
+  entities: NormalizedEntity[],
+): GuessDirection | null {
+  return getGuessedCountryMapData(guess, goal, entities)?.direction ?? null;
 }

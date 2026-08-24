@@ -14,6 +14,15 @@ export type GuessDirection =
   | "southwest"
   | "west"
   | "northwest";
+
+export interface GuessedCountryMapData {
+  qid: string;
+  name: string;
+  mapNames: string[];
+  latitude: number;
+  longitude: number;
+  direction: GuessDirection;
+}
 export const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = ["countries"];
 
 export interface AcceptedAnswer {
@@ -198,6 +207,7 @@ export interface GuessRoundResult {
   canGuess: boolean;
   score: number;
   direction?: GuessDirection | null;
+  guessedCountry?: GuessedCountryMapData | null;
   pendingClaimId?: string | null;
 }
 

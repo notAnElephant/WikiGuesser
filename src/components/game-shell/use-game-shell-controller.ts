@@ -305,7 +305,11 @@ export function useGameShellController({
       const data = (await response.json()) as GuessRoundResult;
       setGuessedEntities((current) => [
         ...current,
-        { name: submittedGuess, direction: data.direction ?? null },
+        {
+          name: data.guessedCountry?.name ?? submittedGuess,
+          direction: data.direction ?? null,
+          mapData: data.guessedCountry ?? null,
+        },
       ]);
       setScore(data.score || null);
       setGuess("");

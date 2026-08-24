@@ -1,3 +1,5 @@
+"use client";
+
 import {
   primaryButtonClass,
   secondaryButtonClass,
@@ -34,6 +36,7 @@ import {
   House,
   LoaderCircle,
   Lock,
+  Map,
   PartyPopper,
   Play,
   RotateCcw,
@@ -41,7 +44,16 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
-import { type FormEvent, useDeferredValue, useState } from "react";
+import dynamic from "next/dynamic";
+import { type FormEvent, useDeferredValue, useRef, useState } from "react";
+
+const WorldMapDialog = dynamic(
+  () =>
+    import("@/src/components/game-shell/world-map-dialog").then(
+      (module) => module.WorldMapDialog,
+    ),
+  { ssr: false },
+);
 
 const DIRECTION_META: Record<
   GuessDirection,
@@ -127,6 +139,8 @@ export function GamePlayView({
   const CurrentModeIcon = currentModeMeta.icon;
   const StatusIcon = statusAppearance.icon;
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const mapButtonRef = useRef<HTMLButtonElement>(null);
   const deferredGuess = useDeferredValue(guess);
   const normalizedSearch = normalizeGuess(deferredGuess);
   const matchingCountryOptions = isCountryRound
@@ -134,6 +148,14 @@ export function GamePlayView({
         .filter((option) => normalizeGuess(option).includes(normalizedSearch))
         .slice(0, 8)
     : [];
+  const guessedCountries = guessedEntities.flatMap((attempt) =>
+    attempt.mapData ? [attempt.mapData] : [],
+  );
+
+  function closeMap() {
+    setIsMapOpen(false);
+    window.requestAnimationFrame(() => mapButtonRef.current?.focus());
+  }
 
   return (
     <div className="grid min-h-[calc(100dvh-1rem)] gap-4 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
@@ -541,6 +563,19 @@ export function GamePlayView({
                 </button>
                 <button
                   className={`${secondaryButtonClass} w-full`}
+                  onClick={() => setIsMapOpen(true)}
+                  ref={mapButtonRef}
+                  type="button"
+                >
+                  <Map
+                    aria-hidden="true"
+                    className="size-4"
+                    strokeWidth={2.2}
+                  />
+                  Open map
+                </button>
+                <button
+                  className={`${secondaryButtonClass} w-full`}
                   disabled={isBusy}
                   onClick={giveUpRound}
                   type="button"
@@ -622,6 +657,12 @@ export function GamePlayView({
           </div>
         </aside>
       </div>
+      {isMapOpen ? (
+        <WorldMapDialog
+          guessedCountries={guessedCountries}
+          onClose={closeMap}
+        />
+      ) : null}
     </div>
   );
 }

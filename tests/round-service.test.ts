@@ -122,6 +122,12 @@ describe("round service", () => {
     expect(result.isComplete).toBe(false);
     expect(result.revealedClues).toHaveLength(2);
     expect(result.canGuess).toBe(true);
+    expect(result.guessedCountry).toMatchObject({
+      name: wrongCountry,
+      direction: result.direction,
+    });
+    expect(result.guessedCountry?.latitude).toEqual(expect.any(Number));
+    expect(result.guessedCountry?.longitude).toEqual(expect.any(Number));
   });
 
   it("allows one final guess after the last classic clue is revealed", async () => {

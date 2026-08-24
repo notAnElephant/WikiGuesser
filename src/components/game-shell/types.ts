@@ -7,6 +7,7 @@ import type {
   RoundClue,
   StartRoundResult,
   GuessDirection,
+  GuessedCountryMapData,
 } from "@/src/lib/types";
 import type { LucideIcon } from "lucide-react";
 
@@ -31,6 +32,7 @@ export interface RoundOutcome {
 export interface GuessAttempt {
   name: string;
   direction: GuessDirection | null;
+  mapData: GuessedCountryMapData | null;
 }
 
 export interface CategoryCardMeta {

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { getGuessDirection } from "@/src/lib/game/guess-direction";
+import {
+  getGuessedCountryMapData,
+  getGuessDirection,
+} from "@/src/lib/game/guess-direction";
 import type { NormalizedEntity } from "@/src/lib/types";
 
 function country(
@@ -59,5 +62,26 @@ describe("getGuessDirection", () => {
 
   it("returns null when the guessed country has no coordinates", () => {
     expect(getGuessDirection("Missing", goal, [goal])).toBeNull();
+  });
+
+  it("returns only the guessed country's safe map overlay data", () => {
+    const france = country("France", 46.2276, 2.2137);
+    france.qid = "Q142";
+    france.acceptedAnswers.push({
+      kind: "alias",
+      value: "French Republic",
+      normalized: "french republic",
+    });
+
+    expect(
+      getGuessedCountryMapData("French Republic", goal, [goal, france]),
+    ).toEqual({
+      qid: "Q142",
+      name: "France",
+      mapNames: ["France", "French Republic"],
+      latitude: 46.2276,
+      longitude: 2.2137,
+      direction: "south",
+    });
   });
 });
