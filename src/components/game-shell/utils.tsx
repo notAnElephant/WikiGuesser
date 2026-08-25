@@ -171,6 +171,7 @@ export function getMessageAppearance(
       icon: PartyPopper,
       className:
         "border-emerald-500/18 bg-emerald-500/10 text-emerald-700 dark:border-emerald-400/18 dark:bg-emerald-400/10 dark:text-emerald-200",
+      tone: "success",
     };
   }
 
@@ -184,6 +185,7 @@ export function getMessageAppearance(
       icon: CircleAlert,
       className:
         "border-amber-500/18 bg-amber-500/10 text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200",
+      tone: "warning",
     };
   }
 
@@ -192,6 +194,7 @@ export function getMessageAppearance(
       icon: Ban,
       className:
         "border-rose-500/18 bg-rose-500/10 text-rose-700 dark:border-rose-300/18 dark:bg-rose-300/10 dark:text-rose-200",
+      tone: "error",
     };
   }
 
@@ -199,5 +202,6 @@ export function getMessageAppearance(
     icon: Sparkles,
     className:
       "border-[#0f766e]/14 bg-[#0f766e]/8 text-[#115e59] dark:border-[#24d4c2]/14 dark:bg-[#24d4c2]/8 dark:text-[#8ff4e7]",
+    tone: "info",
   };
 }

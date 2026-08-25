@@ -37,12 +37,18 @@ export function useGameShellController({
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
   const [guessedEntities, setGuessedEntities] = useState<GuessAttempt[]>([]);
-  const [message, setMessage] = useState(
+  const [message, setMessageState] = useState(
     getMenuMessage(defaultCategory, "classic"),
   );
+  const [messageRevision, setMessageRevision] = useState(0);
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  function setMessage(nextMessage: string) {
+    setMessageState(nextMessage);
+    setMessageRevision((current) => current + 1);
+  }
 
   const validCountryLookup = new Map(
     countryOptions.map((option) => [normalizeGuess(option), option]),
@@ -449,6 +455,7 @@ export function useGameShellController({
     isBusy,
     isCountryRound,
     message,
+    messageRevision,
     result,
     revealClue,
     revealedCount,

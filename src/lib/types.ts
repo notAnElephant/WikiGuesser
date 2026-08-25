@@ -238,6 +238,7 @@ export interface DailyLeaderboardEntry {
   displayName: string;
   imageUrl: string | null;
   score: number;
+  roundsPlayed?: number;
   roundsWon?: number;
   bestScore?: number;
   completedAt?: string | null;

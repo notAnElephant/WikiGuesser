@@ -56,6 +56,7 @@ export function GameShell(props: GameShellProps) {
         isBusy={game.isBusy}
         isCountryRound={game.isCountryRound}
         message={game.message}
+        messageRevision={game.messageRevision}
         result={game.result}
         restartButtonLabel="New free-play round"
         revealClue={game.revealClue}

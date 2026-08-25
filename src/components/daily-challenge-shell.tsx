@@ -101,7 +101,8 @@ export function DailyChallengeShell({
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
   const [guessedEntities, setGuessedEntities] = useState<GuessAttempt[]>([]);
-  const [message, setMessage] = useState("Daily challenge");
+  const [message, setMessageState] = useState("Daily challenge");
+  const [messageRevision, setMessageRevision] = useState(0);
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
   const [claimBanner, setClaimBanner] = useState<string | null>(null);
@@ -112,6 +113,11 @@ export function DailyChallengeShell({
   const [playedOverrides, setPlayedOverrides] = useState<
     Record<string, PlayedOverride>
   >({});
+
+  function setMessage(nextMessage: string) {
+    setMessageState(nextMessage);
+    setMessageRevision((current) => current + 1);
+  }
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -569,6 +575,7 @@ export function DailyChallengeShell({
           isBusy={isBusy}
           isCountryRound={isCountryRound}
           message={message}
+          messageRevision={messageRevision}
           result={result}
           revealClue={revealClue}
           revealedCount={revealedCount}

@@ -171,6 +171,7 @@ function toLeaderboardEntry(params: {
   displayName: string | null;
   imageUrl: string | null;
   score: number;
+  roundsPlayed?: number;
   roundsWon?: number;
   bestScore?: number;
   completedAt?: Date | null;
@@ -180,6 +181,7 @@ function toLeaderboardEntry(params: {
     displayName: params.displayName?.trim() || "Player",
     imageUrl: params.imageUrl,
     score: params.score,
+    roundsPlayed: params.roundsPlayed,
     roundsWon: params.roundsWon,
     bestScore: params.bestScore,
     completedAt: params.completedAt?.toISOString() ?? null,
@@ -475,6 +477,9 @@ async function buildTodayLeaderboard(
     where: {
       category,
       mode,
+      score: {
+        gt: 0,
+      },
       userProfileId: {
         not: null,
       },
@@ -516,6 +521,9 @@ async function buildTotalLeaderboard(category: EntityCategory, mode: GameMode) {
     where: {
       category,
       mode,
+      totalScore: {
+        gt: 0,
+      },
     },
     include: {
       userProfile: true,
@@ -543,6 +551,7 @@ async function buildTotalLeaderboard(category: EntityCategory, mode: GameMode) {
       displayName: entry.userProfile.displayName,
       imageUrl: entry.userProfile.imageUrl,
       score: entry.totalScore,
+      roundsPlayed: entry.roundsPlayed,
       roundsWon: entry.roundsWon,
       bestScore: entry.bestScore,
     }),

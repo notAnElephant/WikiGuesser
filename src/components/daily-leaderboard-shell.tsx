@@ -131,6 +131,13 @@ export function DailyLeaderboardShell({
           <div className="mb-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
             {selectedModeMeta.label}
           </div>
+          {period === "total" ? (
+            <div className="mb-2 grid grid-cols-[minmax(0,1fr)_4rem_4rem] gap-2 px-4 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-[#6b6259] dark:text-[#9aa9bb] sm:grid-cols-[minmax(0,1fr)_5rem_5rem]">
+              <span>Player</span>
+              <span className="text-center">Games</span>
+              <span className="text-right">Score</span>
+            </div>
+          ) : null}
           <div className="grid gap-2">
             {entries.length === 0 ? (
               <div className="rounded-[20px] border border-dashed border-black/10 px-4 py-6 text-center text-sm text-[#6b6259] dark:border-white/10 dark:text-[#9aa9bb]">
@@ -139,7 +146,11 @@ export function DailyLeaderboardShell({
             ) : (
               entries.map((entry, index) => (
                 <div
-                  className="flex items-center justify-between gap-3 rounded-[20px] border border-black/8 bg-white/84 px-4 py-3 dark:border-white/10 dark:bg-[rgba(255,255,255,0.05)]"
+                  className={`items-center gap-2 rounded-[20px] border border-black/8 bg-white/84 px-4 py-3 dark:border-white/10 dark:bg-[rgba(255,255,255,0.05)] ${
+                    period === "total"
+                      ? "grid grid-cols-[minmax(0,1fr)_4rem_4rem] sm:grid-cols-[minmax(0,1fr)_5rem_5rem]"
+                      : "flex justify-between"
+                  }`}
                   key={`${entry.playerKey}-${index}`}
                 >
                   <div className="min-w-0">
@@ -147,17 +158,25 @@ export function DailyLeaderboardShell({
                       {index + 1}. {entry.displayName}
                     </div>
                     <div className="text-xs text-[#6b6259] dark:text-[#9aa9bb]">
-                      {period === "today"
-                        ? entry.completedAt
-                          ? new Date(entry.completedAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "Today"
-                        : `${entry.roundsWon ?? 0} wins`}
+                      {entry.completedAt
+                        ? new Date(entry.completedAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : period === "today"
+                          ? "Today"
+                          : `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`}
                     </div>
                   </div>
-                  <strong className="text-[#115e59] dark:text-[#8ff4e7]">
+                  {period === "total" ? (
+                    <span
+                      aria-label={`${entry.roundsPlayed ?? 0} ${(entry.roundsPlayed ?? 0) === 1 ? "game" : "games"} played`}
+                      className="text-center text-sm font-semibold tabular-nums text-[#6b6259] dark:text-[#c7d3e2]"
+                    >
+                      {entry.roundsPlayed ?? 0}
+                    </span>
+                  ) : null}
+                  <strong className="text-right tabular-nums text-[#115e59] dark:text-[#8ff4e7]">
                     {entry.score}
                   </strong>
                 </div>

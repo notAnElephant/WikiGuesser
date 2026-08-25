@@ -43,8 +43,9 @@ import {
   Target,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { type FormEvent, useDeferredValue, useState } from "react";
+import { type FormEvent, useDeferredValue, useEffect, useState } from "react";
 import { preload } from "react-dom";
+import { toast } from "sonner";
 
 const WorldMapDialog = dynamic(
   () =>
@@ -87,6 +88,7 @@ interface GamePlayViewProps {
   isBusy: boolean;
   isCountryRound: boolean;
   message: string;
+  messageRevision: number;
   result: RoundOutcome | null;
   revealClue: (clueKey: string) => void;
   revealedCount: number;
@@ -120,6 +122,7 @@ export function GamePlayView({
   isBusy,
   isCountryRound,
   message,
+  messageRevision,
   result,
   revealClue,
   revealedCount,
@@ -142,7 +145,6 @@ export function GamePlayView({
   const currentModeMeta = getModeMeta(currentMode);
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const CurrentModeIcon = currentModeMeta.icon;
-  const StatusIcon = statusAppearance.icon;
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const deferredGuess = useDeferredValue(guess);
@@ -156,59 +158,58 @@ export function GamePlayView({
     attempt.mapData ? [attempt.mapData] : [],
   );
 
+  useEffect(() => {
+    if (
+      message === "Round live." ||
+      message === "Daily live." ||
+      message === "Tap a row."
+    ) {
+      return;
+    }
+
+    toast[statusAppearance.tone](message, { id: "game-status" });
+  }, [message, messageRevision, statusAppearance.tone]);
+
   return (
-    <div className="grid min-h-[calc(100dvh-1rem)] gap-4 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
+    <div className="grid min-h-[calc(100dvh-1rem)] gap-3 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
       <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(400px,0.75fr)]">
         <section
-          className={`${surfaceClass} grid content-start gap-4 p-4 sm:p-5`}
+          className={`${surfaceClass} grid content-start gap-2.5 p-3 sm:gap-4 sm:p-5`}
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="m-0 font-serif-display text-[clamp(1.95rem,6vw,3.2rem)] font-semibold leading-[0.92] tracking-[-0.055em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                {currentMode === "blurred-lines"
-                  ? "Open the dossier"
-                  : "Read the trail"}
-              </h1>
-              <p className="m-0 mt-2 text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-                {currentMode === "blurred-lines"
-                  ? "Reveal only what you need."
-                  : "Each miss burns another clue."}
+          <div className="min-w-0">
+            <h1 className="m-0 font-serif-display text-[1.9rem] font-semibold leading-[0.94] tracking-tighter text-[#1f1b17] dark:text-[#f5f7fb] sm:text-[clamp(2rem,4vw,2.6rem)]">
+              {currentMode === "blurred-lines"
+                ? "Choose your clues"
+                : "Follow the clues"}
+            </h1>
+            {currentMode === "blurred-lines" ? (
+              <p className="m-0 mt-1 text-xs leading-4 text-[#6b6259] dark:text-[#9aa9bb] sm:mt-2 sm:text-sm">
+                Reveal only what you need.
               </p>
-            </div>
-
-            <div
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${statusAppearance.className}`}
-            >
-              <StatusIcon
-                aria-hidden="true"
-                className="size-4 shrink-0"
-                strokeWidth={2.2}
-              />
-              <span>{message}</span>
-            </div>
+            ) : null}
           </div>
 
-          <div className="grid gap-2 rounded-3xl border border-black/8 bg-white/72 p-4 dark:border-white/10 dark:bg-white/5">
-            <div className="flex items-center justify-between gap-3 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
-              <span>Reveal meter</span>
-              <span>
-                {revealedCount}/{currentClues.length || 0}
-              </span>
-            </div>
-            <div className="grid grid-flow-col auto-cols-fr gap-2">
-              {currentClues.map((clue) => (
-                <span
-                  className={`h-2 rounded-full ${
-                    clue.isRevealed
-                      ? "bg-[#0f766e] dark:bg-[#24d4c2]"
-                      : clue.spoilerLevel === "late"
-                        ? "bg-[#d6d3d1] dark:bg-white/14"
-                        : "bg-[#ebe4d7] dark:bg-white/8"
-                  }`}
-                  key={clue.key}
-                />
-              ))}
-            </div>
+          <div
+            aria-label={`${revealedCount} of ${currentClues.length || 0} clues revealed`}
+            aria-valuemax={currentClues.length || 0}
+            aria-valuemin={0}
+            aria-valuenow={revealedCount}
+            className="grid grid-flow-col auto-cols-fr gap-1.5 py-1 sm:gap-2"
+            role="progressbar"
+          >
+            {currentClues.map((clue) => (
+              <span
+                aria-hidden="true"
+                className={`h-2.5 rounded-full sm:h-2 ${
+                  clue.isRevealed
+                    ? "bg-[#0f766e] dark:bg-[#24d4c2]"
+                    : clue.spoilerLevel === "late"
+                      ? "bg-[#d6d3d1] dark:bg-white/16"
+                      : "bg-[#d9d1c3] dark:bg-white/12"
+                }`}
+                key={clue.key}
+              />
+            ))}
           </div>
 
           {currentMode === "blurred-lines" ? (
@@ -313,18 +314,18 @@ export function GamePlayView({
 
                 return (
                   <li
-                    className={`rounded-[28px] border p-4 ${
+                    className={`rounded-[22px] border p-3 sm:rounded-[28px] sm:p-4 ${
                       index === visibleClassicClues.length - 1 && round
                         ? "border-[#0f766e]/16 bg-[linear-gradient(160deg,rgba(15,118,110,0.12),rgba(255,255,255,0.92))] dark:border-[#24d4c2]/18 dark:bg-[linear-gradient(160deg,rgba(36,212,194,0.12),rgba(17,24,39,0.92))]"
                         : "border-black/8 bg-white/84 dark:border-white/10 dark:bg-[rgba(255,255,255,0.05)]"
                     }`}
                     key={clue.key}
                   >
-                    <div className="flex items-start gap-4">
-                      <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] text-[#1f1b17] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))] dark:text-[#f5f7fb]">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] text-[#1f1b17] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))] dark:text-[#f5f7fb] sm:size-11 sm:rounded-2xl">
                         <ClueIcon
                           aria-hidden="true"
-                          className="size-5"
+                          className="size-4 sm:size-5"
                           strokeWidth={2.1}
                         />
                       </span>
@@ -335,7 +336,7 @@ export function GamePlayView({
                           </span>
                           {clue.label}
                         </div>
-                        <strong className="mt-2 block text-[clamp(1.28rem,4vw,1.82rem)] leading-[1.08] text-[#1f1b17] dark:text-[#f5f7fb]">
+                        <strong className="mt-1.5 block text-[1.18rem] leading-[1.08] text-[#1f1b17] dark:text-[#f5f7fb] sm:mt-2 sm:text-[clamp(1.28rem,4vw,1.82rem)]">
                           {renderClueValue(clue)}
                         </strong>
                       </div>

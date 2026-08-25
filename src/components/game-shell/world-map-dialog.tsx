@@ -2,7 +2,7 @@
 
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import type { GuessDirection, GuessedCountryMapData } from "@/src/lib/types";
-import { geoMercator, geoPath } from "d3-geo";
+import { geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import { select } from "d3-selection";
 import {
   zoom,
@@ -82,6 +82,51 @@ function buildCountryData(): FeatureCollection<Geometry, CountryProperties> {
 
 const COUNTRY_DATA = buildCountryData();
 
+interface ResizeTransformOptions {
+  currentTransform: ZoomTransform;
+  mapSize: MapSize;
+  previousMapSize: MapSize;
+  previousProjection: GeoProjection;
+  projection: GeoProjection;
+}
+
+export function getResizedMapTransform({
+  currentTransform,
+  mapSize,
+  previousMapSize,
+  previousProjection,
+  projection,
+}: ResizeTransformOptions): ZoomTransform | null {
+  const previousMapCenter = currentTransform.invert([
+    previousMapSize.width / 2,
+    previousMapSize.height / 2,
+  ]);
+  const geographicCenter = previousProjection.invert?.(previousMapCenter);
+
+  if (!geographicCenter) {
+    return null;
+  }
+
+  const nextMapCenter = projection(geographicCenter);
+
+  if (!nextMapCenter) {
+    return null;
+  }
+
+  const nextScale = Math.min(
+    20,
+    Math.max(
+      1,
+      currentTransform.k * (previousProjection.scale() / projection.scale()),
+    ),
+  );
+
+  return zoomIdentity
+    .translate(mapSize.width / 2, mapSize.height / 2)
+    .scale(nextScale)
+    .translate(-nextMapCenter[0], -nextMapCenter[1]);
+}
+
 function DirectionArrow({ direction }: { direction: GuessDirection }) {
   return (
     <svg
@@ -115,6 +160,8 @@ export function WorldMapDialog({
   const mapTransformRef = useRef<ZoomTransform>(zoomIdentity);
   const animationFrameRef = useRef<number | null>(null);
   const previousGuessedCountryCountRef = useRef(guessedCountries.length);
+  const previousMapSizeRef = useRef<MapSize | null>(null);
+  const previousProjectionRef = useRef<GeoProjection | null>(null);
   const [mapSize, setMapSize] = useState<MapSize>({ width: 0, height: 0 });
   const [mapTransform, setMapTransform] = useState<ZoomTransform>(zoomIdentity);
   const guessedNames = useMemo(
@@ -229,6 +276,46 @@ export function WorldMapDialog({
       zoomBehaviorRef.current = null;
     };
   }, [mapSize]);
+
+  useEffect(() => {
+    const previousMapSize = previousMapSizeRef.current;
+    const previousProjection = previousProjectionRef.current;
+    previousMapSizeRef.current = mapSize;
+    previousProjectionRef.current = projection;
+
+    if (
+      !projection ||
+      !previousProjection ||
+      !previousMapSize ||
+      previousMapSize.width <= 0 ||
+      previousMapSize.height <= 0 ||
+      mapSize.width <= 0 ||
+      mapSize.height <= 0
+    ) {
+      return;
+    }
+
+    const svg = svgRef.current;
+    const behavior = zoomBehaviorRef.current;
+
+    if (!svg || !behavior) {
+      return;
+    }
+
+    const nextTransform = getResizedMapTransform({
+      currentTransform: mapTransformRef.current,
+      mapSize,
+      previousMapSize,
+      previousProjection,
+      projection,
+    });
+
+    if (!nextTransform) {
+      return;
+    }
+
+    select(svg).call(behavior.transform, nextTransform);
+  }, [mapSize, projection]);
 
   function changeZoom(factor: number) {
     const currentTransform = mapTransformRef.current;
@@ -542,49 +629,61 @@ export function WorldMapDialog({
               })
             : null}
 
-          <div className="absolute bottom-4 left-4 z-10 grid gap-2">
-            <div className="grid w-11 overflow-hidden rounded-2xl border border-black/16 bg-[#fbf7ef]/94 shadow-lg backdrop-blur">
+          <div className="absolute bottom-3 left-3 z-10 grid gap-1.5 sm:bottom-4 sm:left-4 sm:gap-2">
+            <div className="grid w-9 overflow-hidden rounded-xl border border-black/16 bg-[#fbf7ef]/94 shadow-lg backdrop-blur dark:border-white/14 dark:bg-[#132131]/94 sm:w-11 sm:rounded-2xl">
               <button
                 aria-label="Zoom in"
-                className="inline-flex size-11 items-center justify-center text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:hover:bg-white/10"
+                className="inline-flex size-9 items-center justify-center text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:text-[#d7e1ec] dark:hover:bg-white/10 sm:size-11"
                 onClick={() => changeZoom(1.45)}
                 title="Zoom in"
                 type="button"
               >
-                <Plus aria-hidden="true" className="size-5" strokeWidth={2.2} />
+                <Plus
+                  aria-hidden="true"
+                  className="size-4 sm:size-5"
+                  strokeWidth={2.2}
+                />
               </button>
               <button
                 aria-label="Zoom out"
-                className="inline-flex size-11 items-center justify-center border-t border-black/12 text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:hover:bg-white/10"
+                className="inline-flex size-9 items-center justify-center border-t border-black/12 text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:border-white/12 dark:text-[#d7e1ec] dark:hover:bg-white/10 sm:size-11"
                 onClick={() => changeZoom(1 / 1.45)}
                 title="Zoom out"
                 type="button"
               >
                 <Minus
                   aria-hidden="true"
-                  className="size-5"
+                  className="size-4 sm:size-5"
                   strokeWidth={2.2}
                 />
               </button>
             </div>
             <button
               aria-label="Fit all guessed countries"
-              className="inline-flex size-11 items-center justify-center rounded-2xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 disabled:cursor-not-allowed disabled:opacity-45  dark:hover:bg-[#1a2c3f]"
+              className="inline-flex size-9 items-center justify-center rounded-xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/14 dark:bg-[#132131]/94 dark:text-[#d7e1ec] dark:hover:bg-[#1a2c3f] sm:size-11 sm:rounded-2xl"
               disabled={guessedCountries.length === 0}
               onClick={fitGuessedCountries}
               title="Fit all guessed countries"
               type="button"
             >
-              <Focus aria-hidden="true" className="size-5" strokeWidth={2.2} />
+              <Focus
+                aria-hidden="true"
+                className="size-4 sm:size-5"
+                strokeWidth={2.2}
+              />
             </button>
             <button
               aria-label="Reset map zoom"
-              className="inline-flex size-11 items-center justify-center rounded-2xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35  dark:hover:bg-[#1a2c3f]"
+              className="inline-flex size-9 items-center justify-center rounded-xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/14 dark:bg-[#132131]/94 dark:text-[#d7e1ec] dark:hover:bg-[#1a2c3f] sm:size-11 sm:rounded-2xl"
               onClick={resetWorld}
               title="Reset map zoom"
               type="button"
             >
-              <Scan aria-hidden="true" className="size-5" strokeWidth={2.2} />
+              <Scan
+                aria-hidden="true"
+                className="size-4 sm:size-5"
+                strokeWidth={2.2}
+              />
             </button>
           </div>
 

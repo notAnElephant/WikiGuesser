@@ -52,4 +52,5 @@ export interface GameModeOption {
 export interface MessageAppearance {
   icon: LucideIcon;
   className: string;
+  tone: "error" | "info" | "success" | "warning";
 }
