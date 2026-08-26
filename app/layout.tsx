@@ -6,7 +6,7 @@ import { AppToaster } from "@/src/components/app-toaster";
 import { ClerkProvider, Show } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Dice5, LogIn } from "lucide-react";
+import { Dice5, LogIn, Trophy } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -45,16 +45,24 @@ export default function RootLayout({
 
                 <div className="flex items-center gap-2">
                   <Link
-                    className="inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
+                    aria-label="Leaderboard"
+                    className="inline-flex size-10 items-center justify-center rounded-full text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
                     href="/leaderboard"
+                    title="Leaderboard"
                   >
-                    Leaderboard
+                    <Trophy
+                      aria-hidden="true"
+                      className="size-4"
+                      strokeWidth={2.2}
+                    />
                   </Link>
                   <ThemeToggle />
                   <Show when="signed-out">
                     <Link
-                      className="inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
+                      aria-label="Log in"
+                      className="inline-flex size-10 items-center justify-center rounded-full text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
                       href="/sign-in"
+                      title="Log in"
                     >
                       <LogIn
                         aria-hidden="true"
