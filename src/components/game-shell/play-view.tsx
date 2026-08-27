@@ -366,7 +366,8 @@ export function GamePlayView({
         </section>
 
         <aside className="grid content-start gap-4">
-          {view === "round" ? (
+          {isCountryRound &&
+          (view === "round" || result?.showDialog === false) ? (
             <WorldMapDialog
               guessedCountries={guessedCountries}
               isExpanded={isMapExpanded}

@@ -220,7 +220,7 @@ export function DailyChallengeShell({
   const currentMode = round?.mode ?? result?.mode ?? selectedCard.mode;
   const currentClues = round?.clues ?? result?.clues ?? [];
   const visibleClassicClues = currentClues.filter((clue) => clue.isRevealed);
-  const isCountryRound = round?.category === "countries";
+  const isCountryRound = (round?.category ?? result?.category) === "countries";
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
   const normalizedGuessedEntities = new Set(
@@ -466,6 +466,7 @@ export function DailyChallengeShell({
           category: payload.category,
           mode: payload.mode,
           clues: payload.clues,
+          solutionCountry: payload.solutionCountry,
         });
         setPlayedOverrides((current) => ({
           ...current,
@@ -540,6 +541,7 @@ export function DailyChallengeShell({
         category: payload.category,
         mode: payload.mode,
         clues: payload.clues,
+        solutionCountry: payload.solutionCountry,
       });
       setGuess("");
       setPlayedOverrides((current) => ({
@@ -594,6 +596,9 @@ export function DailyChallengeShell({
             clearForCategoryChoice={() => clearToHub()}
             currentCategory={currentCategory}
             currentCategoryLabel={currentCategoryLabel}
+            guessedCountries={guessedEntities.flatMap((attempt) =>
+              attempt.mapData ? [attempt.mapData] : [],
+            )}
             isBusy={isBusy}
             onClose={() =>
               setResult((current) =>

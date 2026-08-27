@@ -3,6 +3,7 @@ import type {
   GuessedCountryMapData,
   GuessDirection,
   NormalizedEntity,
+  SolutionCountryMapData,
 } from "@/src/lib/types";
 
 interface Coordinate {
@@ -89,6 +90,29 @@ export function getGuessedCountryMapData(
     latitude: from.latitude,
     longitude: from.longitude,
     direction: getDirection(from, to),
+  };
+}
+
+export function getSolutionCountryMapData(
+  entity: NormalizedEntity,
+): SolutionCountryMapData | null {
+  const coordinate = getCoordinate(entity);
+
+  if (entity.category !== "countries" || !coordinate) {
+    return null;
+  }
+
+  return {
+    qid: entity.qid,
+    name: entity.canonicalAnswer,
+    mapNames: Array.from(
+      new Set([
+        entity.canonicalAnswer,
+        ...entity.acceptedAnswers.map((answer) => answer.value),
+      ]),
+    ),
+    latitude: coordinate.latitude,
+    longitude: coordinate.longitude,
   };
 }
 

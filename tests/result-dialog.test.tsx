@@ -31,6 +31,7 @@ const sharedProps = {
   clearForCategoryChoice: () => undefined,
   currentCategory: "countries",
   currentCategoryLabel: "Countries",
+  guessedCountries: [],
   isBusy: false,
   onClose: () => undefined,
   result: dailyResult,
@@ -77,9 +78,11 @@ describe("daily result dialog actions", () => {
     );
 
     expect(markup).toContain('aria-label="Close result"');
+    expect(markup).toContain('aria-label="Expand result drawer"');
+    expect(markup).toContain('data-drawer-state="medium"');
     expect(markup).toContain('alt="Flag of Netherlands"');
     expect(markup).toContain("Flag%20of%20the%20Netherlands.svg");
-    expect(markup).toContain('class="mt-5 flex justify-center"');
+    expect(markup).toContain('class="mt-5 grid gap-4 sm:grid-cols-2"');
     expect(markup).toContain("block h-auto max-h-64 w-auto max-w-full");
     expect(markup).not.toContain("aspect-[3/2]");
   });

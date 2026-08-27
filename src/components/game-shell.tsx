@@ -93,6 +93,9 @@ export function GameShell(props: GameShellProps) {
             clearForCategoryChoice={game.clearForCategoryChoice}
             currentCategory={game.currentCategory}
             currentCategoryLabel={game.currentCategoryLabel}
+            guessedCountries={game.guessedEntities.flatMap((attempt) =>
+              attempt.mapData ? [attempt.mapData] : [],
+            )}
             isBusy={game.isBusy}
             onClose={game.dismissResultDialog}
             primaryActionLabel="Play again"

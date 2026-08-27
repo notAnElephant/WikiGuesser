@@ -128,6 +128,33 @@
     stroke-width: 1.7px;
   }
 
+  .map-country--solution {
+    fill: rgba(37, 99, 235, 0.52);
+    stroke: #2563eb;
+    stroke-width: 1.8px;
+  }
+
+  .map-solution-marker {
+    border: 1px solid #2563eb;
+    border-radius: 0.75rem;
+    background: rgba(239, 246, 255, 0.96);
+    padding: 0.38rem 0.55rem;
+    color: #1d4ed8;
+    font-family: var(--font-sans);
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    box-shadow: 0 8px 22px rgba(29, 78, 216, 0.24);
+    cursor: pointer;
+    transform: translate(-50%, calc(-100% - 0.45rem));
+  }
+
+  .map-solution-marker:focus-visible {
+    outline: 2px solid #0f766e;
+    outline-offset: 3px;
+  }
+
   .dark .map-world-canvas {
     background: #0d1b2a;
   }
@@ -140,5 +167,16 @@
   .dark .map-country--guessed {
     fill: rgba(220, 38, 38, 0.46);
     stroke: #fca5a5;
+  }
+
+  .dark .map-country--solution {
+    fill: rgba(59, 130, 246, 0.58);
+    stroke: #93c5fd;
+  }
+
+  .dark .map-solution-marker {
+    border-color: #93c5fd;
+    background: rgba(30, 58, 138, 0.94);
+    color: #dbeafe;
   }
 }

@@ -8,6 +8,7 @@ import type {
   StartRoundResult,
   GuessDirection,
   GuessedCountryMapData,
+  SolutionCountryMapData,
 } from "@/src/lib/types";
 import type { LucideIcon } from "lucide-react";
 
@@ -26,6 +27,7 @@ export interface RoundOutcome {
   category: EntityCategory;
   mode: GameMode;
   clues: RoundClue[];
+  solutionCountry?: SolutionCountryMapData | null;
   showDialog?: boolean;
 }
 

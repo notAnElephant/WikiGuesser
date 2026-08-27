@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto";
 
 import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
-import { getGuessedCountryMapData } from "@/src/lib/game/guess-direction";
+import {
+  getGuessedCountryMapData,
+  getSolutionCountryMapData,
+} from "@/src/lib/game/guess-direction";
 import {
   createRoundState,
   parseRoundState,
@@ -388,6 +391,7 @@ export async function submitGuess(
     ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
     : null;
   const direction = guessedCountry?.direction ?? null;
+  const solutionCountry = getSolutionCountryMapData(entity);
 
   if (dailyChallengeId) {
     const existingResult = await findDailyResultForActor(
@@ -415,6 +419,7 @@ export async function submitGuess(
       score: getScoreForRevealCount(roundState.revealedClueKeys.length),
       direction,
       guessedCountry,
+      solutionCountry,
       pendingClaimId: null,
     };
 
@@ -461,6 +466,7 @@ export async function submitGuess(
       score: 0,
       direction,
       guessedCountry,
+      solutionCountry,
       pendingClaimId: null,
     };
 
@@ -509,6 +515,7 @@ export async function submitGuess(
     score: 0,
     direction,
     guessedCountry,
+    solutionCountry,
     pendingClaimId: null,
   };
 
@@ -551,6 +558,7 @@ export async function giveUpRound(
     canonicalAnswer: entity.canonicalAnswer,
     score: 0,
     pendingClaimId: null,
+    solutionCountry: getSolutionCountryMapData(entity),
   };
 
   await persistCompletedRoundIfNeeded({

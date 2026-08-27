@@ -421,7 +421,7 @@ export function SharedLandingShell({
   const currentMode = round?.mode ?? result?.mode ?? selectedMode;
   const currentClues = round?.clues ?? result?.clues ?? [];
   const visibleClassicClues = currentClues.filter((clue) => clue.isRevealed);
-  const isCountryRound = round?.category === "countries";
+  const isCountryRound = (round?.category ?? result?.category) === "countries";
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
   const normalizedGuessedEntities = new Set(
@@ -811,6 +811,7 @@ export function SharedLandingShell({
           category: payload.category,
           mode: payload.mode,
           clues: payload.clues,
+          solutionCountry: payload.solutionCountry,
         });
 
         if (payload.kind === "daily") {
@@ -837,6 +838,7 @@ export function SharedLandingShell({
           category: payload.category,
           mode: payload.mode,
           clues: payload.clues,
+          solutionCountry: payload.solutionCountry,
         });
 
         if (payload.kind === "daily") {
@@ -928,6 +930,7 @@ export function SharedLandingShell({
           category: payload.category,
           mode: payload.mode,
           clues: payload.clues,
+          solutionCountry: payload.solutionCountry,
         });
         setGuess("");
 
@@ -1030,6 +1033,9 @@ export function SharedLandingShell({
             clearForCategoryChoice={() => clearToHome()}
             currentCategory={currentCategory}
             currentCategoryLabel={currentCategoryLabel}
+            guessedCountries={guessedEntities.flatMap((attempt) =>
+              attempt.mapData ? [attempt.mapData] : [],
+            )}
             isBusy={isBusy}
             onClose={() =>
               setResult((current) =>

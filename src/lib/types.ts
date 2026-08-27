@@ -23,6 +23,14 @@ export interface GuessedCountryMapData {
   longitude: number;
   direction: GuessDirection;
 }
+
+export interface SolutionCountryMapData {
+  qid: string;
+  name: string;
+  mapNames: string[];
+  latitude: number;
+  longitude: number;
+}
 export const ACTIVE_GAME_CATEGORIES: readonly EntityCategory[] = ["countries"];
 
 export interface AcceptedAnswer {
@@ -208,6 +216,7 @@ export interface GuessRoundResult {
   score: number;
   direction?: GuessDirection | null;
   guessedCountry?: GuessedCountryMapData | null;
+  solutionCountry?: SolutionCountryMapData | null;
   pendingClaimId?: string | null;
 }
 
