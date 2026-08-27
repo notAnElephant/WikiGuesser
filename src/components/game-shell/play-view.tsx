@@ -146,7 +146,9 @@ export function GamePlayView({
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const CurrentModeIcon = currentModeMeta.icon;
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [mapDrawerState, setMapDrawerState] = useState<
+    "hidden" | "medium" | "expanded"
+  >("medium");
   const deferredGuess = useDeferredValue(guess);
   const normalizedSearch = normalizeGuess(deferredGuess);
   const matchingCountryOptions = isCountryRound
@@ -169,6 +171,10 @@ export function GamePlayView({
 
     toast[statusAppearance.tone](message, { id: "game-status" });
   }, [message, messageRevision, statusAppearance.tone]);
+
+  useEffect(() => {
+    setMapDrawerState("medium");
+  }, [round?.roundId]);
 
   return (
     <div className="grid min-h-[calc(100dvh-1rem)] gap-3 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
@@ -369,9 +375,13 @@ export function GamePlayView({
           {isCountryRound &&
           (view === "round" || result?.showDialog === false) ? (
             <WorldMapDialog
+              drawerState={mapDrawerState}
               guessedCountries={guessedCountries}
-              isExpanded={isMapExpanded}
-              onExpandedChange={setIsMapExpanded}
+              isExpanded={mapDrawerState === "expanded"}
+              onDrawerStateChange={setMapDrawerState}
+              onExpandedChange={(isExpanded) =>
+                setMapDrawerState(isExpanded ? "expanded" : "medium")
+              }
             />
           ) : null}
 

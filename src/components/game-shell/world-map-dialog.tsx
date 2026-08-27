@@ -15,7 +15,15 @@ import {
   type ZoomTransform,
 } from "d3-zoom";
 import type { FeatureCollection, Geometry } from "geojson";
-import { ChevronDown, ChevronUp, Focus, Minus, Plus, Scan } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Focus,
+  Minus,
+  Plus,
+  Scan,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
@@ -27,8 +35,10 @@ interface CountryProperties {
 }
 
 interface WorldMapDialogProps {
+  drawerState?: "hidden" | "medium" | "expanded";
   guessedCountries: readonly GuessedCountryMapData[];
   isExpanded: boolean;
+  onDrawerStateChange?: (drawerState: "hidden" | "medium" | "expanded") => void;
   onExpandedChange: (isExpanded: boolean) => void;
   presentation?: "game" | "result";
   solutionCountry?: SolutionCountryMapData | null;
@@ -182,24 +192,39 @@ function DirectionArrow({ direction }: { direction: GuessDirection }) {
 export function WorldMapDialog({
   guessedCountries,
   isExpanded,
+  drawerState,
+  onDrawerStateChange,
   onExpandedChange,
   presentation = "game",
   solutionCountry = null,
 }: WorldMapDialogProps) {
+  const effectiveDrawerState =
+    presentation === "game"
+      ? (drawerState ?? (isExpanded ? "expanded" : "medium"))
+      : "medium";
+  const isMapExpanded = effectiveDrawerState === "expanded";
+  const isMapHidden = effectiveDrawerState === "hidden";
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const expandButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerDragStartYRef = useRef<number | null>(null);
+  const drawerDragStartStateRef = useRef<"hidden" | "medium" | "expanded">(
+    "medium",
+  );
+  const didDrawerDragRef = useRef(false);
   const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
     null,
   );
   const mapTransformRef = useRef<ZoomTransform>(zoomIdentity);
   const animationFrameRef = useRef<number | null>(null);
-  const previousGuessedCountryCountRef = useRef(guessedCountries.length);
+  const focusedGuessedCountryCountRef = useRef(0);
   const previousMapSizeRef = useRef<MapSize | null>(null);
   const previousProjectionRef = useRef<GeoProjection | null>(null);
   const [mapSize, setMapSize] = useState<MapSize>({ width: 0, height: 0 });
   const [mapTransform, setMapTransform] = useState<ZoomTransform>(zoomIdentity);
+  const [drawerDragOffsetY, setDrawerDragOffsetY] = useState(0);
+  const [isDrawerDragging, setIsDrawerDragging] = useState(false);
   const guessedNames = useMemo(
     () =>
       new Set(
@@ -243,7 +268,7 @@ export function WorldMapDialog({
   );
 
   useEffect(() => {
-    if (!isExpanded) {
+    if (!isMapExpanded) {
       return;
     }
 
@@ -254,7 +279,7 @@ export function WorldMapDialog({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [isExpanded]);
+  }, [isMapExpanded]);
 
   useEffect(() => {
     const container = mapContainerRef.current;
@@ -265,15 +290,22 @@ export function WorldMapDialog({
 
     const updateSize = () => {
       const bounds = container.getBoundingClientRect();
-      setMapSize({ width: bounds.width, height: bounds.height });
+
+      if (bounds.width > 0 && bounds.height > 0) {
+        setMapSize({ width: bounds.width, height: bounds.height });
+      }
     };
     updateSize();
+    const animationFrame = window.requestAnimationFrame(updateSize);
 
     const observer = new ResizeObserver(updateSize);
     observer.observe(container);
 
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      observer.disconnect();
+    };
+  }, [isMapHidden]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -508,8 +540,52 @@ export function WorldMapDialog({
     }
   }
 
-  function fitGuessedCountries() {
-    focusCountries(guessedNames, 10, 0.72);
+  function focusLocations(
+    locations: readonly MapLocation[],
+    maximumScale: number,
+    viewportCoverage: number,
+  ): boolean {
+    const behavior = zoomBehaviorRef.current;
+
+    if (!behavior || !projection || locations.length === 0) {
+      return false;
+    }
+
+    const points = locations
+      .map((location) => projection([location.longitude, location.latitude]))
+      .filter((point): point is [number, number] => point !== null);
+
+    if (points.length === 0) {
+      return false;
+    }
+
+    const left = Math.min(...points.map(([x]) => x));
+    const top = Math.min(...points.map(([, y]) => y));
+    const right = Math.max(...points.map(([x]) => x));
+    const bottom = Math.max(...points.map(([, y]) => y));
+    const boundsWidth = Math.max(32, right - left);
+    const boundsHeight = Math.max(32, bottom - top);
+    const scale = Math.min(
+      maximumScale,
+      Math.max(
+        1,
+        Math.min(
+          (mapSize.width * viewportCoverage) / boundsWidth,
+          (mapSize.height * viewportCoverage) / boundsHeight,
+        ),
+      ),
+    );
+    const transform = zoomIdentity
+      .translate(mapSize.width / 2, mapSize.height / 2)
+      .scale(scale)
+      .translate(-(left + right) / 2, -(top + bottom) / 2);
+
+    animateToTransform(transform);
+    return true;
+  }
+
+  function fitGuessedCountries(): boolean {
+    return focusLocations(guessedCountries, 10, 0.72);
   }
 
   function focusCountry(country: GuessedCountryMapData) {
@@ -533,15 +609,22 @@ export function WorldMapDialog({
   }, [mapSize, presentation, projection, solutionCountry]);
 
   useEffect(() => {
-    const previousCount = previousGuessedCountryCountRef.current;
-    previousGuessedCountryCountRef.current = guessedCountries.length;
-
-    if (guessedCountries.length <= previousCount) {
+    if (guessedCountries.length === 0) {
+      focusedGuessedCountryCountRef.current = 0;
       return;
     }
 
-    fitGuessedCountries();
-  }, [guessedCountries]);
+    if (
+      presentation !== "game" ||
+      guessedCountries.length <= focusedGuessedCountryCountRef.current
+    ) {
+      return;
+    }
+
+    if (fitGuessedCountries()) {
+      focusedGuessedCountryCountRef.current = guessedCountries.length;
+    }
+  }, [guessedCountries, mapSize, presentation, projection]);
 
   useEffect(
     () => () => {
@@ -553,13 +636,13 @@ export function WorldMapDialog({
   );
 
   function handleDialogKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (isExpanded && event.key === "Escape") {
+    if (isMapExpanded && event.key === "Escape") {
       event.preventDefault();
-      onExpandedChange(false);
+      setDrawerState("medium");
       return;
     }
 
-    if (!isExpanded || event.key !== "Tab" || !dialogRef.current) {
+    if (!isMapExpanded || event.key !== "Tab" || !dialogRef.current) {
       return;
     }
 
@@ -584,35 +667,112 @@ export function WorldMapDialog({
     }
   }
 
+  function setDrawerState(nextState: "hidden" | "medium" | "expanded") {
+    if (onDrawerStateChange) {
+      onDrawerStateChange(nextState);
+      return;
+    }
+
+    onExpandedChange(nextState === "expanded");
+  }
+
+  function beginDrawerDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      return;
+    }
+
+    drawerDragStartYRef.current = event.clientY;
+    drawerDragStartStateRef.current = effectiveDrawerState;
+    didDrawerDragRef.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDrawerDragOffsetY(0);
+    setIsDrawerDragging(true);
+  }
+
+  function moveDrawerDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    const startY = drawerDragStartYRef.current;
+
+    if (startY === null) {
+      return;
+    }
+
+    const deltaY = event.clientY - startY;
+    didDrawerDragRef.current ||= Math.abs(deltaY) > 8;
+    setDrawerDragOffsetY(Math.max(-220, Math.min(260, deltaY)));
+  }
+
+  function endDrawerDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    const startY = drawerDragStartYRef.current;
+
+    if (startY === null) {
+      return;
+    }
+
+    const deltaY = event.clientY - startY;
+    const startState = drawerDragStartStateRef.current;
+    drawerDragStartYRef.current = null;
+    setDrawerDragOffsetY(0);
+    setIsDrawerDragging(false);
+
+    if (startState === "expanded" && deltaY > 96) {
+      setDrawerState("medium");
+    } else if (startState === "medium" && deltaY < -72) {
+      setDrawerState("expanded");
+    } else if (startState === "medium" && deltaY > 96) {
+      setDrawerState("hidden");
+    }
+  }
+
+  if (presentation === "game" && isMapHidden) {
+    return (
+      <div className="fixed inset-x-0 bottom-0 z-[70] flex justify-center px-2 pb-2 sm:justify-end sm:px-5 sm:pb-5 lg:static lg:px-0 lg:pb-0">
+        <button
+          aria-label="Show world map"
+          className="inline-flex h-10 items-center gap-2 rounded-full border border-black/12 bg-[#fbf7ef]/96 px-4 text-sm font-semibold text-[#17313a] shadow-[0_8px_28px_rgba(17,24,39,0.2)] backdrop-blur transition hover:-translate-y-0.5 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/14 dark:bg-[#132131]/96 dark:text-[#d7e1ec] dark:hover:text-[#8ff4e7]"
+          onClick={() => setDrawerState("medium")}
+          type="button"
+        >
+          <ChevronUp aria-hidden="true" className="size-4" strokeWidth={2.2} />
+          Show map
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       className={
         presentation === "result"
           ? "relative w-full"
-          : isExpanded
+          : isMapExpanded
             ? "fixed inset-0 z-[80] grid place-items-center bg-[rgba(20,26,28,0.54)] p-2 backdrop-blur-[3px] sm:p-5"
             : "pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-2 sm:justify-end sm:px-5 lg:pointer-events-auto lg:static lg:z-auto lg:block lg:px-0"
       }
       onMouseDown={(event) => {
-        if (isExpanded && event.target === event.currentTarget) {
-          onExpandedChange(false);
+        if (isMapExpanded && event.target === event.currentTarget) {
+          setDrawerState("medium");
         }
       }}
     >
       <div
         aria-describedby="world-map-help"
         aria-label="World map"
-        aria-modal={isExpanded ? true : undefined}
-        className={`pointer-events-auto grid w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden border border-black/16 bg-[#fbf7ef] shadow-[0_18px_60px_rgba(17,24,39,0.3)] outline-none transition-[height,width,border-radius] duration-300 dark:border-white/14 dark:bg-[#101a27] dark:shadow-[0_18px_60px_rgba(0,0,0,0.58)] ${
+        aria-modal={isMapExpanded ? true : undefined}
+        className={`pointer-events-auto grid w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden border border-black/16 bg-[#fbf7ef] shadow-[0_18px_60px_rgba(17,24,39,0.3)] outline-none transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:border-white/14 dark:bg-[#101a27] dark:shadow-[0_18px_60px_rgba(0,0,0,0.58)] ${
           presentation === "result"
             ? "h-64 rounded-[24px] sm:h-72"
-            : isExpanded
+            : isMapExpanded
               ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-[28px] sm:h-[min(760px,calc(100dvh-2.5rem))]"
               : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-[26px] sm:border-b lg:mb-0 lg:h-[clamp(320px,42dvh,460px)] lg:max-w-none"
         }`}
         onKeyDown={handleDialogKeyDown}
         ref={dialogRef}
-        role={isExpanded ? "dialog" : "region"}
+        role={isMapExpanded ? "dialog" : "region"}
+        style={
+          presentation === "game" && isDrawerDragging
+            ? { transform: `translateY(${drawerDragOffsetY}px)` }
+            : undefined
+        }
       >
         <div
           aria-label="Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
@@ -621,31 +781,70 @@ export function WorldMapDialog({
           role="application"
         >
           {presentation === "game" ? (
-            <button
-              aria-label={
-                isExpanded ? "Minimize world map" : "Expand world map"
-              }
-              className="absolute right-4 top-4 z-10 inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-black/10 bg-white/90 px-3 text-sm font-semibold text-[#1f1b17] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-[#0f766e]/30 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-[#132131]/90 dark:text-[#f5f7fb] dark:hover:border-[#24d4c2]/35 dark:hover:text-[#8ff4e7]"
-              onClick={() => onExpandedChange(!isExpanded)}
-              ref={expandButtonRef}
-              title={isExpanded ? "Minimize world map" : "Expand world map"}
-              type="button"
-            >
-              {isExpanded ? (
-                <ChevronDown
-                  aria-hidden="true"
-                  className="size-5"
-                  strokeWidth={2.2}
-                />
-              ) : (
-                <ChevronUp
-                  aria-hidden="true"
-                  className="size-5"
-                  strokeWidth={2.2}
-                />
-              )}
-              {isExpanded ? "Minimize" : "Expand"}
-            </button>
+            <>
+              <button
+                aria-expanded={isMapExpanded}
+                aria-label={
+                  isMapExpanded ? "Collapse world map" : "Expand world map"
+                }
+                className="absolute left-1/2 top-2 z-10 flex h-9 w-28 -translate-x-1/2 touch-none items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 lg:hidden"
+                onClick={() => {
+                  if (didDrawerDragRef.current) {
+                    didDrawerDragRef.current = false;
+                    return;
+                  }
+
+                  setDrawerState(isMapExpanded ? "medium" : "expanded");
+                }}
+                onPointerCancel={endDrawerDrag}
+                onPointerDown={beginDrawerDrag}
+                onPointerMove={moveDrawerDrag}
+                onPointerUp={endDrawerDrag}
+                ref={expandButtonRef}
+                type="button"
+              >
+                <span className="h-1.5 w-12 rounded-full bg-[#718093]/85 shadow-sm" />
+                <span className="sr-only">
+                  {isMapExpanded ? "Collapse" : "Expand"} world map
+                </span>
+              </button>
+              <button
+                aria-label="Hide world map"
+                className="absolute right-3 top-2 z-10 inline-flex size-9 items-center justify-center rounded-full border border-black/10 bg-white/90 text-[#17313a] shadow-lg backdrop-blur transition hover:bg-white hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-[#132131]/90 dark:text-[#d7e1ec] dark:hover:text-[#8ff4e7] lg:hidden"
+                onClick={() => setDrawerState("hidden")}
+                type="button"
+              >
+                <X aria-hidden="true" className="size-4" strokeWidth={2.2} />
+              </button>
+              <button
+                aria-label={
+                  isMapExpanded ? "Minimize world map" : "Expand world map"
+                }
+                className="absolute right-4 top-4 z-10 hidden h-10 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-black/10 bg-white/90 px-3 text-sm font-semibold text-[#1f1b17] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-[#0f766e]/30 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-[#132131]/90 dark:text-[#f5f7fb] dark:hover:border-[#24d4c2]/35 dark:hover:text-[#8ff4e7] lg:inline-flex"
+                onClick={() =>
+                  setDrawerState(isMapExpanded ? "medium" : "expanded")
+                }
+                title={
+                  isMapExpanded ? "Minimize world map" : "Expand world map"
+                }
+                type="button"
+              >
+                {isMapExpanded ? (
+                  <ChevronDown
+                    aria-hidden="true"
+                    className="size-5"
+                    strokeWidth={2.2}
+                  />
+                ) : (
+                  <ChevronUp
+                    aria-hidden="true"
+                    className="size-5"
+                    strokeWidth={2.2}
+                  />
+                )}
+                {isMapExpanded ? "Minimize" : "Expand"}
+              </button>
+            </>
           ) : null}
           <svg
             aria-hidden="true"
@@ -840,7 +1039,7 @@ export function WorldMapDialog({
 
         <footer
           className={`border-t border-black/10 bg-white/76 text-center text-sm text-[#5f5a54] dark:border-white/10 dark:bg-white/5 dark:text-[#aab8c6] ${
-            isExpanded && presentation === "game" ? "px-4 py-3" : "sr-only"
+            isMapExpanded && presentation === "game" ? "px-4 py-3" : "sr-only"
           }`}
           id="world-map-help"
         >

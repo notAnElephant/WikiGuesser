@@ -129,3 +129,35 @@ describe("result world map", () => {
     expect(markup).not.toContain('aria-label="Focus France"');
   });
 });
+
+describe("game world map drawer", () => {
+  it("renders a compact control when the map drawer is hidden", () => {
+    const markup = renderToStaticMarkup(
+      createElement(WorldMapDialog, {
+        drawerState: "hidden",
+        guessedCountries: [],
+        isExpanded: false,
+        onDrawerStateChange: () => undefined,
+        onExpandedChange: () => undefined,
+      }),
+    );
+
+    expect(markup).toContain('aria-label="Show world map"');
+    expect(markup).not.toContain('role="application"');
+  });
+
+  it("uses the top handle to expand the medium drawer", () => {
+    const markup = renderToStaticMarkup(
+      createElement(WorldMapDialog, {
+        drawerState: "medium",
+        guessedCountries: [],
+        isExpanded: false,
+        onDrawerStateChange: () => undefined,
+        onExpandedChange: () => undefined,
+      }),
+    );
+
+    expect(markup).toContain('aria-label="Expand world map"');
+    expect(markup).toContain('aria-label="Hide world map"');
+  });
+});
