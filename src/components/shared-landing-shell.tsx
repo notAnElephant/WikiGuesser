@@ -96,7 +96,7 @@ interface GameLauncherProps {
   resetCountdown: string;
 }
 
-function GameLauncher({
+export function GameLauncher({
   claimBanner,
   dailyOptions,
   isBusy,

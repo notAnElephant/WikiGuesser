@@ -1,9 +1,13 @@
+import { AccountUserButton } from "@/src/components/account-user-button";
+import { AdminDailyAnswersProfilePage } from "@/src/components/admin-daily-answers-profile-page";
+import { AppToaster } from "@/src/components/app-toaster";
+import { PostHogIdentity } from "@/src/components/posthog-identity";
 import { ThemeProvider } from "@/src/components/theme-provider";
 import { ThemeToggle } from "@/src/components/theme-toggle";
-import { PostHogIdentity } from "@/src/components/posthog-identity";
-import { AccountUserButton } from "@/src/components/account-user-button";
-import { AppToaster } from "@/src/components/app-toaster";
+
+import { isAdminUser } from "@/src/lib/auth/admin";
 import { ClerkProvider, Show } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Dice5, LogIn, Trophy } from "lucide-react";
@@ -18,9 +22,12 @@ export const metadata: Metadata = {
     "A fast clue-based trivia game built from Wikipedia-inspired topics.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { userId } = await auth();
+  const isAdmin = isAdminUser(userId);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(15,118,110,0.2),transparent_34%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.18),transparent_24%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.32),transparent_28%),linear-gradient(180deg,#fbf5eb_0%,#f2eadb_100%)] font-sans text-[#1f1b17] transition-colors dark:bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.14),transparent_22%),radial-gradient(circle_at_bottom,rgba(36,212,194,0.08),transparent_24%),linear-gradient(180deg,#08111b_0%,#0f1724_54%,#16202d_100%)] dark:text-[#f5f7fb]">
@@ -79,7 +86,12 @@ export default function RootLayout({
                     </Link>
                   </Show>
                   <Show when="signed-in">
-                    <AccountUserButton />
+                    <AccountUserButton
+                      adminDailyAnswersPage={
+                        isAdmin ? <AdminDailyAnswersProfilePage /> : undefined
+                      }
+                      isAdmin={isAdmin}
+                    />
                   </Show>
                 </div>
               </div>

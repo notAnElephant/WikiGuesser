@@ -7,13 +7,18 @@ import type {
 
 import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { getClerkProfileSnapshot } from "@/src/lib/auth/user-profile";
-import { getDailyComboKey, getDailyDayKey, selectDailyChallengeEntity } from "@/src/lib/game/daily";
+import {
+  getDailyComboKey,
+  getDailyDayKey,
+  selectDailyChallengeEntity,
+} from "@/src/lib/game/daily";
 import { buildNextDailyCategoryModeStats } from "@/src/lib/game/player-stats";
 import { getPrismaClient } from "@/src/lib/repository/prisma";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
   DailyChallengeCard,
   DailyChallengeOption,
+  DailyChallengeSolution,
   DailyComboLeaderboard,
   DailyHomeData,
   DailyLandingData,
@@ -37,8 +42,7 @@ function getDefaultDailySelection<
   return (
     options.find((option) => !option.playerStatus.hasPlayed) ??
     options.find(
-      (option) =>
-        option.category === "countries" && option.mode === "classic",
+      (option) => option.category === "countries" && option.mode === "classic",
     ) ??
     options[0]!
   );
@@ -138,8 +142,8 @@ function toDailyEntity(challenge: DailyChallenge): NormalizedEntity {
     acceptedAnswers:
       challenge.acceptedAnswers as unknown as NormalizedEntity["acceptedAnswers"],
     clues: challenge.clues as unknown as NormalizedEntity["clues"],
-    metadata:
-      (challenge.metadata ?? {}) as unknown as NormalizedEntity["metadata"],
+    metadata: (challenge.metadata ??
+      {}) as unknown as NormalizedEntity["metadata"],
     sourceFingerprint: challenge.snapshotKey,
   };
 }
@@ -378,7 +382,11 @@ export async function claimPendingDailyResults(
   const actorId = `user:${clerkUserId}`;
 
   return prisma.$transaction(async (tx) => {
-    const userProfile = await upsertUserProfile(tx, clerkUserId, profileSnapshot);
+    const userProfile = await upsertUserProfile(
+      tx,
+      clerkUserId,
+      profileSnapshot,
+    );
     const results = await tx.dailyResult.findMany({
       where: {
         id: {
@@ -586,6 +594,32 @@ export async function getDailyLandingData(
     defaultCategory: defaultOption.category,
     defaultMode: defaultOption.mode,
   };
+}
+
+export async function getDailyAdminSolutions(): Promise<
+  DailyChallengeSolution[]
+> {
+  const dayKey = getDailyDayKey();
+  const snapshot = await getLatestSnapshot();
+
+  return Promise.all(
+    ACTIVE_GAME_CATEGORIES.flatMap((category) =>
+      GAME_MODES.map(async (mode) => {
+        const challenge = await getOrCreateChallengeForDay(
+          category,
+          mode,
+          dayKey,
+          snapshot,
+        );
+
+        return {
+          category,
+          mode,
+          canonicalAnswer: challenge.canonicalAnswer,
+        };
+      }),
+    ),
+  );
 }
 
 export async function getDailyLeaderboardPageData(): Promise<DailyLeaderboardPageData> {

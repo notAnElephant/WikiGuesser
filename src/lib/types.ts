@@ -242,6 +242,12 @@ export interface DailyChallengeOption {
   playerStatus: DailyChallengePlayerStatus;
 }
 
+export interface DailyChallengeSolution {
+  category: EntityCategory;
+  mode: GameMode;
+  canonicalAnswer: string;
+}
+
 export interface DailyLeaderboardEntry {
   playerKey: string;
   displayName: string;
