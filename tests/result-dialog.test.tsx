@@ -78,8 +78,7 @@ describe("daily result dialog actions", () => {
     );
 
     expect(markup).toContain('aria-label="Close result"');
-    expect(markup).toContain('aria-label="Expand result drawer"');
-    expect(markup).toContain('data-drawer-state="medium"');
+    expect(markup).toContain("items-center justify-center");
     expect(markup).toContain('alt="Flag of Netherlands"');
     expect(markup).toContain("Flag%20of%20the%20Netherlands.svg");
     expect(markup).toContain('class="mt-5 grid gap-4 sm:grid-cols-2"');
