@@ -241,7 +241,7 @@ export interface DailyLeaderboardEntry {
   roundsPlayed?: number;
   roundsWon?: number;
   bestScore?: number;
-  completedAt?: string | null;
+  completedAtLabel?: string | null;
 }
 
 export interface DailyComboLeaderboard {

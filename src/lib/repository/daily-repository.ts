@@ -24,8 +24,19 @@ import type {
   GameMode,
   MaterializedSnapshot,
 } from "@/src/lib/types";
-import { ACTIVE_GAME_CATEGORIES, GAME_MODES } from "@/src/lib/types";
+import {
+  ACTIVE_GAME_CATEGORIES,
+  DAILY_RESET_TIME_ZONE,
+  GAME_MODES,
+} from "@/src/lib/types";
 const DAILY_LEADERBOARD_LIMIT = 10;
+
+const leaderboardTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: DAILY_RESET_TIME_ZONE,
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
 
 function getDefaultDailySelection<
   T extends {
@@ -184,7 +195,9 @@ function toLeaderboardEntry(params: {
     roundsPlayed: params.roundsPlayed,
     roundsWon: params.roundsWon,
     bestScore: params.bestScore,
-    completedAt: params.completedAt?.toISOString() ?? null,
+    completedAtLabel: params.completedAt
+      ? leaderboardTimeFormatter.format(params.completedAt)
+      : null,
   };
 }
 

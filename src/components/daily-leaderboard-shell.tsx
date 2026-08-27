@@ -158,11 +158,8 @@ export function DailyLeaderboardShell({
                       {index + 1}. {entry.displayName}
                     </div>
                     <div className="text-xs text-[#6b6259] dark:text-[#9aa9bb]">
-                      {entry.completedAt
-                        ? new Date(entry.completedAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                      {entry.completedAtLabel
+                        ? entry.completedAtLabel
                         : period === "today"
                           ? "Today"
                           : `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`}
