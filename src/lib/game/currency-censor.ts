@@ -18,6 +18,7 @@ const CURRENCY_NOUNS = [
   "dinar",
   "dirham",
   "dollar",
+  "dobra",
   "dong",
   "dram",
   "euro",

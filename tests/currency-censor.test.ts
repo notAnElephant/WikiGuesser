@@ -17,6 +17,13 @@ describe("currency censor", () => {
     ]);
   });
 
+  it("blurs accented country names before the São Tomé and Príncipe dobra", () => {
+    expect(splitCurrencyRevealSegments("São Tomé and Príncipe dobra")).toEqual([
+      { isBlurred: true, text: "São Tomé and Príncipe" },
+      { isBlurred: false, text: " dobra" },
+    ]);
+  });
+
   it("leaves neutral currency names untouched", () => {
     expect(splitCurrencyRevealSegments("Euro")).toEqual([
       { isBlurred: false, text: "Euro" },
