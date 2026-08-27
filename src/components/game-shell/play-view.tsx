@@ -19,6 +19,7 @@ import {
   isClueLocked,
   renderClueValue,
   renderHiddenCluePlaceholder,
+  shouldDisplayGameStatusToast,
 } from "@/src/components/game-shell/utils";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import type { GameMode, GuessDirection, RoundClue } from "@/src/lib/types";
@@ -161,11 +162,8 @@ export function GamePlayView({
   );
 
   useEffect(() => {
-    if (
-      message === "Round live." ||
-      message === "Daily live." ||
-      message === "Tap a row."
-    ) {
+    if (!shouldDisplayGameStatusToast(message)) {
+      toast.dismiss("game-status");
       return;
     }
 

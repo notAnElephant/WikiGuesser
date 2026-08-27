@@ -5,6 +5,7 @@ import {
   getFlagImageUrl,
   renderClueValue,
   renderHiddenCluePlaceholder,
+  shouldDisplayGameStatusToast,
 } from "@/src/components/game-shell/utils";
 
 const flagUrl =
@@ -42,5 +43,18 @@ describe("game shell clue rendering", () => {
 
     expect(markup).not.toContain(flagUrl);
     expect(markup).toBe("");
+  });
+});
+
+describe("game status toasts", () => {
+  it.each(["Correct.", "Answer: France."])(
+    "does not display a toast for a completed round message: %s",
+    (message) => {
+      expect(shouldDisplayGameStatusToast(message)).toBe(false);
+    },
+  );
+
+  it("continues to display feedback toasts during an active round", () => {
+    expect(shouldDisplayGameStatusToast("Miss. Next clue.")).toBe(true);
   });
 });

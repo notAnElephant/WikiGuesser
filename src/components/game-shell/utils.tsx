@@ -205,3 +205,15 @@ export function getMessageAppearance(
     tone: "info",
   };
 }
+
+export function shouldDisplayGameStatusToast(message: string): boolean {
+  if (
+    message === "Round live." ||
+    message === "Daily live." ||
+    message === "Tap a row."
+  ) {
+    return false;
+  }
+
+  return message !== "Correct." && !message.startsWith("Answer: ");
+}
