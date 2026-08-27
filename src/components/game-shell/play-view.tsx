@@ -380,6 +380,7 @@ export function GamePlayView({
               onExpandedChange={(isExpanded) =>
                 setMapDrawerState(isExpanded ? "expanded" : "medium")
               }
+              solutionCountry={result?.solutionCountry ?? null}
             />
           ) : null}
 
