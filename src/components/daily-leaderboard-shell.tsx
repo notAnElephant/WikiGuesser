@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, CalendarDays, Gauge, Trophy } from "lucide-react";
 
 import {
@@ -30,6 +30,21 @@ function segmentedButtonClass(isActive: boolean) {
       ? "bg-[#0f766e] text-white dark:bg-[#24d4c2] dark:text-[#082825]"
       : "text-[#6b6259] hover:text-[#1f1b17] dark:text-[#9aa9bb] dark:hover:text-white"
   }`;
+}
+
+function LocalCompletionTime({ completedAt }: { completedAt: string }) {
+  const [formattedTime, setFormattedTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFormattedTime(
+      new Intl.DateTimeFormat(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(completedAt)),
+    );
+  }, [completedAt]);
+
+  return <time dateTime={completedAt}>{formattedTime ?? "—"}</time>;
 }
 
 export function DailyLeaderboardShell({
@@ -158,14 +173,13 @@ export function DailyLeaderboardShell({
                       {index + 1}. {entry.displayName}
                     </div>
                     <div className="text-xs text-[#6b6259] dark:text-[#9aa9bb]">
-                      {entry.completedAt
-                        ? new Date(entry.completedAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : period === "today"
-                          ? "Today"
-                          : `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`}
+                      {entry.completedAt ? (
+                        <LocalCompletionTime completedAt={entry.completedAt} />
+                      ) : period === "today" ? (
+                        "Today"
+                      ) : (
+                        `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`
+                      )}
                     </div>
                   </div>
                   {period === "total" ? (
