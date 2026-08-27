@@ -1,6 +1,7 @@
 import { categoryDefinitions } from "@/src/lib/content/category-definitions";
 import { fetchRedirectAliases } from "@/src/lib/content/mediawiki-client";
 import { materializeSnapshot } from "@/src/lib/content/materialize-snapshot";
+import { assertCountryMapCoverage } from "@/src/lib/game/world-map-data";
 import type {
   EntityCategory,
   MaterializedSnapshot,
@@ -60,5 +61,8 @@ export async function buildSnapshotFromSources(
     );
   }
 
-  return materializeSnapshot(normalizedEntities, previousSnapshot);
+  const result = materializeSnapshot(normalizedEntities, previousSnapshot);
+  assertCountryMapCoverage(result.snapshot.entities);
+
+  return result;
 }

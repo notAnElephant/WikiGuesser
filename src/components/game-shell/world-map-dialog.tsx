@@ -1,6 +1,10 @@
 "use client";
 
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  COUNTRY_DATA,
+  getMapCountryNames,
+} from "@/src/lib/game/world-map-data";
 import type {
   GuessDirection,
   GuessedCountryMapData,
@@ -14,7 +18,6 @@ import {
   zoomIdentity,
   type ZoomTransform,
 } from "d3-zoom";
-import type { FeatureCollection, Geometry } from "geojson";
 import {
   ChevronDown,
   ChevronUp,
@@ -25,14 +28,6 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { feature } from "topojson-client";
-import type { GeometryCollection, Topology } from "topojson-specification";
-import worldTopology from "world-atlas/countries-110m.json";
-
-interface CountryProperties {
-  name?: string;
-  normalizedName: string;
-}
 
 interface WorldMapDialogProps {
   drawerState?: "hidden" | "medium" | "expanded";
@@ -75,33 +70,6 @@ const DIRECTION_LABEL: Record<GuessDirection, string> = {
   west: "west",
   northwest: "northwest",
 };
-
-function buildCountryData(): FeatureCollection<Geometry, CountryProperties> {
-  const topology = worldTopology as unknown as Topology;
-  const countries = topology.objects.countries as GeometryCollection<{
-    name?: string;
-  }>;
-  const collection = feature(topology, countries);
-
-  return {
-    ...collection,
-    features: collection.features
-      .filter((country) => country.properties?.name !== "Antarctica")
-      .map((country) => {
-        const name = country.properties?.name ?? "";
-
-        return {
-          ...country,
-          properties: {
-            ...country.properties,
-            normalizedName: normalizeGuess(name),
-          },
-        };
-      }),
-  };
-}
-
-const COUNTRY_DATA = buildCountryData();
 
 interface ResizeTransformOptions {
   currentTransform: ZoomTransform;
@@ -228,9 +196,9 @@ export function WorldMapDialog({
   const guessedNames = useMemo(
     () =>
       new Set(
-        guessedCountries.flatMap((country) =>
-          country.mapNames.map(normalizeGuess),
-        ),
+        guessedCountries.flatMap((country) => [
+          ...getMapCountryNames(country.mapNames),
+        ]),
       ),
     [guessedCountries],
   );
@@ -239,14 +207,19 @@ export function WorldMapDialog({
 
     for (const country of guessedCountries) {
       for (const mapName of country.mapNames) {
-        countriesByName.set(normalizeGuess(mapName), country);
+        for (const normalizedName of getMapCountryNames([mapName])) {
+          countriesByName.set(normalizedName, country);
+        }
       }
     }
 
     return countriesByName;
   }, [guessedCountries]);
   const solutionNames = useMemo(
-    () => new Set(solutionCountry?.mapNames.map(normalizeGuess) ?? []),
+    () =>
+      solutionCountry
+        ? getMapCountryNames(solutionCountry.mapNames)
+        : new Set<string>(),
     [solutionCountry],
   );
   const projection = useMemo(() => {
@@ -590,7 +563,7 @@ export function WorldMapDialog({
 
   function focusCountry(country: GuessedCountryMapData) {
     const didFocusCountry = focusCountries(
-      new Set(country.mapNames.map(normalizeGuess)),
+      getMapCountryNames(country.mapNames),
       7,
       0.56,
     );

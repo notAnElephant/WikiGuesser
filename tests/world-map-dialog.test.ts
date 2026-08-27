@@ -9,6 +9,58 @@ import {
   getResizedMapTransform,
   WorldMapDialog,
 } from "@/src/components/game-shell/world-map-dialog";
+import {
+  getCountriesWithoutMapCoverage,
+  hasMapGeometry,
+} from "@/src/lib/game/world-map-data";
+import type { NormalizedEntity } from "@/src/lib/types";
+
+function country(
+  canonicalAnswer: string,
+  acceptedAnswers: string[],
+  metadata: NormalizedEntity["metadata"],
+): NormalizedEntity {
+  return {
+    id: canonicalAnswer,
+    qid: canonicalAnswer,
+    category: "countries",
+    canonicalAnswer,
+    wikipediaTitle: null,
+    acceptedAnswers: acceptedAnswers.map((value) => ({
+      kind: "canonical",
+      value,
+      normalized: value,
+    })),
+    clues: [],
+    metadata,
+    sourceFingerprint: canonicalAnswer,
+  };
+}
+
+describe("world map coverage", () => {
+  it("includes São Tomé and Príncipe in the map geometry", () => {
+    expect(hasMapGeometry(["São Tomé and Príncipe"])).toBe(true);
+  });
+
+  it("accepts a coordinate marker when a country has no polygon", () => {
+    expect(
+      getCountriesWithoutMapCoverage([
+        country("Tuvalu", ["Tuvalu"], {
+          centroidLatitude: -7.11,
+          centroidLongitude: 177.65,
+        }),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("reports countries that have neither geometry nor a marker", () => {
+    expect(
+      getCountriesWithoutMapCoverage([
+        country("Missing country", ["Missing country"], {}),
+      ]).map((entity) => entity.canonicalAnswer),
+    ).toEqual(["Missing country"]);
+  });
+});
 
 describe("getResizedMapTransform", () => {
   it("keeps the same geographic point centered through a map resize", () => {
