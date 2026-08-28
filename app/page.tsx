@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { SharedLandingShell } from "@/src/components/shared-landing-shell";
 import { getOptionalActorId } from "@/src/lib/auth/actor";
+import { buildContinentOptions } from "@/src/lib/content/continents";
 import { PENDING_DAILY_CLAIMS_COOKIE } from "@/src/lib/game/daily-claim-cookie";
 import { getDailyLandingData } from "@/src/lib/repository/daily-repository";
 import {
@@ -30,6 +31,7 @@ export default async function HomePage() {
         .map((entity) => entity.canonicalAnswer),
     ),
   ].sort((left, right) => left.localeCompare(right));
+  const continentOptions = buildContinentOptions(snapshot.entities);
   const hasPendingClaim = Boolean(
     cookieStore.get(PENDING_DAILY_CLAIMS_COOKIE)?.value,
   );
@@ -38,6 +40,7 @@ export default async function HomePage() {
     <main className="mx-auto min-h-screen w-full max-w-6xl px-3 pb-4 pt-24 sm:px-4 sm:pb-5 sm:pt-28">
       <SharedLandingShell
         categories={categories}
+        continentOptions={continentOptions}
         countryOptions={countryOptions}
         dailyData={dailyLandingData}
         hasPendingClaim={hasPendingClaim}

@@ -2,10 +2,16 @@
 
 import posthog from "posthog-js";
 
-import type { EntityCategory, GameMode, RoundKind } from "@/src/lib/types";
+import type {
+  ContinentId,
+  EntityCategory,
+  GameMode,
+  RoundKind,
+} from "@/src/lib/types";
 
 type GameContext = {
   category: EntityCategory;
+  continent?: ContinentId;
   game_type: "daily" | "free_play";
   mode: GameMode;
 };
@@ -52,9 +58,11 @@ export function toGameContext(
   kind: RoundKind,
   category: EntityCategory,
   mode: GameMode,
+  continent?: ContinentId | null,
 ): GameContext {
   return {
     category,
+    ...(continent ? { continent } : {}),
     game_type: kind === "daily" ? "daily" : "free_play",
     mode,
   };
