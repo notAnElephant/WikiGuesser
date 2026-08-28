@@ -153,9 +153,9 @@ export function GamePlayView({
   const deferredGuess = useDeferredValue(guess);
   const normalizedSearch = normalizeGuess(deferredGuess);
   const matchingCountryOptions = isCountryRound
-    ? availableCountryOptions
-        .filter((option) => normalizeGuess(option).includes(normalizedSearch))
-        .slice(0, 8)
+    ? availableCountryOptions.filter((option) =>
+        normalizeGuess(option).includes(normalizedSearch),
+      )
     : [];
   const guessedCountries = guessedEntities.flatMap((attempt) =>
     attempt.mapData ? [attempt.mapData] : [],
@@ -385,7 +385,9 @@ export function GamePlayView({
           ) : null}
 
           {round ? (
-            <div className={`${surfaceClass} grid gap-4 p-4`}>
+            <div
+              className={`${surfaceClass} grid gap-4 p-4 ${isCountryListOpen ? "relative z-[90]" : ""}`}
+            >
               <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
                 <Target
                   aria-hidden="true"
@@ -431,7 +433,7 @@ export function GamePlayView({
                   matchingCountryOptions.length > 0 ? (
                     <div
                       aria-label="Country suggestions"
-                      className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-64 overflow-y-auto rounded-[20px] border border-black/10 bg-white p-1.5 shadow-[0_18px_45px_rgba(31,27,23,0.2)] dark:border-white/12 dark:bg-[#172231]"
+                      className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-[min(16rem,40dvh)] touch-pan-y overflow-y-auto overscroll-contain rounded-[20px] border border-black/10 bg-white p-1.5 shadow-[0_18px_45px_rgba(31,27,23,0.2)] dark:border-white/12 dark:bg-[#172231]"
                       id="country-guess-options"
                       role="listbox"
                     >
