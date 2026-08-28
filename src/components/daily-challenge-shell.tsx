@@ -488,6 +488,7 @@ export function DailyChallengeShell({
         token: payload.token!,
         kind: payload.kind,
         category: payload.category,
+        continent: payload.continent,
         mode: payload.mode,
         clues: payload.clues,
         revealedClues: payload.revealedClues,

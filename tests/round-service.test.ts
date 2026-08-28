@@ -89,6 +89,44 @@ describe("round service", () => {
     expect(firstRound.mode).toBe("classic");
     expect(firstRound.revealedClues).toHaveLength(1);
     expect(firstRound.canGuess).toBe(true);
+    expect(firstRound.continent).toBeNull();
+  });
+
+  it("limits free-play rounds to the selected continent", async () => {
+    const europeRound = await startRound(
+      { category: "countries", continent: "europe", seed: "alpha" },
+      "user_test_europe",
+    );
+    const asiaRound = await startRound(
+      { category: "countries", continent: "asia", seed: "alpha" },
+      "user_test_asia",
+    );
+
+    expect(parseRoundState(europeRound.token)).toMatchObject({
+      continent: "europe",
+      entityId: "countries-france",
+      totalClues: 5,
+    });
+    expect(parseRoundState(asiaRound.token)).toMatchObject({
+      continent: "asia",
+      entityId: "countries-japan",
+      totalClues: 5,
+    });
+    expect(europeRound.clues.some((clue) => clue.key === "continent")).toBe(
+      false,
+    );
+    expect(europeRound.revealedClues[0]?.key).toBe("area");
+  });
+
+  it("rejects a continent without playable countries", async () => {
+    await expect(
+      startRound(
+        { category: "countries", continent: "antarctica", seed: "alpha" },
+        "user_test_antarctica",
+      ),
+    ).rejects.toThrow(
+      "No playable countries are available for that continent.",
+    );
   });
 
   it("rejects city rounds while the category is disabled", async () => {
@@ -202,6 +240,27 @@ describe("round service", () => {
     expect(round.clues.every((clue) => clue.prefetchedValue.length > 0)).toBe(
       true,
     );
+  });
+
+  it("does not expose the redundant continent clue in a filtered mode", async () => {
+    const round = await startRound(
+      {
+        category: "countries",
+        continent: "europe",
+        mode: "blurred-lines",
+        seed: "alpha",
+      },
+      "user_test_filtered_blurred",
+    );
+
+    expect(round.continent).toBe("europe");
+    expect(round.clues.some((clue) => clue.key === "continent")).toBe(false);
+    await expect(
+      revealClue(
+        { token: round.token, clueKey: "continent" },
+        "user_test_filtered_blurred",
+      ),
+    ).rejects.toThrow("That clue does not exist for this round.");
   });
 
   it("reveals a chosen blurred-lines clue and unlocks a guess", async () => {

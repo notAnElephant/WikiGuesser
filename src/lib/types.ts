@@ -1,9 +1,19 @@
 export const ENTITY_CATEGORIES = ["countries", "cities", "people"] as const;
 export const GAME_MODES = ["classic", "blurred-lines"] as const;
+export const CONTINENT_IDS = [
+  "africa",
+  "asia",
+  "europe",
+  "north-america",
+  "south-america",
+  "oceania",
+  "antarctica",
+] as const;
 export const DAILY_RESET_TIME_ZONE = "Europe/Budapest";
 
 export type EntityCategory = (typeof ENTITY_CATEGORIES)[number];
 export type GameMode = (typeof GAME_MODES)[number];
+export type ContinentId = (typeof CONTINENT_IDS)[number];
 export type RoundKind = "standard" | "daily";
 export type GuessDirection =
   | "north"
@@ -58,7 +68,7 @@ export interface RoundClue {
   spoilerLevel: "safe" | "late";
 }
 
-export type EntityMetadataValue = string | number | boolean | null;
+export type EntityMetadataValue = string | number | boolean | string[] | null;
 
 export interface NormalizedEntity {
   id: string;
@@ -83,6 +93,12 @@ export interface CategorySummary {
   id: EntityCategory;
   label: string;
   description: string;
+  entityCount: number;
+}
+
+export interface ContinentOption {
+  id: ContinentId;
+  label: string;
   entityCount: number;
 }
 
@@ -138,6 +154,7 @@ export interface CategoryDefinition {
 
 export interface StartRoundInput {
   category?: EntityCategory | "random";
+  continent?: ContinentId;
   mode?: GameMode;
   seed?: string;
 }
@@ -152,6 +169,7 @@ export interface RoundState {
   userId: string;
   entityId: string;
   category: EntityCategory;
+  continent?: ContinentId;
   mode: GameMode;
   kind: RoundKind;
   dailyChallengeId?: string;
@@ -167,6 +185,7 @@ export interface StartRoundResult {
   token: string;
   kind: RoundKind;
   category: EntityCategory;
+  continent: ContinentId | null;
   mode: GameMode;
   clues: RoundClue[];
   revealedClues: PlayableClue[];
@@ -193,6 +212,7 @@ export interface RevealClueResult {
   token: string;
   kind: RoundKind;
   category: EntityCategory;
+  continent: ContinentId | null;
   mode: GameMode;
   clues: RoundClue[];
   revealedClues: PlayableClue[];
@@ -205,6 +225,7 @@ export interface GuessRoundResult {
   token: string | null;
   kind: RoundKind;
   category: EntityCategory;
+  continent: ContinentId | null;
   mode: GameMode;
   isCorrect: boolean;
   isComplete: boolean;

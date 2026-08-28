@@ -356,6 +356,7 @@ export function useGameShellController({
         roundId: data.roundId,
         token: data.token!,
         category: data.category,
+        continent: data.continent,
         mode: data.mode,
         clues: data.clues,
         revealedClues: data.revealedClues,

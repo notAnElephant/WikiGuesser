@@ -1,14 +1,12 @@
 import { z } from "zod";
 
-import {
-  ENTITY_CATEGORIES,
-  GAME_MODES,
-} from "@/src/lib/types";
+import { CONTINENT_IDS, ENTITY_CATEGORIES, GAME_MODES } from "@/src/lib/types";
 
 const DAILY_CATEGORY_OPTIONS = ["countries", "cities"] as const;
 
 export const startRoundSchema = z.object({
   category: z.enum([...ENTITY_CATEGORIES, "random"]).optional(),
+  continent: z.enum(CONTINENT_IDS).optional(),
   mode: z.enum(GAME_MODES).optional(),
   seed: z.string().min(1).optional(),
 });

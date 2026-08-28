@@ -22,6 +22,25 @@ describe("category normalization", () => {
       "https://commons.wikimedia.org/wiki/Special:Redirect/file/Flag%20of%20France.svg?width=640",
     );
     expect(entity?.metadata.centroidLatitude).toBe(46.2276);
+    expect(entity?.metadata.continents).toEqual(["europe"]);
+  });
+
+  it("preserves every continent for a transcontinental country", () => {
+    const entity = categoryDefinitions.countries.normalize({
+      ...countrySourceFixture,
+      qid: "Q43",
+      label: "Turkey",
+      wikipediaTitle: "Turkey",
+      claims: {
+        ...countrySourceFixture.claims,
+        P30: [
+          { type: "entity", id: "Q46", label: "Europe" },
+          { type: "entity", id: "Q48", label: "Asia" },
+        ],
+      },
+    });
+
+    expect(entity?.metadata.continents).toEqual(["asia", "europe"]);
   });
 
   it("uses the preferred current country flag", () => {

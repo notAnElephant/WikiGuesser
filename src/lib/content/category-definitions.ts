@@ -1,4 +1,5 @@
 import type { CategoryDefinition, SourceEntity } from "@/src/lib/types";
+import { getSourceContinentIds } from "@/src/lib/content/continents";
 import {
   buildNormalizedEntity,
   createClue,
@@ -141,6 +142,7 @@ export const categoryDefinitions: Record<
         metadata: {
           centroidLatitude: coordinate?.latitude ?? null,
           centroidLongitude: coordinate?.longitude ?? null,
+          continents: getSourceContinentIds(source),
         },
       });
     },
