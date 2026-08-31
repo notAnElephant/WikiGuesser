@@ -2,11 +2,14 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import {
+  getClueUnlockRoundsRemaining,
   getFlagImageUrl,
+  isClueLocked,
   renderClueValue,
   renderHiddenCluePlaceholder,
   shouldDisplayGameStatusToast,
 } from "@/src/components/game-shell/utils";
+import type { RoundClue } from "@/src/lib/types";
 
 const flagUrl =
   "https://commons.wikimedia.org/wiki/Special:Redirect/file/Flag%20of%20France.svg?width=640";
@@ -43,6 +46,71 @@ describe("game shell clue rendering", () => {
 
     expect(markup).not.toContain(flagUrl);
     expect(markup).toBe("");
+  });
+});
+
+describe("blurred-lines clue locking", () => {
+  const clues: RoundClue[] = [
+    "continent",
+    "area",
+    "population",
+    "currency",
+    "flag-colors",
+  ].map((key) => ({
+    key,
+    label: key,
+    value: null,
+    prefetchedValue: key,
+    isRevealed: false,
+    difficulty: 1,
+    spoilerLevel: "safe",
+  }));
+  clues.push({
+    key: "capital",
+    label: "Capital",
+    value: null,
+    prefetchedValue: "Paris",
+    isRevealed: false,
+    difficulty: 6,
+    spoilerLevel: "late",
+  });
+
+  it("unlocks the flag after three other clue reveals", () => {
+    const flag = clues.find((clue) => clue.key === "flag-colors")!;
+
+    expect(getClueUnlockRoundsRemaining(clues, flag)).toBe(3);
+    expect(isClueLocked(clues, flag)).toBe(true);
+
+    const progressedClues = clues.map((clue, index) => ({
+      ...clue,
+      isRevealed: index < 3,
+    }));
+    const progressedFlag = progressedClues.find(
+      (clue) => clue.key === "flag-colors",
+    )!;
+
+    expect(getClueUnlockRoundsRemaining(progressedClues, progressedFlag)).toBe(
+      0,
+    );
+    expect(isClueLocked(progressedClues, progressedFlag)).toBe(false);
+  });
+
+  it("counts the safe clues remaining before the capital unlocks", () => {
+    const capital = clues.find((clue) => clue.key === "capital")!;
+
+    expect(getClueUnlockRoundsRemaining(clues, capital)).toBe(5);
+
+    const progressedClues = clues.map((clue, index) => ({
+      ...clue,
+      isRevealed: index < 3,
+    }));
+    const progressedCapital = progressedClues.find(
+      (clue) => clue.key === "capital",
+    )!;
+
+    expect(
+      getClueUnlockRoundsRemaining(progressedClues, progressedCapital),
+    ).toBe(2);
   });
 });
 

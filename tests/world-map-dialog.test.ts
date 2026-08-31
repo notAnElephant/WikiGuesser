@@ -183,6 +183,20 @@ describe("result world map", () => {
 });
 
 describe("game world map drawer", () => {
+  it("advertises map guessing when a country tap handler is available", () => {
+    const markup = renderToStaticMarkup(
+      createElement(WorldMapDialog, {
+        guessedCountries: [],
+        isExpanded: false,
+        onCountryGuess: () => undefined,
+        onExpandedChange: () => undefined,
+      }),
+    );
+
+    expect(markup).toContain("Tap a country · half points");
+    expect(markup).toContain("map-world-guessing");
+  });
+
   it("renders a compact control when the map drawer is hidden", () => {
     const markup = renderToStaticMarkup(
       createElement(WorldMapDialog, {

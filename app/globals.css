@@ -121,6 +121,18 @@
       stroke 160ms ease;
   }
 
+  .map-world-guessing
+    .map-country:not(.map-country--guessed):not(.map-country--solution):hover {
+    cursor: pointer;
+    fill: #99d8ce;
+  }
+
+  .dark
+    .map-world-guessing
+    .map-country:not(.map-country--guessed):not(.map-country--solution):hover {
+    fill: rgba(36, 212, 194, 0.38);
+  }
+
   .map-country--guessed {
     cursor: pointer;
     fill: rgba(220, 38, 38, 0.36);

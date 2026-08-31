@@ -263,12 +263,15 @@ export function useGameShellController({
     });
   }
 
-  function submitGuess() {
-    if (!round || !guess.trim()) {
+  function submitGuess(mapCountryName?: string) {
+    const isMapGuess = Boolean(mapCountryName);
+    const guessValue = mapCountryName ?? guess.trim();
+
+    if (!round || !guessValue) {
       return;
     }
 
-    if (isCountryRound && !isCountryGuessValid) {
+    if (!isMapGuess && isCountryRound && !isCountryGuessValid) {
       setMessage("Pick a listed country.");
       return;
     }
@@ -282,14 +285,16 @@ export function useGameShellController({
       return;
     }
 
-    if (isAlreadyGuessed) {
+    if (!isMapGuess && isAlreadyGuessed) {
       setMessage("Already tried.");
       return;
     }
 
-    const submittedGuess = isCountryRound
-      ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
-      : guess.trim();
+    const submittedGuess = isMapGuess
+      ? guessValue
+      : isCountryRound
+        ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
+        : guess.trim();
 
     startTransition(async () => {
       const response = await fetch(`/api/rounds/${round.roundId}/guess`, {
@@ -300,6 +305,7 @@ export function useGameShellController({
         body: JSON.stringify({
           token: round.token,
           guess: submittedGuess,
+          method: isMapGuess ? "map" : "text",
         }),
       });
 
@@ -380,6 +386,10 @@ export function useGameShellController({
     submitGuess();
   }
 
+  function handleMapGuess(countryName: string) {
+    submitGuess(countryName);
+  }
+
   function giveUpRound() {
     if (!round) {
       return;
@@ -454,6 +464,7 @@ export function useGameShellController({
     guessButtonLabel,
     handleCategorySelect,
     handleGuessSubmit,
+    handleMapGuess,
     handleModeSelect,
     isBusy,
     isCountryRound,

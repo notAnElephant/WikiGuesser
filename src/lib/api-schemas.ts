@@ -19,6 +19,7 @@ export const startDailyRoundSchema = z.object({
 export const submitGuessSchema = z.object({
   token: z.string().min(1),
   guess: z.string().min(1),
+  method: z.enum(["text", "map"]).optional(),
 });
 
 export const revealClueSchema = z.object({

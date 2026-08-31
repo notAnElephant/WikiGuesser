@@ -7,6 +7,7 @@ import {
   getGuessedCountryMapData,
   getSolutionCountryMapData,
 } from "@/src/lib/game/guess-direction";
+import { getClueUnlockRoundsRemaining } from "@/src/lib/game/clue-locking";
 import {
   createRoundState,
   parseRoundState,
@@ -48,6 +49,15 @@ function getScoreForRevealCount(revealCount: number): number {
       Math.min(normalizedRevealCount - 1, SCORE_BY_REVEAL_INDEX.length - 1)
     ] ?? 10
   );
+}
+
+function getScoreForGuess(
+  revealCount: number,
+  method: GuessRoundInput["method"],
+): number {
+  const score = getScoreForRevealCount(revealCount);
+
+  return method === "map" ? Math.floor(score / 2) : score;
 }
 
 function pickEntity(
@@ -119,16 +129,19 @@ function getRemainingClues(
   );
 }
 
-function hasHiddenSafeClues(
+function getClueUnlockState(
   entity: NormalizedEntity,
   revealedClueKeys: string[],
   mode: GameMode,
   continent?: ContinentId,
-): boolean {
+) {
   const revealedClueSet = new Set(revealedClueKeys);
-  return getEffectiveClues(entity, mode, continent).some(
-    (clue) => clue.spoilerLevel === "safe" && !revealedClueSet.has(clue.key),
-  );
+
+  return getEffectiveClues(entity, mode, continent).map((clue) => ({
+    key: clue.key,
+    spoilerLevel: clue.spoilerLevel,
+    isRevealed: revealedClueSet.has(clue.key),
+  }));
 }
 
 function getNextClassicClueKey(
@@ -397,16 +410,24 @@ export async function revealClue(
     throw new Error("That clue is already revealed.");
   }
 
-  if (
-    selectedClue.spoilerLevel === "late" &&
-    hasHiddenSafeClues(
-      entity,
-      roundState.revealedClueKeys,
-      roundState.mode,
-      roundState.continent,
-    )
-  ) {
-    throw new Error("That field is still locked.");
+  const clueUnlockState = getClueUnlockState(
+    entity,
+    roundState.revealedClueKeys,
+    roundState.mode,
+    roundState.continent,
+  );
+  const selectedClueUnlockState = clueUnlockState.find(
+    (clue) => clue.key === selectedClue.key,
+  )!;
+  const unlockRoundsRemaining = getClueUnlockRoundsRemaining(
+    clueUnlockState,
+    selectedClueUnlockState,
+  );
+
+  if (unlockRoundsRemaining > 0) {
+    throw new Error(
+      `That field unlocks in ${unlockRoundsRemaining} ${unlockRoundsRemaining === 1 ? "round" : "rounds"}.`,
+    );
   }
 
   const nextState = {
@@ -455,7 +476,7 @@ export async function submitGuess(
       isCorrect: true,
       isComplete: true,
       canonicalAnswer: entity.canonicalAnswer,
-      score: getScoreForRevealCount(roundState.revealedClueKeys.length),
+      score: getScoreForGuess(roundState.revealedClueKeys.length, input.method),
       direction,
       guessedCountry,
       solutionCountry,

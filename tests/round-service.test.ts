@@ -292,6 +292,45 @@ describe("round service", () => {
     ).toBe(chosenClue.value);
   });
 
+  it("unlocks the flag after three blurred-lines clue reveals", async () => {
+    const round = await startRound(
+      { category: "countries", mode: "blurred-lines", seed: "alpha" },
+      "user_flag_lock",
+    );
+
+    await expect(
+      revealClue(
+        { token: round.token, clueKey: "flag-colors" },
+        "user_flag_lock",
+      ),
+    ).rejects.toThrow("That field unlocks in 3 rounds.");
+
+    let currentRound = round;
+    const earlyClueKeys = currentRound.clues
+      .filter(
+        (clue) => clue.key !== "flag-colors" && clue.spoilerLevel === "safe",
+      )
+      .slice(0, 3)
+      .map((clue) => clue.key);
+
+    for (const clueKey of earlyClueKeys) {
+      currentRound = await revealClue(
+        { token: currentRound.token, clueKey },
+        "user_flag_lock",
+      );
+    }
+
+    const revealedRound = await revealClue(
+      { token: currentRound.token, clueKey: "flag-colors" },
+      "user_flag_lock",
+    );
+
+    expect(
+      revealedRound.clues.find((clue) => clue.key === "flag-colors")
+        ?.isRevealed,
+    ).toBe(true);
+  });
+
   it("requires a reveal before the first blurred-lines guess", async () => {
     const round = await startRound(
       { category: "countries", mode: "blurred-lines", seed: "alpha" },
@@ -368,6 +407,30 @@ describe("round service", () => {
     expect(result.isCorrect).toBe(true);
     expect(result.score).toBe(100);
     expect(result.canonicalAnswer).toBe(correctAnswer);
+  });
+
+  it("awards half score for a correct map guess", async () => {
+    const round = await startRound(
+      { category: "countries", seed: "alpha" },
+      "user_test_map_guess",
+    );
+    const roundState = parseRoundState(round.token);
+    const snapshot = await getLatestSnapshot();
+    const actualEntity = snapshot.entities.find(
+      (entity) => entity.id === roundState.entityId,
+    );
+
+    const result = await submitGuess(
+      {
+        token: round.token,
+        guess: actualEntity!.canonicalAnswer,
+        method: "map",
+      },
+      "user_test_map_guess",
+    );
+
+    expect(result.isCorrect).toBe(true);
+    expect(result.score).toBe(50);
   });
 
   it("rejects guesses for a different authenticated user", async () => {

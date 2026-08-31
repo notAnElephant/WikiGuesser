@@ -907,12 +907,15 @@ export function SharedLandingShell({
     });
   }
 
-  function submitGuess() {
-    if (!round || !guess.trim()) {
+  function submitGuess(mapCountryName?: string) {
+    const isMapGuess = Boolean(mapCountryName);
+    const guessValue = mapCountryName ?? guess.trim();
+
+    if (!round || !guessValue) {
       return;
     }
 
-    if (isCountryRound && !isCountryGuessValid) {
+    if (!isMapGuess && isCountryRound && !isCountryGuessValid) {
       setMessage("Pick a listed country.");
       return;
     }
@@ -926,14 +929,16 @@ export function SharedLandingShell({
       return;
     }
 
-    if (isAlreadyGuessed) {
+    if (!isMapGuess && isAlreadyGuessed) {
       setMessage("Already tried.");
       return;
     }
 
-    const submittedGuess = isCountryRound
-      ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
-      : guess.trim();
+    const submittedGuess = isMapGuess
+      ? guessValue
+      : isCountryRound
+        ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
+        : guess.trim();
 
     startTransition(async () => {
       const response = await fetch(`/api/rounds/${round.roundId}/guess`, {
@@ -944,6 +949,7 @@ export function SharedLandingShell({
         body: JSON.stringify({
           token: round.token,
           guess: submittedGuess,
+          method: isMapGuess ? "map" : "text",
         }),
       });
 
@@ -1071,6 +1077,10 @@ export function SharedLandingShell({
   function handleGuessSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void submitGuess();
+  }
+
+  function handleMapGuess(countryName: string) {
+    void submitGuess(countryName);
   }
 
   function giveUpRound() {
@@ -1201,6 +1211,7 @@ export function SharedLandingShell({
           guessedEntities={guessedEntities}
           guessButtonLabel={guessButtonLabel}
           handleGuessSubmit={handleGuessSubmit}
+          handleMapGuess={handleMapGuess}
           homeButtonLabel="Home"
           isBusy={isBusy}
           isCountryRound={isCountryRound}

@@ -1,4 +1,8 @@
 import { splitCurrencyRevealSegments } from "@/src/lib/game/currency-censor";
+export {
+  getClueUnlockRoundsRemaining,
+  isClueLocked,
+} from "@/src/lib/game/clue-locking";
 
 import { FlagColorsClue } from "@/src/components/game-shell/flag-colors-clue";
 import {
@@ -46,14 +50,6 @@ export function getMenuMessage(
   }
 
   return "Start free play.";
-}
-
-export function hasHiddenSafeClues(clues: RoundClue[]): boolean {
-  return clues.some((clue) => clue.spoilerLevel === "safe" && !clue.isRevealed);
-}
-
-export function isClueLocked(clues: RoundClue[], clue: RoundClue): boolean {
-  return clue.spoilerLevel === "late" && hasHiddenSafeClues(clues);
 }
 
 export function toPlayableClues(clues: RoundClue[]): PlayableClue[] {

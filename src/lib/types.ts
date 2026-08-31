@@ -195,6 +195,7 @@ export interface StartRoundResult {
 export interface GuessRoundInput {
   token: string;
   guess: string;
+  method?: "text" | "map";
 }
 
 export interface RevealClueInput {

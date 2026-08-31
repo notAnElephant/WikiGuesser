@@ -13,10 +13,10 @@ import type {
 } from "@/src/components/game-shell/types";
 import {
   getCategoryMeta,
+  getClueUnlockRoundsRemaining,
   getClueIcon,
   getFlagImageUrl,
   getModeMeta,
-  isClueLocked,
   renderClueValue,
   renderHiddenCluePlaceholder,
   shouldDisplayGameStatusToast,
@@ -85,6 +85,7 @@ interface GamePlayViewProps {
   guessedEntities: GuessAttempt[];
   guessButtonLabel: string;
   handleGuessSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  handleMapGuess: (countryName: string) => void;
   homeButtonLabel?: string;
   isBusy: boolean;
   isCountryRound: boolean;
@@ -119,6 +120,7 @@ export function GamePlayView({
   guessedEntities,
   guessButtonLabel,
   handleGuessSubmit,
+  handleMapGuess,
   homeButtonLabel = "Categories",
   isBusy,
   isCountryRound,
@@ -231,8 +233,10 @@ export function GamePlayView({
                 </thead>
                 <tbody>
                   {currentClues.map((clue, index) => {
-                    const isLocked =
-                      Boolean(round) && isClueLocked(currentClues, clue);
+                    const unlockRoundsRemaining = round
+                      ? getClueUnlockRoundsRemaining(currentClues, clue)
+                      : 0;
+                    const isLocked = unlockRoundsRemaining > 0;
                     const ClueIcon = getClueIcon(clue.key);
 
                     return (
@@ -269,7 +273,11 @@ export function GamePlayView({
                                     className="size-3"
                                     strokeWidth={2.2}
                                   />
-                                  Later
+                                  {unlockRoundsRemaining}{" "}
+                                  {unlockRoundsRemaining === 1
+                                    ? "round"
+                                    : "rounds"}{" "}
+                                  later
                                 </span>
                               </div>
                             ) : (
@@ -379,6 +387,9 @@ export function GamePlayView({
               onDrawerStateChange={setMapDrawerState}
               onExpandedChange={(isExpanded) =>
                 setMapDrawerState(isExpanded ? "expanded" : "medium")
+              }
+              onCountryGuess={
+                round?.canGuess && !isBusy ? handleMapGuess : undefined
               }
               solutionCountry={result?.solutionCountry ?? null}
             />

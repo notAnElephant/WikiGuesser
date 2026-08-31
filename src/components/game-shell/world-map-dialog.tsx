@@ -35,6 +35,7 @@ interface WorldMapDialogProps {
   isExpanded: boolean;
   onDrawerStateChange?: (drawerState: "hidden" | "medium" | "expanded") => void;
   onExpandedChange: (isExpanded: boolean) => void;
+  onCountryGuess?: (countryName: string) => void;
   presentation?: "game" | "result";
   solutionCountry?: SolutionCountryMapData | null;
 }
@@ -163,6 +164,7 @@ export function WorldMapDialog({
   drawerState,
   onDrawerStateChange,
   onExpandedChange,
+  onCountryGuess,
   presentation = "game",
   solutionCountry = null,
 }: WorldMapDialogProps) {
@@ -819,9 +821,14 @@ export function WorldMapDialog({
               </button>
             </>
           ) : null}
+          {presentation === "game" && onCountryGuess ? (
+            <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-[#0f766e]/20 bg-[#fbf7ef]/92 px-3 py-1.5 text-xs font-semibold text-[#0f766e] shadow-sm backdrop-blur dark:border-[#24d4c2]/24 dark:bg-[#132131]/92 dark:text-[#75e6d7] sm:left-4 sm:top-4">
+              Tap a country · half points
+            </span>
+          ) : null}
           <svg
             aria-hidden="true"
-            className="size-full touch-none select-none"
+            className={`size-full touch-none select-none ${onCountryGuess ? "map-world-guessing" : ""}`}
             ref={svgRef}
             viewBox={`0 0 ${mapSize.width || 1} ${mapSize.height || 1}`}
           >
@@ -849,7 +856,12 @@ export function WorldMapDialog({
                         onClick={
                           guessedCountry
                             ? () => focusCountry(guessedCountry)
-                            : undefined
+                            : onCountryGuess
+                              ? () =>
+                                  onCountryGuess(
+                                    country.properties.name ?? name,
+                                  )
+                              : undefined
                         }
                         vectorEffect="non-scaling-stroke"
                       />

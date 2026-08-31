@@ -52,6 +52,7 @@ export function GameShell(props: GameShellProps) {
         guessedEntities={game.guessedEntities}
         guessButtonLabel={game.guessButtonLabel}
         handleGuessSubmit={game.handleGuessSubmit}
+        handleMapGuess={game.handleMapGuess}
         homeButtonLabel="Free play"
         isBusy={game.isBusy}
         isCountryRound={game.isCountryRound}
