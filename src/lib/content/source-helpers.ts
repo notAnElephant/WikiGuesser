@@ -40,6 +40,68 @@ export function getEntityLabels(
     .filter((label): label is string => Boolean(label));
 }
 
+export function getCurrentEntityLabels(
+  entity: SourceEntity,
+  propertyId: string,
+): string[] {
+  const entityClaims = getClaims(entity, propertyId).filter(
+    (claim): claim is Extract<SourceClaimValue, { type: "entity" }> =>
+      claim.type === "entity",
+  );
+  const labelsById = new Map(
+    entityClaims.map((claim) => [
+      claim.id,
+      claim.label ?? getKnownEntityLabel(claim.id),
+    ]),
+  );
+  const rawEntity = entity.raw as {
+    claims?: Record<
+      string,
+      Array<{
+        rank?: string;
+        mainsnak?: {
+          snaktype?: string;
+          datavalue?: {
+            type?: string;
+            value?: { id?: string };
+          };
+        };
+        qualifiers?: Record<string, unknown[]>;
+      }>
+    >;
+  };
+  const statements = (rawEntity.claims?.[propertyId] ?? []).filter(
+    (statement) =>
+      statement.rank !== "deprecated" &&
+      statement.mainsnak?.snaktype !== "novalue" &&
+      statement.mainsnak?.datavalue?.type === "wikibase-entityid" &&
+      typeof statement.mainsnak.datavalue.value?.id === "string",
+  );
+
+  if (statements.length === 0) {
+    return getEntityLabels(entity, propertyId);
+  }
+
+  const preferredStatements = statements.filter(
+    (statement) => statement.rank === "preferred",
+  );
+  const currentStatements = statements.filter(
+    (statement) => !statement.qualifiers?.P582?.length,
+  );
+  const candidates =
+    preferredStatements.length > 0
+      ? preferredStatements
+      : currentStatements.length > 0
+        ? currentStatements
+        : statements;
+
+  return candidates
+    .map((statement) => statement.mainsnak?.datavalue?.value?.id)
+    .filter((id): id is string => Boolean(id))
+    .map((id) => labelsById.get(id) ?? getKnownEntityLabel(id))
+    .filter((label): label is string => Boolean(label));
+}
+
 export function getPreferredQuantity(
   entity: SourceEntity,
   propertyId: string,

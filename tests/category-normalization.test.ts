@@ -100,6 +100,80 @@ describe("category normalization", () => {
     );
   });
 
+  it("ignores ended currencies and capitals", () => {
+    const entity = categoryDefinitions.countries.normalize({
+      ...countrySourceFixture,
+      claims: {
+        ...countrySourceFixture.claims,
+        P38: [
+          { type: "entity", id: "Q16068", label: "Deutsche Mark" },
+          { type: "entity", id: "Q4916", label: "euro" },
+        ],
+        P36: [
+          { type: "entity", id: "Q8678", label: "Rio de Janeiro" },
+          { type: "entity", id: "Q2844", label: "Brasília" },
+        ],
+      },
+      raw: {
+        claims: {
+          P38: [
+            {
+              rank: "normal",
+              mainsnak: {
+                snaktype: "value",
+                datavalue: {
+                  type: "wikibase-entityid",
+                  value: { id: "Q16068" },
+                },
+              },
+              qualifiers: { P582: [{}] },
+            },
+            {
+              rank: "preferred",
+              mainsnak: {
+                snaktype: "value",
+                datavalue: {
+                  type: "wikibase-entityid",
+                  value: { id: "Q4916" },
+                },
+              },
+            },
+          ],
+          P36: [
+            {
+              rank: "normal",
+              mainsnak: {
+                snaktype: "value",
+                datavalue: {
+                  type: "wikibase-entityid",
+                  value: { id: "Q8678" },
+                },
+              },
+              qualifiers: { P582: [{}] },
+            },
+            {
+              rank: "normal",
+              mainsnak: {
+                snaktype: "value",
+                datavalue: {
+                  type: "wikibase-entityid",
+                  value: { id: "Q2844" },
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(entity?.clues.find((clue) => clue.key === "currency")?.value).toBe(
+      "euro",
+    );
+    expect(entity?.clues.find((clue) => clue.key === "capital")?.value).toBe(
+      "Brasília",
+    );
+  });
+
   it("uses the preferred current population instead of the oldest historical value", () => {
     const entity = categoryDefinitions.countries.normalize({
       ...countrySourceFixture,

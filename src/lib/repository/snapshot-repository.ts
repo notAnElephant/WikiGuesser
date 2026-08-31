@@ -128,30 +128,33 @@ export async function persistSnapshot(
   }
 
   const prisma = getPrismaClient();
-  await prisma.$transaction(async (tx) => {
-    await tx.snapshotVersion.deleteMany();
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.snapshotVersion.deleteMany();
 
-    const snapshotVersion = await tx.snapshotVersion.create({
-      data: {
-        key: snapshot.key,
-        sourceFingerprint: snapshot.sourceFingerprint,
-      },
-    });
+      const snapshotVersion = await tx.snapshotVersion.create({
+        data: {
+          key: snapshot.key,
+          sourceFingerprint: snapshot.sourceFingerprint,
+        },
+      });
 
-    await tx.snapshotEntity.createMany({
-      data: snapshot.entities.map((entity) => ({
-        id: entity.id,
-        snapshotVersionId: snapshotVersion.id,
-        qid: entity.qid,
-        category: entity.category,
-        canonicalAnswer: entity.canonicalAnswer,
-        wikipediaTitle: entity.wikipediaTitle,
-        sourceFingerprint: entity.sourceFingerprint,
-        acceptedAnswers:
-          entity.acceptedAnswers as unknown as Prisma.InputJsonValue,
-        clues: entity.clues as unknown as Prisma.InputJsonValue,
-        metadata: entity.metadata as unknown as Prisma.InputJsonValue,
-      })),
-    });
-  });
+      await tx.snapshotEntity.createMany({
+        data: snapshot.entities.map((entity) => ({
+          id: entity.id,
+          snapshotVersionId: snapshotVersion.id,
+          qid: entity.qid,
+          category: entity.category,
+          canonicalAnswer: entity.canonicalAnswer,
+          wikipediaTitle: entity.wikipediaTitle,
+          sourceFingerprint: entity.sourceFingerprint,
+          acceptedAnswers:
+            entity.acceptedAnswers as unknown as Prisma.InputJsonValue,
+          clues: entity.clues as unknown as Prisma.InputJsonValue,
+          metadata: entity.metadata as unknown as Prisma.InputJsonValue,
+        })),
+      });
+    },
+    { timeout: 15_000 },
+  );
 }

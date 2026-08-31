@@ -12,6 +12,7 @@ import {
   formatList,
   formatPopulation,
   getDistance,
+  getCurrentEntityLabels,
   getEntityLabels,
   getFirstCoordinate,
   getPreferredQuantity,
@@ -56,7 +57,7 @@ LIMIT __LIMIT__
 `;
 
 function getCountryCapitalLabel(source: SourceEntity): string | null {
-  const explicitCapital = formatList(getEntityLabels(source, "P36"), 1);
+  const explicitCapital = formatList(getCurrentEntityLabels(source, "P36"), 1);
 
   if (explicitCapital) {
     return explicitCapital;
@@ -122,7 +123,7 @@ export const categoryDefinitions: Record<
           createClue(
             "currency",
             "Currency",
-            formatList(getEntityLabels(source, "P38"), 1),
+            formatList(getCurrentEntityLabels(source, "P38"), 1),
             4,
           ),
           createClue(

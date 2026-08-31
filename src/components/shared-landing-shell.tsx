@@ -1,5 +1,6 @@
 "use client";
 
+import { GoogleOneTap } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti";
 import {
@@ -1250,82 +1251,95 @@ export function SharedLandingShell({
         ) : null}
 
         {result && result.showDialog !== false ? (
-          <GameResultDialog
-            clearForCategoryChoice={() => clearToHome()}
-            currentCategory={currentCategory}
-            currentCategoryLabel={currentCategoryLabel}
-            guessedCountries={guessedEntities.flatMap((attempt) =>
-              attempt.mapData ? [attempt.mapData] : [],
-            )}
-            isBusy={isBusy}
-            onClose={() =>
-              setResult((current) =>
-                current ? { ...current, showDialog: false } : current,
-              )
-            }
-            onPrimaryAction={() => {
-              if (result.kind !== "daily") {
-                startSelectedFlow();
-                return;
+          <>
+            {result.kind === "daily" && !isSignedIn ? (
+              <GoogleOneTap
+                signInForceRedirectUrl="/"
+                signUpForceRedirectUrl="/profile-name"
+              />
+            ) : null}
+            <GameResultDialog
+              clearForCategoryChoice={() => clearToHome()}
+              currentCategory={currentCategory}
+              currentCategoryLabel={currentCategoryLabel}
+              guessedCountries={guessedEntities.flatMap((attempt) =>
+                attempt.mapData ? [attempt.mapData] : [],
+              )}
+              isBusy={isBusy}
+              onClose={() =>
+                setResult((current) =>
+                  current ? { ...current, showDialog: false } : current,
+                )
               }
+              onPrimaryAction={() => {
+                if (result.kind !== "daily") {
+                  startSelectedFlow();
+                  return;
+                }
 
-              if (otherAvailableDailyOption) {
-                void startDaily(otherAvailableDailyOption);
-                return;
+                if (otherAvailableDailyOption) {
+                  void startDaily(otherAvailableDailyOption);
+                  return;
+                }
+
+                if (!isSignedIn) {
+                  router.push("/sign-up");
+                  return;
+                }
+
+                clearToHome({ refresh: true });
+              }}
+              onSecondaryAction={() => {
+                if (
+                  result.kind === "daily" &&
+                  !isSignedIn &&
+                  otherAvailableDailyOption
+                ) {
+                  router.push("/sign-up");
+                  return;
+                }
+
+                result.kind === "daily"
+                  ? clearToHome({ refresh: true })
+                  : clearToHome();
+              }}
+              onTertiaryAction={
+                result.kind === "daily" && !isSignedIn
+                  ? () => {
+                      router.push("/sign-in");
+                    }
+                  : undefined
               }
-
-              if (!isSignedIn) {
-                router.push("/sign-up");
-                return;
+              primaryActionIcon={
+                result.kind === "daily" && otherAvailableDailyOption
+                  ? Play
+                  : undefined
               }
-
-              clearToHome({ refresh: true });
-            }}
-            onSecondaryAction={() =>
-              result.kind === "daily"
-                ? clearToHome({ refresh: true })
-                : clearToHome()
-            }
-            onTertiaryAction={
-              result.kind === "daily" &&
-              !isSignedIn &&
-              !otherAvailableDailyOption
-                ? () => {
-                    router.push("/sign-in");
-                  }
-                : undefined
-            }
-            primaryActionIcon={
-              result.kind === "daily" && otherAvailableDailyOption
-                ? Play
-                : undefined
-            }
-            primaryActionLabel={
-              result.kind === "daily"
-                ? otherAvailableDailyOption
-                  ? `Play ${launcherModeCopy[otherAvailableDailyOption.mode].dailyTitle}`
-                  : isSignedIn
+              primaryActionLabel={
+                result.kind === "daily"
+                  ? otherAvailableDailyOption
+                    ? `Play ${launcherModeCopy[otherAvailableDailyOption.mode].dailyTitle}`
+                    : isSignedIn
+                      ? "Home"
+                      : "Create account"
+                  : "Play again"
+              }
+              result={result}
+              secondaryActionLabel={
+                result.kind === "daily" && otherAvailableDailyOption
+                  ? isSignedIn
                     ? "Home"
                     : "Create account"
-                : "Play again"
-            }
-            result={result}
-            secondaryActionLabel={
-              result.kind === "daily" &&
-              isSignedIn &&
-              !otherAvailableDailyOption
-                ? null
-                : "Home"
-            }
-            startRound={startSelectedFlow}
-            tertiaryActionLabel={
-              result.kind === "daily" &&
-              !isSignedIn &&
-              !otherAvailableDailyOption
-                ? "Log in"
-                : undefined
-            }
-          />
+                  : result.kind === "daily" && isSignedIn
+                    ? null
+                    : "Home"
+              }
+              startRound={startSelectedFlow}
+              tertiaryActionLabel={
+                result.kind === "daily" && !isSignedIn ? "Log in" : undefined
+              }
+            />
+          </>
         ) : null}
       </>
     );

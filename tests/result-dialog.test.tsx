@@ -54,6 +54,24 @@ describe("daily result dialog actions", () => {
     expect(markup).toContain("Home</button>");
   });
 
+  it("offers account creation alongside the other daily for guests", () => {
+    const markup = renderToStaticMarkup(
+      <GameResultDialog
+        {...sharedProps}
+        primaryActionIcon={Play}
+        primaryActionLabel="Play Choose Clues Daily"
+        secondaryActionLabel="Create account"
+        tertiaryActionLabel="Log in"
+        onTertiaryAction={() => undefined}
+      />,
+    );
+
+    expect(markup).toContain("Play Choose Clues Daily");
+    expect(markup).toContain("Create account</button>");
+    expect(markup).toContain("Log in</button>");
+    expect(markup).toContain("lucide-user-plus");
+  });
+
   it("renders only one Home action when no daily remains", () => {
     const markup = renderToStaticMarkup(
       <GameResultDialog

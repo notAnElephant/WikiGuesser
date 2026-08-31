@@ -68,6 +68,8 @@ export function GameResultDialog({
   const handlePrimaryAction = onPrimaryAction ?? startRound;
   const handleSecondaryAction = onSecondaryAction ?? clearForCategoryChoice;
   const usesCreateAccountAction = primaryActionLabel === "Create account";
+  const usesCreateAccountSecondaryAction =
+    secondaryActionLabel === "Create account";
   const usesHomeAction =
     primaryActionLabel === "Home" || primaryActionLabel === "Daily hub";
   const PrimaryActionIcon =
@@ -205,7 +207,19 @@ export function GameResultDialog({
               onClick={handleSecondaryAction}
               type="button"
             >
-              <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
+              {usesCreateAccountSecondaryAction ? (
+                <UserPlus
+                  aria-hidden="true"
+                  className="size-4"
+                  strokeWidth={2.2}
+                />
+              ) : (
+                <House
+                  aria-hidden="true"
+                  className="size-4"
+                  strokeWidth={2.2}
+                />
+              )}
               {secondaryActionLabel}
             </button>
           ) : null}
