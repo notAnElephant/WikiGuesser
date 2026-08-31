@@ -31,6 +31,28 @@ describe("continent helpers", () => {
     ).toEqual(["europe"]);
   });
 
+  it("groups every American region and Central America under the Americas", () => {
+    const france = demoSnapshot.entities.find(
+      (entity) => entity.id === "countries-france",
+    )!;
+
+    for (const clueValue of [
+      "North America",
+      "Central America",
+      "South America",
+    ]) {
+      expect(
+        getEntityContinentIds({
+          ...france,
+          metadata: { ...france.metadata, continents: null },
+          clues: france.clues.map((clue) =>
+            clue.key === "continent" ? { ...clue, value: clueValue } : clue,
+          ),
+        }),
+      ).toEqual(["americas"]);
+    }
+  });
+
   it("validates continent filters at the API boundary", () => {
     expect(
       startRoundSchema.parse({ category: "countries", continent: "europe" }),

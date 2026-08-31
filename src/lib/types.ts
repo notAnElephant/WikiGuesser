@@ -4,8 +4,7 @@ export const CONTINENT_IDS = [
   "africa",
   "asia",
   "europe",
-  "north-america",
-  "south-america",
+  "americas",
   "oceania",
   "antarctica",
 ] as const;

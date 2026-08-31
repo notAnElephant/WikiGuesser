@@ -11,8 +11,7 @@ export const CONTINENT_LABELS: Readonly<Record<ContinentId, string>> = {
   africa: "Africa",
   asia: "Asia",
   europe: "Europe",
-  "north-america": "North America",
-  "south-america": "South America",
+  americas: "Americas",
   oceania: "Oceania",
   antarctica: "Antarctica",
 };
@@ -21,16 +20,17 @@ const continentIdsByWikidataId: Readonly<
   Record<string, readonly ContinentId[]>
 > = {
   Q15: ["africa"],
-  Q18: ["south-america"],
+  Q18: ["americas"],
   Q46: ["europe"],
   Q48: ["asia"],
-  Q49: ["north-america"],
+  Q49: ["americas"],
   Q51: ["antarctica"],
   Q538: ["oceania"],
   Q3960: ["oceania"],
   Q5401: ["europe", "asia"],
   Q55643: ["oceania"],
-  Q828: ["north-america", "south-america"],
+  Q828: ["americas"],
+  Q27611: ["americas"],
 };
 
 const continentIdsByLabel = new Map<string, readonly ContinentId[]>([
@@ -40,7 +40,10 @@ const continentIdsByLabel = new Map<string, readonly ContinentId[]>([
   ["australia", ["oceania"]],
   ["eurasia", ["europe", "asia"]],
   ["insular oceania", ["oceania"]],
-  ["the americas", ["north-america", "south-america"]],
+  ["north america", ["americas"]],
+  ["south america", ["americas"]],
+  ["central america", ["americas"]],
+  ["the americas", ["americas"]],
 ]);
 
 export function isContinentId(value: unknown): value is ContinentId {
