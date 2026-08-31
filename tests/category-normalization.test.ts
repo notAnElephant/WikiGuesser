@@ -25,7 +25,7 @@ describe("category normalization", () => {
     expect(entity?.metadata.continents).toEqual(["europe"]);
   });
 
-  it("preserves every continent for a transcontinental country", () => {
+  it("uses the primary continent for an exclusive filter category", () => {
     const entity = categoryDefinitions.countries.normalize({
       ...countrySourceFixture,
       qid: "Q43",
@@ -40,7 +40,26 @@ describe("category normalization", () => {
       },
     });
 
-    expect(entity?.metadata.continents).toEqual(["asia", "europe"]);
+    expect(entity?.metadata.continents).toEqual(["europe"]);
+  });
+
+  it("maps Central America to the Americas primary filter", () => {
+    const entity = categoryDefinitions.countries.normalize({
+      ...countrySourceFixture,
+      qid: "Q804",
+      label: "Panama",
+      wikipediaTitle: "Panama",
+      claims: {
+        ...countrySourceFixture.claims,
+        P30: [
+          { type: "entity", id: "Q27611", label: "Central America" },
+          { type: "entity", id: "Q18", label: "South America" },
+          { type: "entity", id: "Q49", label: "North America" },
+        ],
+      },
+    });
+
+    expect(entity?.metadata.continents).toEqual(["americas"]);
   });
 
   it("uses the preferred current country flag", () => {
@@ -78,6 +97,112 @@ describe("category normalization", () => {
       entity?.clues.find((clue) => clue.key === "flag-colors")?.value,
     ).toBe(
       "https://commons.wikimedia.org/wiki/Special:Redirect/file/Current%20flag.svg?width=640",
+    );
+  });
+
+  it("uses the preferred current population instead of the oldest historical value", () => {
+    const entity = categoryDefinitions.countries.normalize({
+      ...countrySourceFixture,
+      claims: {
+        ...countrySourceFixture.claims,
+        P1082: [
+          { type: "quantity", amount: 3581239, unit: "1" },
+          { type: "quantity", amount: 5627400, unit: "1" },
+        ],
+      },
+      raw: {
+        claims: {
+          P1082: [
+            {
+              rank: "normal",
+              mainsnak: {
+                snaktype: "value",
+                datavalue: {
+                  type: "quantity",
+                  value: { amount: "+3581239" },
+                },
+              },
+              qualifiers: {
+                P585: [
+                  { datavalue: { value: { time: "+1960-00-00T00:00:00Z" } } },
+                ],
+              },
+            },
+            {
+              rank: "preferred",
+              mainsnak: {
+                snaktype: "value",
+                datavalue: {
+                  type: "quantity",
+                  value: { amount: "+5627400" },
+                },
+              },
+              qualifiers: {
+                P585: [
+                  { datavalue: { value: { time: "+2026-01-01T00:00:00Z" } } },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(entity?.clues.find((clue) => clue.key === "population")?.value).toBe(
+      "5.6 million",
+    );
+  });
+
+  it("uses the latest dated quantity when Wikidata has no preferred statement", () => {
+    const entity = categoryDefinitions.cities.normalize({
+      ...citySourceFixture,
+      claims: {
+        ...citySourceFixture.claims,
+        P1082: [
+          { type: "quantity", amount: 1500000, unit: "1" },
+          { type: "quantity", amount: 1800000, unit: "1" },
+        ],
+      },
+      raw: {
+        claims: {
+          P1082: [
+            {
+              rank: "normal",
+              mainsnak: {
+                snaktype: "value",
+                datavalue: {
+                  type: "quantity",
+                  value: { amount: "+1800000" },
+                },
+              },
+              qualifiers: {
+                P585: [
+                  { datavalue: { value: { time: "+2024-01-01T00:00:00Z" } } },
+                ],
+              },
+            },
+            {
+              rank: "normal",
+              mainsnak: {
+                snaktype: "value",
+                datavalue: {
+                  type: "quantity",
+                  value: { amount: "+1500000" },
+                },
+              },
+              qualifiers: {
+                P585: [
+                  { datavalue: { value: { time: "+2000-01-01T00:00:00Z" } } },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(entity?.clues.find((clue) => clue.key === "population")?.value).toBe(
+      "1.8 million",
     );
   });
 

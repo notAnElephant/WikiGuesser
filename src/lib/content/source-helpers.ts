@@ -40,10 +40,67 @@ export function getEntityLabels(
     .filter((label): label is string => Boolean(label));
 }
 
-export function getFirstQuantity(
+export function getPreferredQuantity(
   entity: SourceEntity,
   propertyId: string,
 ): number | null {
+  const rawEntity = entity.raw as {
+    claims?: Record<
+      string,
+      Array<{
+        rank?: string;
+        mainsnak?: {
+          snaktype?: string;
+          datavalue?: {
+            type?: string;
+            value?: { amount?: string };
+          };
+        };
+        qualifiers?: Record<
+          string,
+          Array<{ datavalue?: { value?: { time?: string } } }>
+        >;
+      }>
+    >;
+  };
+  const statements = (rawEntity.claims?.[propertyId] ?? []).filter(
+    (statement) =>
+      statement.rank !== "deprecated" &&
+      statement.mainsnak?.snaktype !== "novalue" &&
+      statement.mainsnak?.datavalue?.type === "quantity" &&
+      typeof statement.mainsnak.datavalue.value?.amount === "string",
+  );
+
+  if (statements.length > 0) {
+    const preferredStatements = statements.filter(
+      (statement) => statement.rank === "preferred",
+    );
+    const candidates =
+      preferredStatements.length > 0 ? preferredStatements : statements;
+    const latestDatedStatement = candidates
+      .map((statement, index) => ({
+        statement,
+        index,
+        pointInTime:
+          statement.qualifiers?.P585?.[0]?.datavalue?.value?.time ?? null,
+      }))
+      .filter(
+        (candidate): candidate is typeof candidate & { pointInTime: string } =>
+          candidate.pointInTime !== null,
+      )
+      .sort((left, right) =>
+        right.pointInTime.localeCompare(left.pointInTime),
+      )[0]?.statement;
+    const selectedStatement = latestDatedStatement ?? candidates[0];
+    const amount = Number.parseFloat(
+      selectedStatement?.mainsnak?.datavalue?.value?.amount ?? "",
+    );
+
+    if (Number.isFinite(amount)) {
+      return amount;
+    }
+  }
+
   const match = getClaims(entity, propertyId).find(
     (claim): claim is Extract<SourceClaimValue, { type: "quantity" }> =>
       claim.type === "quantity",

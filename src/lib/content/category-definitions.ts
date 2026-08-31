@@ -14,7 +14,7 @@ import {
   getDistance,
   getEntityLabels,
   getFirstCoordinate,
-  getFirstQuantity,
+  getPreferredQuantity,
   getFirstTimeValue,
   getPreferredStringValue,
 } from "@/src/lib/content/source-helpers";
@@ -110,13 +110,13 @@ export const categoryDefinitions: Record<
           createClue(
             "area",
             "Area",
-            formatAreaSquareKilometers(getFirstQuantity(source, "P2046")),
+            formatAreaSquareKilometers(getPreferredQuantity(source, "P2046")),
             2,
           ),
           createClue(
             "population",
             "Population",
-            formatPopulation(getFirstQuantity(source, "P1082")),
+            formatPopulation(getPreferredQuantity(source, "P1082")),
             3,
           ),
           createClue(
@@ -216,7 +216,8 @@ export const categoryDefinitions: Record<
       }
 
       const gdpValue =
-        getFirstQuantity(source, "P2131") ?? getFirstQuantity(source, "P2226");
+        getPreferredQuantity(source, "P2131") ??
+        getPreferredQuantity(source, "P2226");
 
       return buildNormalizedEntity({
         source,
@@ -236,7 +237,7 @@ export const categoryDefinitions: Record<
           createClue(
             "population",
             "Population",
-            formatPopulation(getFirstQuantity(source, "P1082")),
+            formatPopulation(getPreferredQuantity(source, "P1082")),
             2,
           ),
           createClue(

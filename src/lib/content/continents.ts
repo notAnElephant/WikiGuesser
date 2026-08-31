@@ -76,9 +76,15 @@ function sortAndDedupeContinentIds(
 }
 
 export function getSourceContinentIds(source: SourceEntity): ContinentId[] {
-  return sortAndDedupeContinentIds(
-    (source.claims.P30 ?? []).flatMap(resolveClaimContinents),
-  );
+  for (const claim of source.claims.P30 ?? []) {
+    const continentIds = resolveClaimContinents(claim);
+
+    if (continentIds.length > 0) {
+      return sortAndDedupeContinentIds(continentIds);
+    }
+  }
+
+  return [];
 }
 
 export function getEntityContinentIds(entity: NormalizedEntity): ContinentId[] {
