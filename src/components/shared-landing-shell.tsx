@@ -7,6 +7,7 @@ import {
   type FormEvent,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useTransition,
 } from "react";
@@ -528,6 +529,8 @@ export function SharedLandingShell({
   const [messageRevision, setMessageRevision] = useState(0);
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
+  const [isSubmittingGuess, setIsSubmittingGuess] = useState(false);
+  const isSubmittingGuessRef = useRef(false);
   const [claimBanner, setClaimBanner] = useState<string | null>(null);
   const [isClaimingPending, setIsClaimingPending] = useState(
     isSignedIn && hasPendingClaim,
@@ -602,6 +605,7 @@ export function SharedLandingShell({
     isCountryGuessValid &&
     !isAlreadyGuessed &&
     !isPending &&
+    !isSubmittingGuess &&
     !isSyncingReveal,
   );
   const currentCategory =
@@ -613,7 +617,7 @@ export function SharedLandingShell({
     message,
     result?.status ?? null,
   );
-  const isBusy = isPending || isSyncingReveal;
+  const isBusy = isPending || isSubmittingGuess || isSyncingReveal;
   const guessButtonLabel = isBusy
     ? "..."
     : round?.canGuess
@@ -909,6 +913,10 @@ export function SharedLandingShell({
   }
 
   function submitGuess(mapCountryName?: string) {
+    if (isSubmittingGuessRef.current) {
+      return;
+    }
+
     const isMapGuess = Boolean(mapCountryName);
     const guessValue = mapCountryName ?? guess.trim();
 
@@ -941,137 +949,144 @@ export function SharedLandingShell({
         ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
         : guess.trim();
 
+    isSubmittingGuessRef.current = true;
+    setIsSubmittingGuess(true);
     startTransition(async () => {
-      const response = await fetch(`/api/rounds/${round.roundId}/guess`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: round.token,
-          guess: submittedGuess,
-          method: isMapGuess ? "map" : "text",
-        }),
-      });
+      try {
+        const response = await fetch(`/api/rounds/${round.roundId}/guess`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: round.token,
+            guess: submittedGuess,
+            method: isMapGuess ? "map" : "text",
+          }),
+        });
 
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        setMessage(payload?.error ?? "Guess failed.");
-        return;
-      }
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          setMessage(payload?.error ?? "Guess failed.");
+          return;
+        }
 
-      const payload = (await response.json()) as GuessRoundResult;
-      const attemptNumber = guessedEntities.length + 1;
-      const cluesRevealed = payload.clues.filter(
-        (entry) => entry.isRevealed,
-      ).length;
-      captureAnalyticsEvent("guess_submitted", {
-        ...toGameContext(
-          payload.kind,
-          payload.category,
-          payload.mode,
-          payload.continent,
-        ),
-        attempt_number: attemptNumber,
-        completed: payload.isComplete,
-        correct: payload.isCorrect,
-      });
-
-      if (payload.isComplete) {
-        captureAnalyticsEvent("game_completed", {
+        const payload = (await response.json()) as GuessRoundResult;
+        const attemptNumber = guessedEntities.length + 1;
+        const cluesRevealed = payload.clues.filter(
+          (entry) => entry.isRevealed,
+        ).length;
+        captureAnalyticsEvent("guess_submitted", {
           ...toGameContext(
             payload.kind,
             payload.category,
             payload.mode,
             payload.continent,
           ),
-          clues_revealed: cluesRevealed,
-          guesses: attemptNumber,
-          outcome: payload.isCorrect ? "win" : "loss",
-          score: payload.score,
-        });
-      }
-
-      setGuessedEntities((current) => [
-        ...current,
-        {
-          name: payload.guessedCountry?.name ?? submittedGuess,
-          direction: payload.direction ?? null,
-          mapData: payload.guessedCountry ?? null,
-        },
-      ]);
-      setScore(payload.score || null);
-      setGuess("");
-
-      if (payload.isCorrect) {
-        setRound(null);
-        setResult({
-          status: "win",
-          canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
-          score: payload.score,
-          kind: payload.kind,
-          category: payload.category,
-          mode: payload.mode,
-          clues: payload.clues,
-          solutionCountry: payload.solutionCountry,
+          attempt_number: attemptNumber,
+          completed: payload.isComplete,
+          correct: payload.isCorrect,
         });
 
-        if (payload.kind === "daily") {
-          setPlayedOverrides((current) => ({
-            ...current,
-            [getDailyComboKey(payload.category, payload.mode)]: {
-              score: payload.score,
-              completedAt: new Date().toISOString(),
-            },
-          }));
+        if (payload.isComplete) {
+          captureAnalyticsEvent("game_completed", {
+            ...toGameContext(
+              payload.kind,
+              payload.category,
+              payload.mode,
+              payload.continent,
+            ),
+            clues_revealed: cluesRevealed,
+            guesses: attemptNumber,
+            outcome: payload.isCorrect ? "win" : "loss",
+            score: payload.score,
+          });
         }
 
-        setMessage("Correct.");
-        return;
-      }
+        setGuessedEntities((current) => [
+          ...current,
+          {
+            name: payload.guessedCountry?.name ?? submittedGuess,
+            direction: payload.direction ?? null,
+            mapData: payload.guessedCountry ?? null,
+          },
+        ]);
+        setScore(payload.score || null);
+        setGuess("");
 
-      if (payload.isComplete) {
-        setRound(null);
-        setResult({
-          status: "loss",
-          canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
-          score: 0,
-          kind: payload.kind,
-          category: payload.category,
-          mode: payload.mode,
-          clues: payload.clues,
-          solutionCountry: payload.solutionCountry,
-        });
+        if (payload.isCorrect) {
+          setRound(null);
+          setResult({
+            status: "win",
+            canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
+            score: payload.score,
+            kind: payload.kind,
+            category: payload.category,
+            mode: payload.mode,
+            clues: payload.clues,
+            solutionCountry: payload.solutionCountry,
+          });
 
-        if (payload.kind === "daily") {
-          setPlayedOverrides((current) => ({
-            ...current,
-            [getDailyComboKey(payload.category, payload.mode)]: {
-              score: payload.score,
-              completedAt: new Date().toISOString(),
-            },
-          }));
+          if (payload.kind === "daily") {
+            setPlayedOverrides((current) => ({
+              ...current,
+              [getDailyComboKey(payload.category, payload.mode)]: {
+                score: payload.score,
+                completedAt: new Date().toISOString(),
+              },
+            }));
+          }
+
+          setMessage("Correct.");
+          return;
         }
 
-        setMessage(`Answer: ${payload.canonicalAnswer ?? "Unknown"}.`);
-        return;
-      }
+        if (payload.isComplete) {
+          setRound(null);
+          setResult({
+            status: "loss",
+            canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
+            score: 0,
+            kind: payload.kind,
+            category: payload.category,
+            mode: payload.mode,
+            clues: payload.clues,
+            solutionCountry: payload.solutionCountry,
+          });
 
-      setRound({
-        roundId: payload.roundId,
-        token: payload.token!,
-        kind: payload.kind,
-        category: payload.category,
-        continent: payload.continent,
-        mode: payload.mode,
-        clues: payload.clues,
-        revealedClues: payload.revealedClues,
-        remainingClues: payload.remainingClues,
-        canGuess: payload.canGuess,
-      });
-      setMessage(getMissMessage(payload));
+          if (payload.kind === "daily") {
+            setPlayedOverrides((current) => ({
+              ...current,
+              [getDailyComboKey(payload.category, payload.mode)]: {
+                score: payload.score,
+                completedAt: new Date().toISOString(),
+              },
+            }));
+          }
+
+          setMessage(`Answer: ${payload.canonicalAnswer ?? "Unknown"}.`);
+          return;
+        }
+
+        setRound({
+          roundId: payload.roundId,
+          token: payload.token!,
+          kind: payload.kind,
+          category: payload.category,
+          continent: payload.continent,
+          mode: payload.mode,
+          clues: payload.clues,
+          revealedClues: payload.revealedClues,
+          remainingClues: payload.remainingClues,
+          canGuess: payload.canGuess,
+        });
+        setMessage(getMissMessage(payload));
+      } finally {
+        isSubmittingGuessRef.current = false;
+        setIsSubmittingGuess(false);
+      }
     });
   }
 

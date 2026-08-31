@@ -21,7 +21,7 @@ import type {
   StartRoundResult,
 } from "@/src/lib/types";
 import type { FormEvent } from "react";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 
 export function useGameShellController({
   categories,
@@ -43,6 +43,8 @@ export function useGameShellController({
   const [messageRevision, setMessageRevision] = useState(0);
   const [score, setScore] = useState<number | null>(null);
   const [isSyncingReveal, setIsSyncingReveal] = useState(false);
+  const [isSubmittingGuess, setIsSubmittingGuess] = useState(false);
+  const isSubmittingGuessRef = useRef(false);
   const [isPending, startTransition] = useTransition();
 
   function setMessage(nextMessage: string) {
@@ -89,6 +91,7 @@ export function useGameShellController({
     isCountryGuessValid &&
     !isAlreadyGuessed &&
     !isPending &&
+    !isSubmittingGuess &&
     !isSyncingReveal,
   );
   const selectedCategoryMeta = categories.find(
@@ -118,7 +121,7 @@ export function useGameShellController({
     message,
     result?.status ?? null,
   );
-  const isBusy = isPending || isSyncingReveal;
+  const isBusy = isPending || isSubmittingGuess || isSyncingReveal;
   const guessButtonLabel = isBusy
     ? "..."
     : round?.canGuess
@@ -264,6 +267,10 @@ export function useGameShellController({
   }
 
   function submitGuess(mapCountryName?: string) {
+    if (isSubmittingGuessRef.current) {
+      return;
+    }
+
     const isMapGuess = Boolean(mapCountryName);
     const guessValue = mapCountryName ?? guess.trim();
 
@@ -296,88 +303,95 @@ export function useGameShellController({
         ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
         : guess.trim();
 
+    isSubmittingGuessRef.current = true;
+    setIsSubmittingGuess(true);
     startTransition(async () => {
-      const response = await fetch(`/api/rounds/${round.roundId}/guess`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: round.token,
-          guess: submittedGuess,
-          method: isMapGuess ? "map" : "text",
-        }),
-      });
+      try {
+        const response = await fetch(`/api/rounds/${round.roundId}/guess`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token: round.token,
+            guess: submittedGuess,
+            method: isMapGuess ? "map" : "text",
+          }),
+        });
 
-      if (!response.ok) {
-        setMessage("Guess failed.");
-        return;
-      }
+        if (!response.ok) {
+          setMessage("Guess failed.");
+          return;
+        }
 
-      const data = (await response.json()) as GuessRoundResult;
-      setGuessedEntities((current) => [
-        ...current,
-        {
-          name: data.guessedCountry?.name ?? submittedGuess,
-          direction: data.direction ?? null,
-          mapData: data.guessedCountry ?? null,
-        },
-      ]);
-      setScore(data.score || null);
-      setGuess("");
+        const data = (await response.json()) as GuessRoundResult;
+        setGuessedEntities((current) => [
+          ...current,
+          {
+            name: data.guessedCountry?.name ?? submittedGuess,
+            direction: data.direction ?? null,
+            mapData: data.guessedCountry ?? null,
+          },
+        ]);
+        setScore(data.score || null);
+        setGuess("");
 
-      if (data.isCorrect) {
-        setRound(null);
-        setResult({
-          status: "win",
-          canonicalAnswer: data.canonicalAnswer ?? "Unknown",
-          score: data.score,
-          kind: data.kind,
+        if (data.isCorrect) {
+          setRound(null);
+          setResult({
+            status: "win",
+            canonicalAnswer: data.canonicalAnswer ?? "Unknown",
+            score: data.score,
+            kind: data.kind,
+            category: data.category,
+            mode: data.mode,
+            clues: data.clues,
+            solutionCountry: data.solutionCountry,
+          });
+          setMessage("Correct.");
+          return;
+        }
+
+        if (data.isComplete) {
+          setRound(null);
+          setResult({
+            status: "loss",
+            canonicalAnswer: data.canonicalAnswer ?? "Unknown",
+            score: 0,
+            kind: data.kind,
+            category: data.category,
+            mode: data.mode,
+            clues: data.clues,
+            solutionCountry: data.solutionCountry,
+          });
+          setMessage(`Answer: ${data.canonicalAnswer ?? "Unknown"}.`);
+          return;
+        }
+
+        setRound({
+          roundId: data.roundId,
+          token: data.token!,
           category: data.category,
+          continent: data.continent,
           mode: data.mode,
           clues: data.clues,
-          solutionCountry: data.solutionCountry,
-        });
-        setMessage("Correct.");
-        return;
-      }
-
-      if (data.isComplete) {
-        setRound(null);
-        setResult({
-          status: "loss",
-          canonicalAnswer: data.canonicalAnswer ?? "Unknown",
-          score: 0,
+          revealedClues: data.revealedClues,
+          remainingClues: data.remainingClues,
+          canGuess: data.canGuess,
           kind: data.kind,
-          category: data.category,
-          mode: data.mode,
-          clues: data.clues,
-          solutionCountry: data.solutionCountry,
         });
-        setMessage(`Answer: ${data.canonicalAnswer ?? "Unknown"}.`);
-        return;
+
+        setMessage(
+          data.mode === "blurred-lines"
+            ? "Miss. Pick another row."
+            : data.remainingClues === 0
+              ? "Miss. Last chance."
+              : "Miss. Next clue.",
+        );
+      } finally {
+        isSubmittingGuessRef.current = false;
+        setIsSubmittingGuess(false);
       }
-
-      setRound({
-        roundId: data.roundId,
-        token: data.token!,
-        category: data.category,
-        continent: data.continent,
-        mode: data.mode,
-        clues: data.clues,
-        revealedClues: data.revealedClues,
-        remainingClues: data.remainingClues,
-        canGuess: data.canGuess,
-        kind: data.kind,
-      });
-
-      setMessage(
-        data.mode === "blurred-lines"
-          ? "Miss. Pick another row."
-          : data.remainingClues === 0
-            ? "Miss. Last chance."
-            : "Miss. Next clue.",
-      );
     });
   }
 
