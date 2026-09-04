@@ -22,7 +22,7 @@ function getWebSocketConstructor(): typeof WebSocket {
   return (wsModule.default ?? wsModule) as typeof WebSocket;
 }
 
-function hasDailyDelegates(
+function hasRequiredDelegates(
   client: PrismaClient | undefined,
 ): client is PrismaClient {
   if (!client) {
@@ -33,17 +33,23 @@ function hasDailyDelegates(
     dailyChallenge?: unknown;
     dailyResult?: unknown;
     userDailyCategoryModeStats?: unknown;
+    duel?: unknown;
+    duelRound?: unknown;
+    duelAttempt?: unknown;
   };
 
   return Boolean(
     candidate.dailyChallenge &&
-      candidate.dailyResult &&
-      candidate.userDailyCategoryModeStats,
+    candidate.dailyResult &&
+    candidate.userDailyCategoryModeStats &&
+    candidate.duel &&
+    candidate.duelRound &&
+    candidate.duelAttempt,
   );
 }
 
 export function getPrismaClient(): PrismaClient {
-  if (!hasDailyDelegates(globalThis.prisma)) {
+  if (!hasRequiredDelegates(globalThis.prisma)) {
     if (!env.databaseUrl) {
       throw new Error("DATABASE_URL is not configured.");
     }

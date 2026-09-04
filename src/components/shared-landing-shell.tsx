@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 
+import { DuelCreator } from "@/src/components/duel/duel-creator";
 import {
   GAME_MODE_OPTIONS,
   primaryButtonClass,
@@ -1178,22 +1179,25 @@ export function SharedLandingShell({
 
   if (view === "menu") {
     return (
-      <GameLauncher
-        claimBanner={claimBanner}
-        continentOptions={continentOptions}
-        dailyOptions={dailyOptions.filter(
-          (option) => option.category === dailyData.defaultCategory,
-        )}
-        isBusy={isBusy}
-        isClaimingPending={isClaimingPending}
-        onStartDaily={(option) => void startDaily(option)}
-        onStartFreePlay={(mode, continent) =>
-          void startFreePlay(mode, continent)
-        }
-        resetCountdown={resetCountdown}
-        selectedContinent={selectedContinent}
-        totalCountryCount={countryOptions.length}
-      />
+      <div className="grid gap-6">
+        <GameLauncher
+          claimBanner={claimBanner}
+          continentOptions={continentOptions}
+          dailyOptions={dailyOptions.filter(
+            (option) => option.category === dailyData.defaultCategory,
+          )}
+          isBusy={isBusy}
+          isClaimingPending={isClaimingPending}
+          onStartDaily={(option) => void startDaily(option)}
+          onStartFreePlay={(mode, continent) =>
+            void startFreePlay(mode, continent)
+          }
+          resetCountdown={resetCountdown}
+          selectedContinent={selectedContinent}
+          totalCountryCount={countryOptions.length}
+        />
+        <DuelCreator categories={categories} isSignedIn={isSignedIn} />
+      </div>
     );
   }
 

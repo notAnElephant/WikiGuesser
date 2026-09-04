@@ -306,3 +306,21 @@ export interface DailyLeaderboardPageData {
   defaultCategory: EntityCategory;
   defaultMode: GameMode;
 }
+
+export interface CreateDuelInput {
+  category: EntityCategory;
+  mode: GameMode;
+  roundCount: 3 | 5 | 10;
+}
+
+export interface DuelMutationInput {
+  version: number;
+}
+
+export interface DuelGuessInput extends DuelMutationInput {
+  guess: string;
+}
+
+export interface DuelRevealInput extends DuelMutationInput {
+  clueKey: string;
+}

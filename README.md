@@ -5,6 +5,7 @@ Fast Wikipedia-inspired guessing game built with Next.js, Prisma, Clerk, and a W
 ## Current Product
 
 - Daily challenge: one shared puzzle per category/mode each day
+- Duels: signed-in players can share a 3-, 5-, or 10-round asynchronous challenge
 - Live categories: `countries`, `cities`
 - Modes: `classic`, `blurred-lines`
 - Theme: dark by default, user-toggleable

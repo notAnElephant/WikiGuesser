@@ -7,11 +7,12 @@ datasource db {
 }
 
 model SnapshotVersion {
-  id                String          @id @default(cuid())
-  key               String          @unique
+  id                String           @id @default(cuid())
+  key               String           @unique
   sourceFingerprint String
-  createdAt         DateTime        @default(now())
+  createdAt         DateTime         @default(now())
   entities          SnapshotEntity[]
+  duels             Duel[]
 }
 
 model SnapshotEntity {
@@ -28,39 +29,115 @@ model SnapshotEntity {
   metadata          Json?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
+  duelRounds        DuelRound[]
 
   @@unique([snapshotVersionId, category, qid])
   @@index([snapshotVersionId, category])
 }
 
 model UserProfile {
-  id          String                 @id @default(cuid())
-  clerkUserId String                 @unique
-  displayName String?
-  imageUrl    String?
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
-  gameResults GameResult[]
-  stats       UserCategoryModeStats[]
-  dailyResults DailyResult[]
-  dailyStats   UserDailyCategoryModeStats[]
+  id              String                       @id @default(cuid())
+  clerkUserId     String                       @unique
+  displayName     String?
+  imageUrl        String?
+  createdAt       DateTime                     @default(now())
+  updatedAt       DateTime                     @updatedAt
+  gameResults     GameResult[]
+  stats           UserCategoryModeStats[]
+  dailyResults    DailyResult[]
+  dailyStats      UserDailyCategoryModeStats[]
+  challengedDuels Duel[]                       @relation("DuelChallenger")
+  receivedDuels   Duel[]                       @relation("DuelOpponent")
+  duelAttempts    DuelAttempt[]
+}
+
+enum DuelStatus {
+  INVITED
+  ACTIVE
+  COMPLETED
+  EXPIRED
+}
+
+model Duel {
+  id                String           @id @default(cuid())
+  inviteCode        String           @unique
+  status            DuelStatus       @default(INVITED)
+  category          String
+  mode              String
+  roundCount        Int
+  snapshotVersionId String?
+  snapshotVersion   SnapshotVersion? @relation(fields: [snapshotVersionId], references: [id], onDelete: SetNull)
+  snapshotKey       String
+  challengerId      String
+  challenger        UserProfile      @relation("DuelChallenger", fields: [challengerId], references: [id], onDelete: Restrict)
+  opponentId        String?
+  opponent          UserProfile?     @relation("DuelOpponent", fields: [opponentId], references: [id], onDelete: Restrict)
+  expiresAt         DateTime
+  createdAt         DateTime         @default(now())
+  startedAt         DateTime?
+  completedAt       DateTime?
+  rounds            DuelRound[]
+
+  @@index([status, expiresAt])
+  @@index([challengerId, createdAt])
+  @@index([opponentId, createdAt])
+}
+
+model DuelRound {
+  id               String          @id @default(cuid())
+  duelId           String
+  duel             Duel            @relation(fields: [duelId], references: [id], onDelete: Cascade)
+  position         Int
+  snapshotEntityId String?
+  snapshotEntity   SnapshotEntity? @relation(fields: [snapshotEntityId], references: [id], onDelete: SetNull)
+  entityQid        String
+  canonicalAnswer  String
+  acceptedAnswers  Json
+  clues            Json
+  metadata         Json?
+  attempts         DuelAttempt[]
+
+  @@unique([duelId, position])
+  @@unique([duelId, snapshotEntityId])
+  @@index([snapshotEntityId])
+}
+
+model DuelAttempt {
+  id               String      @id @default(cuid())
+  duelRoundId      String
+  duelRound        DuelRound   @relation(fields: [duelRoundId], references: [id], onDelete: Cascade)
+  userProfileId    String
+  userProfile      UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  revealedClueKeys Json        @default("[]")
+  guesses          Json        @default("[]")
+  canGuess         Boolean     @default(true)
+  version          Int         @default(0)
+  score            Int?
+  isCorrect        Boolean?
+  completedAt      DateTime?
+  givenUp          Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([duelRoundId, userProfileId])
+  @@index([userProfileId, updatedAt])
 }
 
 model GameResult {
-  roundId            String      @id
-  userProfileId      String
-  userProfile        UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
-  snapshotKey        String
-  entityId           String
-  entityQid          String
-  canonicalAnswer    String
-  category           String
-  mode               String
-  score              Int
-  isCorrect          Boolean
-  revealedClueCount  Int
-  totalClues         Int
-  completedAt        DateTime    @default(now())
+  roundId           String      @id
+  userProfileId     String
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  snapshotKey       String
+  entityId          String
+  entityQid         String
+  canonicalAnswer   String
+  category          String
+  mode              String
+  score             Int
+  isCorrect         Boolean
+  revealedClueCount Int
+  totalClues        Int
+  completedAt       DateTime    @default(now())
 
   @@index([userProfileId, completedAt])
   @@index([userProfileId, category, mode, completedAt])
@@ -106,20 +183,20 @@ model DailyChallenge {
 }
 
 model DailyResult {
-  id               String         @id @default(cuid())
-  dailyChallengeId String
-  dailyChallenge   DailyChallenge @relation(fields: [dailyChallengeId], references: [id], onDelete: Cascade)
-  playerKey        String
-  userProfileId    String?
-  userProfile      UserProfile?   @relation(fields: [userProfileId], references: [id], onDelete: SetNull)
-  category         String
-  mode             String
-  score            Int
-  isCorrect        Boolean
+  id                String         @id @default(cuid())
+  dailyChallengeId  String
+  dailyChallenge    DailyChallenge @relation(fields: [dailyChallengeId], references: [id], onDelete: Cascade)
+  playerKey         String
+  userProfileId     String?
+  userProfile       UserProfile?   @relation(fields: [userProfileId], references: [id], onDelete: SetNull)
+  category          String
+  mode              String
+  score             Int
+  isCorrect         Boolean
   revealedClueCount Int
-  totalClues       Int
-  completedAt      DateTime       @default(now())
-  claimedAt        DateTime?
+  totalClues        Int
+  completedAt       DateTime       @default(now())
+  claimedAt         DateTime?
 
   @@unique([dailyChallengeId, playerKey])
   @@index([dailyChallengeId, completedAt])
