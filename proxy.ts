@@ -13,6 +13,8 @@ const isPublicRoute = createRouteMatcher([
   "/leaderboard",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/duel/(.*)",
+  "/api/duels/(.*)",
   "/api/rounds/start",
   "/api/rounds/(.*)/guess",
   "/api/rounds/(.*)/reveal",
