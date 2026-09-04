@@ -2,7 +2,13 @@
 
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
-import { TextInput } from "@astryxdesign/core/TextInput";
+import { FlagColorsClue } from "@/src/components/game-shell/flag-colors-clue";
+import { getClueUnlockRoundsRemaining } from "@/src/components/game-shell/utils";
+import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import type {
+  GuessedCountryMapData,
+  SolutionCountryMapData,
+} from "@/src/lib/types";
 import {
   Check,
   Clipboard,
@@ -21,7 +27,16 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
+
+const WorldMapDialog = dynamic(
+  () =>
+    import("@/src/components/game-shell/world-map-dialog").then(
+      (module) => module.WorldMapDialog,
+    ),
+  { ssr: false },
+);
 
 export type DuelStatus = "pending" | "active" | "completed" | "expired";
 
@@ -37,6 +52,12 @@ export interface DuelClue {
   value?: string | null;
   isRevealed: boolean;
   difficulty?: number;
+  spoilerLevel?: "safe" | "late";
+}
+
+export interface DuelGuess {
+  name: string;
+  mapData: GuessedCountryMapData | null;
 }
 
 export interface DuelRound {
@@ -47,7 +68,9 @@ export interface DuelRound {
   canGuess?: boolean;
   score?: number | null;
   guess?: string | null;
+  guesses: DuelGuess[];
   answer?: string | null;
+  solutionCountry?: SolutionCountryMapData | null;
   message?: string | null;
 }
 
@@ -74,6 +97,7 @@ export interface DuelResponse {
 }
 
 interface DuelShellProps {
+  countryOptions: string[];
   inviteCode: string;
 }
 
@@ -102,13 +126,16 @@ function formatCategory(category: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function DuelShell({ inviteCode }: DuelShellProps) {
+export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
   const [duel, setDuel] = useState<DuelResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guess, setGuess] = useState("");
   const [copied, setCopied] = useState(false);
+  const [mapDrawerState, setMapDrawerState] = useState<
+    "hidden" | "medium" | "expanded"
+  >("medium");
 
   const loadDuel = useCallback(async () => {
     try {
@@ -209,6 +236,10 @@ export function DuelShell({ inviteCode }: DuelShellProps) {
       ? "you"
       : "opponent";
   }, [duel]);
+
+  useEffect(() => {
+    setMapDrawerState("medium");
+  }, [currentRound?.position]);
 
   async function copyInvite() {
     if (!shareUrl) return;
@@ -320,6 +351,8 @@ export function DuelShell({ inviteCode }: DuelShellProps) {
           opponentName={opponentName}
           guess={guess}
           isBusy={isBusy}
+          mapDrawerState={mapDrawerState}
+          onDrawerStateChange={setMapDrawerState}
           onGuessChange={setGuess}
           onStart={() =>
             currentRound && void mutate("start", currentRound.position)
@@ -335,6 +368,7 @@ export function DuelShell({ inviteCode }: DuelShellProps) {
             currentRound &&
             void mutate("guess", currentRound.position, {
               guess: guess.trim(),
+              method: "text",
               version: currentRound.version,
             })
           }
@@ -344,6 +378,15 @@ export function DuelShell({ inviteCode }: DuelShellProps) {
               version: currentRound.version,
             })
           }
+          onMapGuess={(countryName) =>
+            currentRound &&
+            void mutate("guess", currentRound.position, {
+              guess: countryName,
+              method: "map",
+              version: currentRound.version,
+            })
+          }
+          countryOptions={countryOptions}
         />
       ) : null}
     </main>
@@ -494,11 +537,15 @@ function ActiveDuel({
   opponentName,
   guess,
   isBusy,
+  mapDrawerState,
+  onDrawerStateChange,
   onGuessChange,
   onStart,
   onReveal,
   onGuess,
   onGiveUp,
+  onMapGuess,
+  countryOptions,
 }: {
   duel: DuelResponse;
   currentRound?: DuelRound;
@@ -506,11 +553,15 @@ function ActiveDuel({
   opponentName: string;
   guess: string;
   isBusy: boolean;
+  mapDrawerState: "hidden" | "medium" | "expanded";
+  onDrawerStateChange: (state: "hidden" | "medium" | "expanded") => void;
   onGuessChange: (value: string) => void;
   onStart: () => void;
   onReveal: (key: string) => void;
   onGuess: () => void;
   onGiveUp: () => void;
+  onMapGuess: (countryName: string) => void;
+  countryOptions: string[];
 }) {
   if (!currentRound)
     return (
@@ -525,6 +576,20 @@ function ActiveDuel({
   ).length;
   const roundFinished =
     currentRound.status === "completed" || currentRound.status === "waiting";
+  const isCountryDuel = duel.settings.category === "countries";
+  const guessedCountryNames = new Set(
+    currentRound.guesses.map((entry) => normalizeGuess(entry.name)),
+  );
+  const guessedCountries = currentRound.guesses.flatMap((entry) =>
+    entry.mapData ? [entry.mapData] : [],
+  );
+  const normalizedGuess = normalizeGuess(guess);
+  const isCountryGuessValid =
+    !isCountryDuel ||
+    countryOptions.some(
+      (country) => normalizeGuess(country) === normalizedGuess,
+    );
+  const isRepeatedGuess = guessedCountryNames.has(normalizedGuess);
   return (
     <div className="grid gap-4">
       <DuelScoreRail
@@ -563,39 +628,66 @@ function ActiveDuel({
             ))}
           </div>
           <div className="mt-6 overflow-hidden rounded-lg border border-border">
-            {currentRound.clues.map((clue, index) => (
-              <div
-                className={`flex items-start justify-between gap-4 px-4 py-4 ${index % 2 === 0 ? "bg-card" : "bg-transparent"}`}
-                key={clue.key}
-              >
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-secondary">
-                    {clue.label}
-                  </p>
-                  <p className="mt-1 text-base leading-6 text-primary">
-                    {clue.isRevealed
-                      ? (clue.value ?? "No value")
-                      : "Clue hidden"}
-                  </p>
+            {currentRound.clues.map((clue, index) => {
+              const unlockRoundsRemaining = getClueUnlockRoundsRemaining(
+                currentRound.clues.map((entry) => ({
+                  key: entry.key,
+                  spoilerLevel: entry.spoilerLevel ?? "safe",
+                  isRevealed: entry.isRevealed,
+                })),
+                {
+                  key: clue.key,
+                  spoilerLevel: clue.spoilerLevel ?? "safe",
+                  isRevealed: clue.isRevealed,
+                },
+              );
+              const isLocked = unlockRoundsRemaining > 0;
+
+              return (
+                <div
+                  className={`flex items-start justify-between gap-4 px-4 py-4 ${index % 2 === 0 ? "bg-card" : "bg-transparent"}`}
+                  key={clue.key}
+                >
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wide text-secondary">
+                      {clue.label}
+                    </p>
+                    <p className="mt-1 text-base leading-6 text-primary">
+                      {clue.isRevealed ? (
+                        clue.key === "flag-colors" && clue.value ? (
+                          <FlagColorsClue src={clue.value} />
+                        ) : (
+                          (clue.value ?? "No value")
+                        )
+                      ) : (
+                        "Clue hidden"
+                      )}
+                    </p>
+                  </div>
+                  {!clue.isRevealed &&
+                  !roundFinished &&
+                  duel.settings.mode === "blurred-lines" &&
+                  !isLocked ? (
+                    <Button
+                      icon={<LockKeyhole />}
+                      isDisabled={isBusy}
+                      label={`Reveal ${clue.label}`}
+                      onClick={() => onReveal(clue.key)}
+                      size="sm"
+                      variant="ghost"
+                    />
+                  ) : (
+                    <span className="mt-1 text-right text-xs text-secondary ">
+                      {isLocked ? (
+                        `${unlockRoundsRemaining} ${unlockRoundsRemaining === 1 ? "reveal" : "reveals"} later`
+                      ) : (
+                        <Flag className="size-4" />
+                      )}
+                    </span>
+                  )}
                 </div>
-                {!clue.isRevealed &&
-                !roundFinished &&
-                duel.settings.mode === "blurred-lines" ? (
-                  <Button
-                    icon={<LockKeyhole />}
-                    isDisabled={isBusy}
-                    label={`Reveal ${clue.label}`}
-                    onClick={() => onReveal(clue.key)}
-                    size="sm"
-                    variant="ghost"
-                  />
-                ) : (
-                  <span className="mt-1 text-secondary ">
-                    <Flag className="size-4" />
-                  </span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
           {currentRound.status === "available" ? (
             <Button
@@ -612,32 +704,62 @@ function ActiveDuel({
               className="mt-6 flex flex-col gap-2 sm:flex-row"
               onSubmit={(event) => {
                 event.preventDefault();
-                if (guess.trim() && currentRound.canGuess) onGuess();
+                if (
+                  guess.trim() &&
+                  currentRound.canGuess &&
+                  isCountryGuessValid &&
+                  !isRepeatedGuess
+                )
+                  onGuess();
               }}
             >
-              <TextInput
-                isDisabled={!currentRound.canGuess}
-                isLabelHidden
-                label="Your answer"
-                value={guess}
-                onChange={onGuessChange}
+              <input
+                aria-label="Your answer"
+                autoComplete="off"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-card px-4 py-3 text-primary outline-none transition focus:border-accent-bg focus:ring-2 focus:ring-accent-muted"
+                disabled={!currentRound.canGuess || isBusy}
+                list={isCountryDuel ? "duel-country-options" : undefined}
+                onChange={(event) => onGuessChange(event.target.value)}
                 placeholder={
                   currentRound.canGuess
                     ? "Type your answer…"
                     : "Reveal a clue first…"
                 }
-                size="lg"
-                width="100%"
+                type="text"
+                value={guess}
               />
               <Button
                 icon={<Send />}
-                isDisabled={isBusy || !guess.trim() || !currentRound.canGuess}
+                isDisabled={
+                  isBusy ||
+                  !guess.trim() ||
+                  !currentRound.canGuess ||
+                  !isCountryGuessValid ||
+                  isRepeatedGuess
+                }
                 isLoading={isBusy}
                 label="Submit guess"
                 type="submit"
                 variant="primary"
               />
             </form>
+          ) : null}
+          {isCountryDuel && guess.trim() && !isCountryGuessValid ? (
+            <p className="mt-3 text-sm text-warning">Pick a listed country.</p>
+          ) : isRepeatedGuess ? (
+            <p className="mt-3 text-sm text-warning">Already tried.</p>
+          ) : null}
+          {isCountryDuel ? (
+            <datalist id="duel-country-options">
+              {countryOptions
+                .filter(
+                  (country) =>
+                    !guessedCountryNames.has(normalizeGuess(country)),
+                )
+                .map((country) => (
+                  <option key={country} value={country} />
+                ))}
+            </datalist>
           ) : null}
           {currentRound.status === "in-progress" ? (
             <Button
@@ -657,6 +779,21 @@ function ActiveDuel({
           ) : null}
         </Card>
         <aside className="grid content-start gap-4">
+          {isCountryDuel ? (
+            <WorldMapDialog
+              drawerState={mapDrawerState}
+              guessedCountries={guessedCountries}
+              isExpanded={mapDrawerState === "expanded"}
+              onCountryGuess={
+                currentRound.canGuess && !isBusy ? onMapGuess : undefined
+              }
+              onDrawerStateChange={onDrawerStateChange}
+              onExpandedChange={(isExpanded) =>
+                onDrawerStateChange(isExpanded ? "expanded" : "medium")
+              }
+              solutionCountry={currentRound.solutionCountry}
+            />
+          ) : null}
           <ProgressCard
             duel={duel}
             completedRounds={completedRounds}
@@ -856,7 +993,73 @@ function Scoreboard({
           />
         </div>
       </div>
+      <DuelRoundResults rounds={duel.rounds} />
     </Card>
+  );
+}
+
+function DuelRoundResults({ rounds }: { rounds: DuelRound[] }) {
+  return (
+    <section className="grid gap-4 p-6 sm:p-8">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wider text-accent">
+          Round review
+        </p>
+        <h2 className="mt-1 font-heading text-2xl font-semibold">
+          Answers and clues
+        </h2>
+      </div>
+      <ol className="grid gap-4">
+        {rounds.map((round) => {
+          const flagUrl = round.clues.find(
+            (clue) => clue.key === "flag-colors",
+          )?.value;
+          const guessedCountries = round.guesses.flatMap((guess) =>
+            guess.mapData ? [guess.mapData] : [],
+          );
+
+          return (
+            <li
+              className="grid gap-4 rounded-xl border border-border bg-card p-4 sm:grid-cols-[minmax(0,1fr)_15rem]"
+              key={round.position}
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-wider text-secondary">
+                  Round {round.position}
+                </p>
+                <h3 className="mt-1 font-heading text-xl font-semibold">
+                  {round.answer ?? "Answer unavailable"}
+                </h3>
+                {round.guesses.length > 0 ? (
+                  <p className="mt-3 text-sm text-secondary">
+                    Your guesses:{" "}
+                    {round.guesses.map((guess) => guess.name).join(", ")}
+                  </p>
+                ) : null}
+                {flagUrl ? (
+                  <img
+                    alt={`Flag of ${round.answer ?? "the answer"}`}
+                    className="mt-4 block h-auto max-h-40 w-auto max-w-full rounded-lg border border-border object-contain"
+                    height={160}
+                    src={flagUrl}
+                    width={240}
+                  />
+                ) : null}
+              </div>
+              {round.solutionCountry ? (
+                <WorldMapDialog
+                  guessedCountries={guessedCountries}
+                  isExpanded={false}
+                  onExpandedChange={() => undefined}
+                  presentation="result"
+                  solutionCountry={round.solutionCountry}
+                />
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
 

@@ -65,6 +65,7 @@ export interface RoundClue {
   isRevealed: boolean;
   difficulty: number;
   spoilerLevel: "safe" | "late";
+  currencyRedactionTexts?: string[];
 }
 
 export type EntityMetadataValue = string | number | boolean | string[] | null;
@@ -319,6 +320,7 @@ export interface DuelMutationInput {
 
 export interface DuelGuessInput extends DuelMutationInput {
   guess: string;
+  method?: "text" | "map";
 }
 
 export interface DuelRevealInput extends DuelMutationInput {

@@ -43,6 +43,7 @@ export const duelMutationSchema = z.object({
 
 export const duelGuessSchema = duelMutationSchema.extend({
   guess: z.string().trim().min(1),
+  method: z.enum(["text", "map"]).optional(),
 });
 
 export const duelRevealSchema = duelMutationSchema.extend({

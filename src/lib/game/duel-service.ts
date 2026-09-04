@@ -4,7 +4,11 @@ import { Prisma, type DuelAttempt } from "@prisma/client";
 
 import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
-import { getGuessedCountryMapData } from "@/src/lib/game/guess-direction";
+import { getClueUnlockRoundsRemaining } from "@/src/lib/game/clue-locking";
+import {
+  getGuessedCountryMapData,
+  getSolutionCountryMapData,
+} from "@/src/lib/game/guess-direction";
 import {
   acceptDuel as acceptStoredDuel,
   completeDuelIfReady,
@@ -151,6 +155,7 @@ function visibleClues(
     value: completed || revealed.has(clue.key) ? clue.value : null,
     isRevealed: completed || revealed.has(clue.key),
     difficulty: clue.difficulty,
+    spoilerLevel: clue.spoilerLevel,
   }));
 }
 
@@ -179,7 +184,11 @@ function roundView(
     canGuess: ownAttempt?.canGuess ?? false,
     score: ownAttempt?.score ?? null,
     guess: guesses.at(-1)?.name ?? null,
+    guesses,
     answer: completed ? round.canonicalAnswer : null,
+    solutionCountry: completed
+      ? getSolutionCountryMapData(roundEntity(duel, round))
+      : null,
     message:
       ownAttempt && !completed && guesses.length > 0
         ? duel.mode === "blurred-lines"
@@ -462,11 +471,22 @@ export async function revealDuelClue(
   const revealed = asStrings(attempt.revealedClueKeys);
   if (revealed.includes(selected.key))
     throw new Error("That clue is already revealed.");
-  const hiddenSafe = clues.some(
-    (clue) => clue.spoilerLevel === "safe" && !revealed.includes(clue.key),
+  const clueUnlockState = clues.map((clue) => ({
+    key: clue.key,
+    spoilerLevel: clue.spoilerLevel,
+    isRevealed: revealed.includes(clue.key),
+  }));
+  const selectedClueUnlockState = clueUnlockState.find(
+    (clue) => clue.key === selected.key,
+  )!;
+  const unlockRoundsRemaining = getClueUnlockRoundsRemaining(
+    clueUnlockState,
+    selectedClueUnlockState,
   );
-  if (selected.spoilerLevel === "late" && hiddenSafe) {
-    throw new Error("That clue is still locked.");
+  if (unlockRoundsRemaining > 0) {
+    throw new Error(
+      `That field unlocks in ${unlockRoundsRemaining} ${unlockRoundsRemaining === 1 ? "round" : "rounds"}.`,
+    );
   }
   await updateDuelAttempt(attempt.id, profile.id, input.version, {
     revealedClueKeys: [...revealed, selected.key],
@@ -510,7 +530,10 @@ export async function guessDuelRound(
   if (isCorrect) {
     await updateDuelAttempt(attempt.id, profile.id, input.version, {
       guesses: nextGuesses as unknown as Prisma.InputJsonValue,
-      score: scoreForRevealCount(revealed.length),
+      score:
+        input.method === "map"
+          ? Math.floor(scoreForRevealCount(revealed.length) / 2)
+          : scoreForRevealCount(revealed.length),
       isCorrect: true,
       completedAt: new Date(),
       canGuess: false,

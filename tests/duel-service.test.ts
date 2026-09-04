@@ -230,6 +230,23 @@ describe("duel service", () => {
     );
   });
 
+  it("keeps the flag clue locked until three clues are revealed", async () => {
+    const current = duel({
+      rounds: [{ ...duel().rounds[0], attempts: [attempt("challenger")] }],
+    });
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "challenger" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(current);
+
+    await expect(
+      revealDuelClue(
+        "abc123",
+        1,
+        { clueKey: "flag-colors", version: 7 },
+        "clerk",
+      ),
+    ).rejects.toThrow("unlocks in 3 rounds");
+  });
+
   it("passes the optimistic version when guessing", async () => {
     const current = duel({
       rounds: [{ ...duel().rounds[0], attempts: [attempt("challenger")] }],
@@ -246,6 +263,39 @@ describe("duel service", () => {
       "challenger",
       7,
       expect.objectContaining({ isCorrect: true }),
+    );
+  });
+
+  it("halves the score for a map guess", async () => {
+    const current = duel({
+      rounds: [
+        {
+          ...duel().rounds[0],
+          attempts: [
+            attempt("challenger", { revealedClueKeys: ["continent"] }),
+          ],
+        },
+      ],
+    });
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "challenger" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(current);
+    repository.getDuelByInviteCode.mockResolvedValue(current);
+    repository.updateDuelAttempt.mockResolvedValue(
+      attempt("challenger", { version: 8 }),
+    );
+
+    await guessDuelRound(
+      "abc123",
+      1,
+      { guess: "France", method: "map", version: 7 },
+      "clerk",
+    );
+
+    expect(repository.updateDuelAttempt).toHaveBeenCalledWith(
+      "challenger-attempt",
+      "challenger",
+      7,
+      expect.objectContaining({ score: 50 }),
     );
   });
 });
