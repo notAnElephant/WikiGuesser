@@ -53,6 +53,7 @@ export default async function RootLayout({
 
   return (
     <html
+      className="dark"
       data-astryx-theme="butter"
       data-theme="dark"
       lang="en"

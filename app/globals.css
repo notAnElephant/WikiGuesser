@@ -3,6 +3,12 @@
 @import "@astryxdesign/core/reset.css";
 @import "@astryxdesign/core/astryx.css";
 @import "../src/themes/butter/butter.css";
+@import "../src/themes/chocolate/chocolate.css";
+@import "../src/themes/gothic/gothic.css";
+@import "../src/themes/matcha/matcha.css";
+@import "@astryxdesign/theme-neutral/theme.css";
+@import "../src/themes/stone/stone.css";
+@import "../src/themes/y2k/y2k.css";
 @import "@astryxdesign/core/tailwind-theme.css";
 @import "tailwindcss/utilities.css" layer(utilities);
 @custom-variant dark (&:where(.dark, .dark *));
@@ -13,9 +19,21 @@
     --font-serif:
       "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
     --app-background:
-      radial-gradient(circle at top left, rgba(15, 118, 110, 0.2), transparent 34%),
-      radial-gradient(circle at top right, rgba(234, 179, 8, 0.18), transparent 24%),
-      radial-gradient(circle at bottom, rgba(255, 255, 255, 0.32), transparent 28%),
+      radial-gradient(
+        circle at top left,
+        rgba(15, 118, 110, 0.2),
+        transparent 34%
+      ),
+      radial-gradient(
+        circle at top right,
+        rgba(234, 179, 8, 0.18),
+        transparent 24%
+      ),
+      radial-gradient(
+        circle at bottom,
+        rgba(255, 255, 255, 0.32),
+        transparent 28%
+      ),
       linear-gradient(180deg, #fbf5eb 0%, #f2eadb 100%);
     --app-foreground: #1f1b17;
     --wg-map-water: #dce9ed;
@@ -46,43 +64,23 @@
   html.dark {
     color-scheme: dark;
     --app-background:
-      radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 28%),
-      radial-gradient(circle at top right, rgba(96, 165, 250, 0.14), transparent 22%),
-      radial-gradient(circle at bottom, rgba(36, 212, 194, 0.08), transparent 24%),
+      radial-gradient(
+        circle at top left,
+        rgba(20, 184, 166, 0.18),
+        transparent 28%
+      ),
+      radial-gradient(
+        circle at top right,
+        rgba(96, 165, 250, 0.14),
+        transparent 22%
+      ),
+      radial-gradient(
+        circle at bottom,
+        rgba(36, 212, 194, 0.08),
+        transparent 24%
+      ),
       linear-gradient(180deg, #08111b 0%, #0f1724 54%, #16202d 100%);
     --app-foreground: #f5f7fb;
-  }
-
-  html[data-palette="sunset"] {
-    --app-background:
-      radial-gradient(circle at top left, rgba(234, 88, 12, 0.24), transparent 34%),
-      radial-gradient(circle at top right, rgba(244, 63, 94, 0.18), transparent 24%),
-      radial-gradient(circle at bottom, rgba(255, 237, 213, 0.36), transparent 28%),
-      linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
-  }
-
-  html.dark[data-palette="sunset"] {
-    --app-background:
-      radial-gradient(circle at top left, rgba(249, 115, 22, 0.2), transparent 28%),
-      radial-gradient(circle at top right, rgba(244, 63, 94, 0.16), transparent 22%),
-      radial-gradient(circle at bottom, rgba(251, 146, 60, 0.1), transparent 24%),
-      linear-gradient(180deg, #1c0d10 0%, #2d1514 54%, #381d16 100%);
-  }
-
-  html[data-palette="violet"] {
-    --app-background:
-      radial-gradient(circle at top left, rgba(124, 58, 237, 0.2), transparent 34%),
-      radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 24%),
-      radial-gradient(circle at bottom, rgba(237, 233, 254, 0.38), transparent 28%),
-      linear-gradient(180deg, #faf5ff 0%, #ede9fe 100%);
-  }
-
-  html.dark[data-palette="violet"] {
-    --app-background:
-      radial-gradient(circle at top left, rgba(139, 92, 246, 0.2), transparent 28%),
-      radial-gradient(circle at top right, rgba(56, 189, 248, 0.13), transparent 22%),
-      radial-gradient(circle at bottom, rgba(167, 139, 250, 0.1), transparent 24%),
-      linear-gradient(180deg, #100d22 0%, #1a1536 54%, #221b42 100%);
   }
 
   html.light {
