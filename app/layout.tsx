@@ -10,7 +10,7 @@ import { ClerkProvider, Show } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Dice5, LogIn, Trophy } from "lucide-react";
+import { Dice5, LogIn, Trophy, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -53,7 +53,7 @@ export default async function RootLayout({
                 <div className="flex items-center gap-2">
                   <Link
                     aria-label="Leaderboard"
-                    className="inline-flex size-10 items-center justify-center rounded-full text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
+                    className="inline-flex size-10 items-center justify-center rounded-full bg-[rgba(15,118,110,0.08)] text-[#115e59] transition hover:bg-[rgba(15,118,110,0.15)] dark:bg-[rgba(45,212,191,0.12)] dark:text-[#8ff4e7] dark:hover:bg-[rgba(45,212,191,0.2)]"
                     href="/leaderboard"
                     title="Leaderboard"
                   >
@@ -67,7 +67,7 @@ export default async function RootLayout({
                   <Show when="signed-out">
                     <Link
                       aria-label="Log in"
-                      className="inline-flex size-10 items-center justify-center rounded-full text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
+                      className="inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
                       href="/sign-in"
                       title="Log in"
                     >
@@ -79,9 +79,14 @@ export default async function RootLayout({
                       Log in
                     </Link>
                     <Link
-                      className="inline-flex items-center justify-center rounded-full border border-[rgba(15,118,110,0.18)] bg-[rgba(15,118,110,0.06)] px-3 py-2 text-sm font-medium text-[#115e59] transition hover:bg-[rgba(15,118,110,0.12)] dark:border-[rgba(45,212,191,0.24)] dark:bg-[rgba(45,212,191,0.12)] dark:text-[#8ff4e7] dark:hover:bg-[rgba(45,212,191,0.18)]"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(15,118,110,0.18)] bg-[rgba(15,118,110,0.06)] px-3 py-2 text-sm font-medium text-[#115e59] transition hover:bg-[rgba(15,118,110,0.12)] dark:border-[rgba(45,212,191,0.24)] dark:bg-[rgba(45,212,191,0.12)] dark:text-[#8ff4e7] dark:hover:bg-[rgba(45,212,191,0.18)]"
                       href="/sign-up"
                     >
+                      <UserPlus
+                        aria-hidden="true"
+                        className="size-4"
+                        strokeWidth={2.2}
+                      />
                       Sign up
                     </Link>
                   </Show>
