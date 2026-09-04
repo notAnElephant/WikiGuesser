@@ -1,7 +1,10 @@
 import "@/src/scripts/load-env";
 import { writeFile } from "node:fs/promises";
 
-import { splitCurrencyRevealSegments } from "@/src/lib/game/currency-censor";
+import {
+  getCurrencyRedactionTexts,
+  splitCurrencyRevealSegments,
+} from "@/src/lib/game/currency-censor";
 import { getGeneratedPath } from "@/src/lib/content/generated-io";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 
@@ -14,14 +17,18 @@ async function main() {
   const rows = snapshot.entities
     .filter((entity) => entity.category === "countries")
     .map((entity) => {
-      const currency = entity.clues.find((clue) => clue.key === "currency")
-        ?.value;
+      const currency = entity.clues.find(
+        (clue) => clue.key === "currency",
+      )?.value;
 
       if (!currency) {
         return null;
       }
 
-      const censored = splitCurrencyRevealSegments(currency)
+      const censored = splitCurrencyRevealSegments(
+        currency,
+        getCurrencyRedactionTexts(currency, entity.canonicalAnswer),
+      )
         .map((segment) =>
           segment.isBlurred ? `[BLURRED: ${segment.text}]` : segment.text,
         )

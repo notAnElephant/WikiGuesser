@@ -73,7 +73,7 @@ export function getFlagImageUrl(
 }
 
 export function renderClueValue(
-  clue: Pick<RoundClue, "key" | "value">,
+  clue: Pick<RoundClue, "key" | "value" | "currencyRedactionTexts">,
 ): ReactNode {
   if (!clue.value) {
     return null;
@@ -87,7 +87,10 @@ export function renderClueValue(
     return clue.value;
   }
 
-  const segments = splitCurrencyRevealSegments(clue.value);
+  const segments = splitCurrencyRevealSegments(
+    clue.value,
+    clue.currencyRedactionTexts,
+  );
 
   if (!segments.some((segment) => segment.isBlurred)) {
     return clue.value;

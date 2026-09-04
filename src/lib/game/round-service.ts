@@ -8,6 +8,7 @@ import {
   getSolutionCountryMapData,
 } from "@/src/lib/game/guess-direction";
 import { getClueUnlockRoundsRemaining } from "@/src/lib/game/clue-locking";
+import { getCurrencyRedactionTexts } from "@/src/lib/game/currency-censor";
 import {
   createRoundState,
   parseRoundState,
@@ -113,6 +114,14 @@ function getClues(
       isRevealed,
       difficulty: clue.difficulty,
       spoilerLevel: clue.spoilerLevel,
+      ...(clue.key === "currency"
+        ? {
+            currencyRedactionTexts: getCurrencyRedactionTexts(
+              clue.value,
+              entity.canonicalAnswer,
+            ),
+          }
+        : {}),
     };
   });
 }
