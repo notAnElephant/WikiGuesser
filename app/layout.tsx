@@ -30,7 +30,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(15,118,110,0.2),transparent_34%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.18),transparent_24%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.32),transparent_28%),linear-gradient(180deg,#fbf5eb_0%,#f2eadb_100%)] font-sans text-[#1f1b17] transition-colors dark:bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.14),transparent_22%),radial-gradient(circle_at_bottom,rgba(36,212,194,0.08),transparent_24%),linear-gradient(180deg,#08111b_0%,#0f1724_54%,#16202d_100%)] dark:text-[#f5f7fb]">
+      <body className="min-h-screen bg-[var(--app-background)] font-sans text-[var(--app-foreground)] transition-colors">
         <ThemeProvider>
           <ClerkProvider signUpForceRedirectUrl="/profile-name">
             <PostHogIdentity />
