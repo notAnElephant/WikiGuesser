@@ -1,6 +1,6 @@
 allowBuilds:
-  '@astryxdesign/cli': set this to true or false
-  '@astryxdesign/core': set this to true or false
+  '@astryxdesign/cli': true
+  '@astryxdesign/core': true
   '@prisma/engines': true
   core-js: true
   esbuild: true
