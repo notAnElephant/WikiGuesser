@@ -193,6 +193,19 @@ describe("duel service", () => {
     );
   });
 
+  it("recognizes an authenticated actor ID as the duel creator", async () => {
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "challenger" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(duel());
+
+    const result = await getDuel("abc123", "user:clerk-challenger");
+
+    expect(repository.ensureDuelUserProfile).toHaveBeenCalledWith(
+      "clerk-challenger",
+    );
+    expect(result.playerRole).toBe("challenger");
+    expect(result.status).toBe("active");
+  });
+
   it("passes the optimistic version when revealing a clue", async () => {
     const current = duel({
       rounds: [{ ...duel().rounds[0], attempts: [attempt("challenger")] }],

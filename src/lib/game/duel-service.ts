@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from "node:crypto";
 
 import { Prisma, type DuelAttempt } from "@prisma/client";
 
+import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
 import { getGuessedCountryMapData } from "@/src/lib/game/guess-direction";
 import {
@@ -36,6 +37,16 @@ type StoredGuess = {
   name: string;
   mapData: GuessedCountryMapData | null;
 };
+
+/**
+ * Duel creation receives a raw Clerk ID, while the public duel routes pass the
+ * application actor ID (for example, `user_123` versus `user:user_123`).
+ * Store and compare the raw ID in both cases so a participant retains access
+ * after the invitation has been accepted.
+ */
+function duelProfileKey(actorOrClerkUserId: string) {
+  return getClerkUserIdFromActorId(actorOrClerkUserId) ?? actorOrClerkUserId;
+}
 
 function asClues(value: Prisma.JsonValue): PlayableClue[] {
   return value as unknown as PlayableClue[];
@@ -316,9 +327,10 @@ export async function createDuel(
 
 export async function getDuel(
   inviteCode: string,
-  clerkUserId: string,
+  actorOrClerkUserId: string,
   origin?: string,
 ) {
+  const clerkUserId = duelProfileKey(actorOrClerkUserId);
   const [duel, profile] = await Promise.all([
     getOrRefreshDuelByInviteCode(inviteCode),
     ensureDuelUserProfile(clerkUserId),
@@ -336,9 +348,10 @@ export async function getDuel(
 
 export async function acceptDuel(
   inviteCode: string,
-  clerkUserId: string,
+  actorOrClerkUserId: string,
   origin?: string,
 ) {
+  const clerkUserId = duelProfileKey(actorOrClerkUserId);
   const profile = await ensureDuelUserProfile(clerkUserId);
   const duel = await acceptStoredDuel(inviteCode, profile.id);
   return buildDuelView(duel, profile.id, origin);
@@ -346,9 +359,10 @@ export async function acceptDuel(
 
 export async function createDuelRematch(
   inviteCode: string,
-  clerkUserId: string,
+  actorOrClerkUserId: string,
   origin?: string,
 ) {
+  const clerkUserId = duelProfileKey(actorOrClerkUserId);
   const [source, profile] = await Promise.all([
     getOrRefreshDuelByInviteCode(inviteCode),
     ensureDuelUserProfile(clerkUserId),
@@ -374,8 +388,9 @@ export async function createDuelRematch(
 async function participantRound(
   inviteCode: string,
   position: number,
-  clerkUserId: string,
+  actorOrClerkUserId: string,
 ) {
+  const clerkUserId = duelProfileKey(actorOrClerkUserId);
   const [duel, profile] = await Promise.all([
     getOrRefreshDuelByInviteCode(inviteCode),
     ensureDuelUserProfile(clerkUserId),
