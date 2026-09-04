@@ -51,7 +51,7 @@ describe("daily result dialog actions", () => {
 
     expect(markup).toContain("Play Choose Clues Daily");
     expect(markup).toContain("lucide-play");
-    expect(markup).toContain("Home</button>");
+    expect(markup).toContain(">Home</span>");
   });
 
   it("offers account creation alongside the other daily for guests", () => {
@@ -67,8 +67,8 @@ describe("daily result dialog actions", () => {
     );
 
     expect(markup).toContain("Play Choose Clues Daily");
-    expect(markup).toContain("Create account</button>");
-    expect(markup).toContain("Log in</button>");
+    expect(markup).toContain(">Create account</span>");
+    expect(markup).toContain(">Log in</span>");
     expect(markup).toContain("lucide-user-plus");
   });
 
@@ -81,9 +81,9 @@ describe("daily result dialog actions", () => {
       />,
     );
 
-    expect(markup.match(/>Home<\/button>/g)).toHaveLength(1);
+    expect(markup.match(/>Home<\/span>/g)).toHaveLength(1);
     expect(markup).toContain("lucide-house");
-    expect(markup).toContain("Home</button>");
+    expect(markup).toContain(">Home</span>");
   });
 
   it("renders the completed round's flag without forcing a backdrop or aspect ratio", () => {
@@ -95,7 +95,8 @@ describe("daily result dialog actions", () => {
       />,
     );
 
-    expect(markup).toContain('aria-label="Close result"');
+    expect(markup).toContain('class="astryx-dialog');
+    expect(markup).toContain('aria-label="Close"');
     expect(markup).toContain("items-center justify-center");
     expect(markup).toContain('alt="Flag of Netherlands"');
     expect(markup).toContain("Flag%20of%20the%20Netherlands.svg");

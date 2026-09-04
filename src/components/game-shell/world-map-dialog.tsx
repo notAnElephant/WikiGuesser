@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@astryxdesign/core/Button";
+import { IconButton } from "@astryxdesign/core/IconButton";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import {
   COUNTRY_DATA,
@@ -701,15 +703,15 @@ export function WorldMapDialog({
   if (presentation === "game" && isMapHidden) {
     return (
       <div className="fixed inset-x-0 bottom-0 z-[70] flex justify-center px-2 pb-2 sm:justify-end sm:px-5 sm:pb-5 lg:static lg:px-0 lg:pb-0">
-        <button
-          aria-label="Show world map"
-          className="inline-flex h-10 items-center gap-2 rounded-full border border-black/12 bg-[#fbf7ef]/96 px-4 text-sm font-semibold text-[#17313a] shadow-[0_8px_28px_rgba(17,24,39,0.2)] backdrop-blur transition hover:-translate-y-0.5 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/14 dark:bg-[#132131]/96 dark:text-[#d7e1ec] dark:hover:text-[#8ff4e7]"
+        <Button
+          elevation="med"
+          icon={<ChevronUp aria-hidden="true" />}
+          label="Show world map"
           onClick={() => setDrawerState("medium")}
-          type="button"
+          variant="secondary"
         >
-          <ChevronUp aria-hidden="true" className="size-4" strokeWidth={2.2} />
           Show map
-        </button>
+        </Button>
       </div>
     );
   }
@@ -720,7 +722,7 @@ export function WorldMapDialog({
         presentation === "result"
           ? "relative w-full"
           : isMapExpanded
-            ? "fixed inset-0 z-[80] grid place-items-center bg-[rgba(20,26,28,0.54)] p-2 backdrop-blur-[3px] sm:p-5"
+            ? "fixed inset-0 z-[80] grid place-items-center bg-overlay p-2 backdrop-blur-[3px] sm:p-5"
             : "pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-2 sm:justify-end sm:px-5 lg:pointer-events-auto lg:static lg:z-auto lg:block lg:px-0"
       }
       onMouseDown={(event) => {
@@ -733,12 +735,12 @@ export function WorldMapDialog({
         aria-describedby="world-map-help"
         aria-label="World map"
         aria-modal={isMapExpanded ? true : undefined}
-        className={`pointer-events-auto grid w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden border border-black/16 bg-[#fbf7ef] shadow-[0_18px_60px_rgba(17,24,39,0.3)] outline-none transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:border-white/14 dark:bg-[#101a27] dark:shadow-[0_18px_60px_rgba(0,0,0,0.58)] ${
+        className={`pointer-events-auto grid w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden border border-border bg-body shadow-md outline-none transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"}  dark:shadow-md ${
           presentation === "result"
-            ? "h-64 rounded-[24px] sm:h-72"
+            ? "h-64 rounded-xl sm:h-72"
             : isMapExpanded
-              ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-[28px] sm:h-[min(760px,calc(100dvh-2.5rem))]"
-              : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-[26px] sm:border-b lg:mb-0 lg:h-[clamp(320px,42dvh,460px)] lg:max-w-none"
+              ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-xl sm:h-[min(760px,calc(100dvh-2.5rem))]"
+              : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-xl sm:border-b lg:mb-0 lg:h-[clamp(320px,42dvh,460px)] lg:max-w-none"
         }`}
         onKeyDown={handleDialogKeyDown}
         ref={dialogRef}
@@ -762,7 +764,7 @@ export function WorldMapDialog({
                 aria-label={
                   isMapExpanded ? "Collapse world map" : "Expand world map"
                 }
-                className="absolute left-1/2 top-2 z-10 flex h-9 w-28 -translate-x-1/2 touch-none items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 lg:hidden"
+                className="absolute left-1/2 top-2 z-10 flex h-9 w-28 -translate-x-1/2 touch-none items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-accent-muted lg:hidden"
                 onClick={() => {
                   if (didDrawerDragRef.current) {
                     didDrawerDragRef.current = false;
@@ -778,51 +780,40 @@ export function WorldMapDialog({
                 ref={expandButtonRef}
                 type="button"
               >
-                <span className="h-1.5 w-12 rounded-full bg-[#718093]/85 shadow-sm" />
+                <span className="h-1.5 w-12 rounded-full bg-muted shadow-sm" />
                 <span className="sr-only">
                   {isMapExpanded ? "Collapse" : "Expand"} world map
                 </span>
               </button>
-              <button
-                aria-label="Hide world map"
-                className="absolute right-3 top-2 z-10 inline-flex size-9 items-center justify-center rounded-full border border-black/10 bg-white/90 text-[#17313a] shadow-lg backdrop-blur transition hover:bg-white hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-[#132131]/90 dark:text-[#d7e1ec] dark:hover:text-[#8ff4e7] lg:hidden"
+              <IconButton
+                className="absolute right-3 top-2 z-10 lg:hidden"
+                elevation="high"
+                icon={<X aria-hidden="true" />}
+                label="Hide world map"
                 onClick={() => setDrawerState("hidden")}
-                type="button"
-              >
-                <X aria-hidden="true" className="size-4" strokeWidth={2.2} />
-              </button>
-              <button
-                aria-label={
-                  isMapExpanded ? "Minimize world map" : "Expand world map"
+                tooltip="Hide world map"
+                variant="secondary"
+              />
+              <Button
+                className="absolute right-4 top-4 z-10 hidden lg:inline-flex"
+                elevation="high"
+                icon={
+                  isMapExpanded ? (
+                    <ChevronDown aria-hidden="true" />
+                  ) : (
+                    <ChevronUp aria-hidden="true" />
+                  )
                 }
-                className="absolute right-4 top-4 z-10 hidden h-10 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-black/10 bg-white/90 px-3 text-sm font-semibold text-[#1f1b17] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-[#0f766e]/30 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-[#132131]/90 dark:text-[#f5f7fb] dark:hover:border-[#24d4c2]/35 dark:hover:text-[#8ff4e7] lg:inline-flex"
+                label={isMapExpanded ? "Minimize" : "Expand"}
                 onClick={() =>
                   setDrawerState(isMapExpanded ? "medium" : "expanded")
                 }
-                title={
-                  isMapExpanded ? "Minimize world map" : "Expand world map"
-                }
-                type="button"
-              >
-                {isMapExpanded ? (
-                  <ChevronDown
-                    aria-hidden="true"
-                    className="size-5"
-                    strokeWidth={2.2}
-                  />
-                ) : (
-                  <ChevronUp
-                    aria-hidden="true"
-                    className="size-5"
-                    strokeWidth={2.2}
-                  />
-                )}
-                {isMapExpanded ? "Minimize" : "Expand"}
-              </button>
+                variant="secondary"
+              />
             </>
           ) : null}
           {presentation === "game" && onCountryGuess ? (
-            <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-[#0f766e]/20 bg-[#fbf7ef]/92 px-3 py-1.5 text-xs font-semibold text-[#0f766e] shadow-sm backdrop-blur dark:border-[#24d4c2]/24 dark:bg-[#132131]/92 dark:text-[#75e6d7] sm:left-4 sm:top-4">
+            <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-accent-bg/20 bg-body px-3 py-1.5 text-xs font-semibold text-accent shadow-sm backdrop-blur  sm:left-4 sm:top-4">
               Tap a country · half points
             </span>
           ) : null}
@@ -959,71 +950,53 @@ export function WorldMapDialog({
 
           {presentation === "game" ? (
             <div className="absolute bottom-3 left-3 z-10 grid gap-1.5 sm:bottom-4 sm:left-4 sm:gap-2">
-              <div className="grid w-9 overflow-hidden rounded-xl border border-black/16 bg-[#fbf7ef]/94 shadow-lg backdrop-blur dark:border-white/14 dark:bg-[#132131]/94 sm:w-11 sm:rounded-2xl">
-                <button
-                  aria-label="Zoom in"
-                  className="inline-flex size-9 items-center justify-center text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:text-[#d7e1ec] dark:hover:bg-white/10 sm:size-11"
+              <div className="grid w-9 overflow-hidden rounded-xl border border-border bg-body shadow-lg backdrop-blur  sm:w-11 sm:rounded-2xl">
+                <IconButton
+                  icon={<Plus aria-hidden="true" />}
+                  label="Zoom in"
                   onClick={() => changeZoom(1.45)}
-                  title="Zoom in"
-                  type="button"
-                >
-                  <Plus
-                    aria-hidden="true"
-                    className="size-4 sm:size-5"
-                    strokeWidth={2.2}
-                  />
-                </button>
-                <button
-                  aria-label="Zoom out"
-                  className="inline-flex size-9 items-center justify-center border-t border-black/12 text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:border-white/12 dark:text-[#d7e1ec] dark:hover:bg-white/10 sm:size-11"
+                  size="lg"
+                  tooltip="Zoom in"
+                  variant="ghost"
+                />
+                <IconButton
+                  icon={<Minus aria-hidden="true" />}
+                  label="Zoom out"
                   onClick={() => changeZoom(1 / 1.45)}
-                  title="Zoom out"
-                  type="button"
-                >
-                  <Minus
-                    aria-hidden="true"
-                    className="size-4 sm:size-5"
-                    strokeWidth={2.2}
-                  />
-                </button>
+                  size="lg"
+                  tooltip="Zoom out"
+                  variant="ghost"
+                />
               </div>
-              <button
-                aria-label="Fit all guessed countries"
-                className="inline-flex size-9 items-center justify-center rounded-xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/14 dark:bg-[#132131]/94 dark:text-[#d7e1ec] dark:hover:bg-[#1a2c3f] sm:size-11 sm:rounded-2xl"
-                disabled={guessedCountries.length === 0}
+              <IconButton
+                elevation="high"
+                icon={<Focus aria-hidden="true" />}
+                isDisabled={guessedCountries.length === 0}
+                label="Fit all guessed countries"
                 onClick={fitGuessedCountries}
-                title="Fit all guessed countries"
-                type="button"
-              >
-                <Focus
-                  aria-hidden="true"
-                  className="size-4 sm:size-5"
-                  strokeWidth={2.2}
-                />
-              </button>
-              <button
-                aria-label="Reset map zoom"
-                className="inline-flex size-9 items-center justify-center rounded-xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/14 dark:bg-[#132131]/94 dark:text-[#d7e1ec] dark:hover:bg-[#1a2c3f] sm:size-11 sm:rounded-2xl"
+                size="lg"
+                tooltip="Fit all guessed countries"
+                variant="secondary"
+              />
+              <IconButton
+                elevation="high"
+                icon={<Scan aria-hidden="true" />}
+                label="Reset map zoom"
                 onClick={resetWorld}
-                title="Reset map zoom"
-                type="button"
-              >
-                <Scan
-                  aria-hidden="true"
-                  className="size-4 sm:size-5"
-                  strokeWidth={2.2}
-                />
-              </button>
+                size="lg"
+                tooltip="Reset map zoom"
+                variant="secondary"
+              />
             </div>
           ) : null}
 
-          <span className="pointer-events-none absolute bottom-3 right-3 z-10 rounded-full bg-white/72 px-2 py-1 text-[0.62rem] font-medium text-[#53636a] backdrop-blur dark:bg-[#0d1723]/72 dark:text-[#aab8c6]">
+          <span className="pointer-events-none absolute bottom-3 right-3 z-10 rounded-full bg-card px-2 py-1 text-xs font-medium text-secondary backdrop-blur  ">
             Map data: Natural Earth
           </span>
         </div>
 
         <footer
-          className={`border-t border-black/10 bg-white/76 text-center text-sm text-[#5f5a54] dark:border-white/10 dark:bg-white/5 dark:text-[#aab8c6] ${
+          className={`border-t border-border bg-card text-center text-sm text-secondary  ${
             isMapExpanded && presentation === "game" ? "px-4 py-3" : "sr-only"
           }`}
           id="world-map-help"

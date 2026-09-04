@@ -8,13 +8,36 @@ import { ThemeToggle } from "@/src/components/theme-toggle";
 import { isAdminUser } from "@/src/lib/auth/admin";
 import { ClerkProvider, Show } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Dice5, LogIn, Trophy, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
+import { JetBrains_Mono, Outfit, Sarina } from "next/font/google";
 import Link from "next/link";
 
+import "./layers.css";
 import "./globals.css";
+
+const outfit = Outfit({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+});
+
+const sarina = Sarina({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-sarina",
+  weight: "400",
+});
 
 export const metadata: Metadata = {
   title: "WikiGuesser",
@@ -29,18 +52,29 @@ export default async function RootLayout({
   const isAdmin = isAdminUser(userId);
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-[var(--app-background)] font-sans text-[var(--app-foreground)] transition-colors">
+    <html
+      data-astryx-theme="butter"
+      data-theme="dark"
+      lang="en"
+      suppressHydrationWarning
+    >
+      <body
+        className={`${outfit.variable} ${jetBrainsMono.variable} ${sarina.variable} min-h-screen bg-body font-sans text-primary transition-colors`}
+      >
         <ThemeProvider>
           <ClerkProvider signUpForceRedirectUrl="/profile-name">
             <PostHogIdentity />
             <header className="fixed inset-x-0 top-0 z-40 p-3 sm:p-4">
-              <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 rounded-3xl border border-black/8 bg-white/72 px-3 py-2 shadow-[0_18px_40px_rgba(53,36,22,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgba(9,16,26,0.76)] dark:shadow-[0_18px_40px_rgba(0,0,0,0.34)]">
+              <Card
+                className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3"
+                elevation="low"
+                padding={2}
+              >
                 <Link
-                  className="inline-flex items-center gap-2 rounded-full px-2 py-1.5 text-sm font-semibold text-[#1f1b17] transition hover:bg-white/70 dark:text-[#f5f7fb] dark:hover:bg-white/10"
+                  className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-muted"
                   href="/"
                 >
-                  <span className="inline-flex size-9 items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.16))] text-[#115e59] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.16),rgba(56,189,248,0.14))] dark:text-[#8ff4e7]">
+                  <span className="inline-flex size-9 items-center justify-center rounded-md bg-muted text-accent">
                     <Dice5
                       aria-hidden="true"
                       className="size-4.5"
@@ -53,7 +87,7 @@ export default async function RootLayout({
                 <div className="flex items-center gap-2">
                   <Link
                     aria-label="Leaderboard"
-                    className="inline-flex size-10 items-center justify-center rounded-full bg-[rgba(15,118,110,0.08)] text-[#115e59] transition hover:bg-[rgba(15,118,110,0.15)] dark:bg-[rgba(45,212,191,0.12)] dark:text-[#8ff4e7] dark:hover:bg-[rgba(45,212,191,0.2)]"
+                    className="inline-flex size-10 items-center justify-center rounded-md bg-muted text-accent transition-colors hover:bg-card"
                     href="/leaderboard"
                     title="Leaderboard"
                   >
@@ -67,7 +101,7 @@ export default async function RootLayout({
                   <Show when="signed-out">
                     <Link
                       aria-label="Log in"
-                      className="inline-flex items-center justify-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-[#6b6259] transition hover:bg-white/70 hover:text-[#1f1b17] dark:text-[#d7e1ec] dark:hover:bg-white/10 dark:hover:text-white"
+                      className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-muted hover:text-primary"
                       href="/sign-in"
                       title="Log in"
                     >
@@ -78,17 +112,13 @@ export default async function RootLayout({
                       />
                       Log in
                     </Link>
-                    <Link
-                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[rgba(15,118,110,0.18)] bg-[rgba(15,118,110,0.06)] px-3 py-2 text-sm font-medium text-[#115e59] transition hover:bg-[rgba(15,118,110,0.12)] dark:border-[rgba(45,212,191,0.24)] dark:bg-[rgba(45,212,191,0.12)] dark:text-[#8ff4e7] dark:hover:bg-[rgba(45,212,191,0.18)]"
+                    <Button
                       href="/sign-up"
-                    >
-                      <UserPlus
-                        aria-hidden="true"
-                        className="size-4"
-                        strokeWidth={2.2}
-                      />
-                      Sign up
-                    </Link>
+                      icon={<UserPlus aria-hidden="true" className="size-4" />}
+                      label="Sign up"
+                      size="lg"
+                      variant="primary"
+                    />
                   </Show>
                   <Show when="signed-in">
                     <AccountUserButton
@@ -99,7 +129,7 @@ export default async function RootLayout({
                     />
                   </Show>
                 </div>
-              </div>
+              </Card>
             </header>
             {children}
             <AppToaster />

@@ -1,7 +1,15 @@
 "use client";
 
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@astryxdesign/core/SegmentedControl";
+import { Selector } from "@astryxdesign/core/Selector";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Link2, LoaderCircle, Share2, Swords } from "lucide-react";
+import { Check, Copy, Link2, Share2, Swords } from "lucide-react";
 import { useState } from "react";
 
 import type {
@@ -9,11 +17,6 @@ import type {
   EntityCategory,
   GameMode,
 } from "@/src/lib/types";
-import {
-  primaryButtonClass,
-  secondaryButtonClass,
-  surfaceClass,
-} from "@/src/components/game-shell/config";
 
 interface DuelCreatorProps {
   categories: CategorySummary[];
@@ -105,166 +108,125 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
   }
 
   return (
-    <section
-      className={`${surfaceClass} grid gap-5 p-5 sm:p-7`}
+    <Card
+      className="grid gap-5 p-5 sm:p-7"
       aria-labelledby="duel-creator-title"
+      elevation="low"
+      padding={0}
     >
       <div className="flex items-start gap-3">
-        <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#0f766e]/10 text-[#0f766e] dark:bg-[#24d4c2]/12 dark:text-[#55e7d5]">
+        <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent-bg/10 text-accent ">
           <Swords aria-hidden="true" className="size-5" />
         </div>
         <div>
-          <p className="m-0 text-xs font-bold uppercase tracking-[0.16em] text-[#0f766e] dark:text-[#55e7d5]">
+          <p className="m-0 text-xs font-bold uppercase tracking-wider text-accent ">
             Challenge a friend
           </p>
           <h2
             id="duel-creator-title"
-            className="mt-1 font-serif-display text-3xl font-semibold tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]"
+            className="mt-1 font-heading text-3xl font-semibold tracking-tight text-primary"
           >
             Set up a duel
           </h2>
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
-        <label className="grid gap-2 text-sm font-semibold text-[#4e4740] dark:text-[#c5cfda]">
-          Category
-          <select
-            className="rounded-2xl border border-black/10 bg-white/70 px-4 py-3 font-medium text-[#1f1b17] outline-none focus:border-[#0f766e] dark:border-white/10 dark:bg-white/6 dark:text-[#f5f7fb]"
-            value={category}
-            onChange={(event) =>
-              setCategory(event.target.value as EntityCategory)
-            }
-          >
-            {categories.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <fieldset className="grid gap-2 text-sm font-semibold text-[#4e4740] dark:text-[#c5cfda]">
+        <Selector
+          label="Category"
+          onChange={(value) => setCategory(value as EntityCategory)}
+          options={categories.map((item) => ({
+            label: item.label,
+            value: item.id,
+          }))}
+          size="lg"
+          value={category}
+          width="100%"
+        />
+        <fieldset className="grid gap-2 text-sm font-semibold text-secondary ">
           <legend>Game mode</legend>
-          <div className="grid grid-cols-2 gap-2">
+          <SegmentedControl
+            label="Game mode"
+            layout="fill"
+            onChange={(value) => setMode(value as GameMode)}
+            value={mode}
+          >
             {modeOptions.map((item) => (
-              <button
+              <SegmentedControlItem
                 key={item.id}
-                type="button"
-                aria-pressed={mode === item.id}
-                onClick={() => setMode(item.id)}
-                className={`${mode === item.id ? primaryButtonClass : secondaryButtonClass} px-3 py-2.5`}
-              >
-                <span>{item.label}</span>
-                <span className="sr-only"> — {item.hint}</span>
-              </button>
+                label={item.label}
+                value={item.id}
+              />
             ))}
-          </div>
+          </SegmentedControl>
         </fieldset>
-        <fieldset className="grid gap-2 text-sm font-semibold text-[#4e4740] dark:text-[#c5cfda]">
+        <fieldset className="grid gap-2 text-sm font-semibold text-secondary ">
           <legend>Rounds</legend>
-          <div className="grid gap-2">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-2xl font-semibold tracking-[-0.03em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                {rounds} games
-              </span>
-              <span className="text-xs font-medium text-[#756d64] dark:text-[#9daab7]">
-                Choose your distance
-              </span>
-            </div>
-            <input
-              type="range"
-              min={0}
-              max={roundOptions.length - 1}
-              step={1}
-              value={roundOptions.indexOf(rounds)}
-              onChange={(event) =>
-                setRounds(roundOptions[Number(event.target.value)] ?? 3)
-              }
-              aria-label="Number of rounds"
-              aria-valuetext={`${rounds} games`}
-              className="h-2 w-full cursor-pointer accent-[#0f766e] dark:accent-[#55e7d5]"
-            />
-            <div className="grid grid-cols-3 text-xs font-semibold text-[#756d64] dark:text-[#9daab7]">
-              {roundOptions.map((count) => (
-                <span
-                  key={count}
-                  className={
-                    rounds === count
-                      ? "text-[#0f766e] dark:text-[#55e7d5]"
-                      : undefined
-                  }
-                >
-                  {count}
-                </span>
-              ))}
-            </div>
-          </div>
+          <SegmentedControl
+            label="Number of rounds"
+            layout="fill"
+            onChange={(value) => setRounds(Number(value) as typeof rounds)}
+            value={String(rounds)}
+          >
+            {roundOptions.map((count) => (
+              <SegmentedControlItem
+                key={count}
+                label={`${count} games`}
+                value={String(count)}
+              />
+            ))}
+          </SegmentedControl>
         </fieldset>
       </div>
       {inviteUrl ? (
-        <div className="grid gap-3 rounded-2xl border border-[#0f766e]/20 bg-[#0f766e]/7 p-4">
-          <p className="m-0 text-sm font-semibold text-[#1f625c] dark:text-[#9ef1e5]">
+        <div className="grid gap-3 rounded-2xl border border-accent-bg/20 bg-accent-bg/7 p-4">
+          <p className="m-0 text-sm font-semibold text-secondary ">
             Your duel is ready. Send this link to your opponent.
           </p>
           <div className="flex gap-2">
-            <input
-              readOnly
+            <TextInput
+              isLabelHidden
+              isReadOnly
+              label="Duel invite link"
               value={inviteUrl}
-              className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white/75 px-3 py-2 text-sm text-[#4e4740] outline-none dark:border-white/10 dark:bg-white/6 dark:text-[#dce6ee]"
+              width="100%"
             />
-            <button
-              type="button"
+            <Button
+              icon={copied ? <Check /> : <Copy />}
+              label={copied ? "Copied" : "Copy"}
               onClick={() => void copyInvite()}
-              className={secondaryButtonClass}
-              aria-label="Copy invite link"
-            >
-              {copied ? (
-                <Check className="size-4" />
-              ) : (
-                <Copy className="size-4" />
-              )}
-              {copied ? "Copied" : "Copy"}
-            </button>
-            <button
-              type="button"
+              tooltip="Copy invite link"
+              variant="secondary"
+            />
+            <Button
+              icon={<Share2 />}
+              label="Share"
               onClick={() => void shareInvite()}
-              className={primaryButtonClass}
-              aria-label="Share invite link"
-            >
-              <Share2 className="size-4" />
-              Share
-            </button>
+              variant="primary"
+            />
           </div>
           <a
             href={inviteUrl}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-[#0f766e] dark:text-[#55e7d5]"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-accent "
           >
             <Link2 className="size-4" />
             Open duel
           </a>
         </div>
       ) : (
-        <button
-          type="button"
-          disabled={isCreating}
+        <Button
+          icon={<Swords />}
+          isLoading={isCreating}
+          label="Create duel link"
           onClick={() => void createDuel()}
-          className={`${primaryButtonClass} w-full sm:w-fit`}
-        >
-          {isCreating ? (
-            <LoaderCircle className="size-4 animate-spin" />
-          ) : (
-            <Swords className="size-4" />
-          )}
-          {isCreating ? "Creating…" : "Create duel link"}
-        </button>
+          variant="primary"
+          width="100%"
+        />
       )}
       {error ? (
-        <p
-          role="alert"
-          className="m-0 text-sm font-medium text-rose-700 dark:text-rose-300"
-        >
+        <p role="alert" className="m-0 text-sm font-medium text-error">
           {error}
         </p>
       ) : null}
-    </section>
+    </Card>
   );
 }

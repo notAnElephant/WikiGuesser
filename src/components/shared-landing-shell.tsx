@@ -1,6 +1,10 @@
 "use client";
 
 import { GoogleOneTap } from "@clerk/nextjs";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { SelectableCard } from "@astryxdesign/core/SelectableCard";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti";
 import {
@@ -21,10 +25,7 @@ import {
 } from "lucide-react";
 
 import { DuelCreator } from "@/src/components/duel/duel-creator";
-import {
-  GAME_MODE_OPTIONS,
-  primaryButtonClass,
-} from "@/src/components/game-shell/config";
+import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
 import type {
@@ -97,9 +98,6 @@ const launcherModeCopy: Record<
   },
 };
 
-const launcherSecondaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-full border border-[#0f766e]/36 px-5 py-3 text-sm font-semibold text-[#0f766e] transition hover:-translate-y-0.5 hover:border-[#0f766e]/56 hover:bg-[#0f766e]/6 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 dark:border-[#24d4c2]/42 dark:text-[#55e7d5] dark:hover:border-[#24d4c2]/64 dark:hover:bg-[#24d4c2]/7";
-
 interface GameLauncherProps {
   claimBanner: string | null;
   continentOptions: ContinentOption[];
@@ -141,24 +139,24 @@ export function GameLauncher({
   return (
     <section className="grid gap-5 pb-3 sm:gap-7">
       <header className="flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between">
-        <h1 className="m-0 font-serif-display text-[clamp(3rem,9vw,5.4rem)] font-semibold leading-[0.88] tracking-[-0.065em] text-[#1f1b17] dark:text-[#f5f7fb]">
+        <h1 className="m-0 font-heading text-4xl sm:text-5xl font-semibold leading-tight tracking-tight text-primary">
           Pick your game
         </h1>
-        <div className="inline-flex items-center gap-2 pb-1 text-sm font-medium text-[#6b6259] dark:text-[#9aa9bb]">
+        <div className="inline-flex items-center gap-2 pb-1 text-sm font-medium text-secondary">
           <CalendarDays
             aria-hidden="true"
-            className="size-4 text-[#0f766e] dark:text-[#24d4c2]"
+            className="size-4 text-accent"
             strokeWidth={2.1}
           />
           Daily resets in
-          <strong className="font-semibold text-[#0f766e] dark:text-[#55e7d5]">
+          <strong className="font-semibold text-accent">
             {resetCountdown}
           </strong>
         </div>
       </header>
 
       {claimBanner ? (
-        <div className="rounded-2xl border border-emerald-500/18 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-400/18 dark:bg-emerald-400/10 dark:text-emerald-200">
+        <div className="rounded-2xl border border-success bg-success-muted px-4 py-3 text-sm font-medium text-success">
           {claimBanner}
         </div>
       ) : null}
@@ -249,101 +247,59 @@ function ContinentPickerDialog({
   totalCountryCount,
 }: ContinentPickerDialogProps) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,20,14,0.46)] p-4 backdrop-blur-sm dark:bg-[rgba(3,7,14,0.62)]"
-      onClick={onClose}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          onClose();
-        }
+    <Dialog
+      isOpen
+      maxHeight="calc(100dvh - var(--spacing-8))"
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
       }}
+      padding={6}
+      width="42rem"
     >
-      <div
-        aria-describedby="continent-picker-description"
-        aria-labelledby="continent-picker-title"
-        aria-modal="true"
-        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-4xl border border-[rgba(17,94,89,0.14)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(255,247,238,0.95))] p-6 shadow-[0_20px_70px_rgba(29,22,14,0.26)] dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(14,22,34,0.98),rgba(19,29,43,0.95))] dark:shadow-[0_20px_70px_rgba(0,0,0,0.46)] sm:p-7"
-        onClick={(event) => event.stopPropagation()}
-        role="dialog"
-      >
-        <button
-          aria-label="Close continent picker"
-          className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full border border-black/8 bg-white/72 text-[#6b6259] transition hover:bg-white hover:text-[#1f1b17] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f766e] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb] dark:hover:bg-white/10 dark:hover:text-[#f5f7fb]"
-          onClick={onClose}
-          type="button"
+      <DialogHeader
+        onOpenChange={(isOpen) => {
+          if (!isOpen) onClose();
+        }}
+        startContent={<Globe2 aria-hidden="true" className="text-accent" />}
+        subtitle="Pick the country pool for this round."
+        title="Choose a continent"
+      />
+      <div className="grid gap-3 pt-4 sm:grid-cols-2">
+        <SelectableCard
+          isSelected={selectedContinent === null}
+          label="All continents"
+          onChange={() => onSelect(null)}
+          padding={4}
         >
-          <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
-        </button>
-
-        <div className="flex items-start gap-4 pr-10">
-          <span className="inline-flex size-14 shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.18))] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.14))]">
-            <Globe2
-              aria-hidden="true"
-              className="size-6 text-[#1f1b17] dark:text-[#f5f7fb]"
-              strokeWidth={2.1}
-            />
+          <strong className="block font-heading text-xl text-primary">
+            All continents
+          </strong>
+          <span className="mt-1 block text-sm text-secondary">
+            {totalCountryCount} countries
           </span>
-          <div className="min-w-0">
-            <p className="m-0 text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">
-              {launcherModeCopy[mode].freeTitle} free play
-            </p>
-            <h2
-              className="m-0 mt-2 font-serif-display text-[clamp(2rem,8vw,3.1rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17] dark:text-[#f5f7fb]"
-              id="continent-picker-title"
-            >
-              Choose a continent
-            </h2>
-            <p
-              className="m-0 mt-3 text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]"
-              id="continent-picker-description"
-            >
-              Pick the country pool for this round.
-            </p>
-          </div>
-        </div>
+        </SelectableCard>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button
-            autoFocus={selectedContinent === null}
-            className={`rounded-[22px] border p-4 text-left transition hover:-translate-y-0.5 hover:border-[#0f766e]/42 hover:bg-[#0f766e]/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f766e] dark:hover:border-[#24d4c2]/48 dark:hover:bg-[#24d4c2]/7 ${
-              selectedContinent === null
-                ? "border-[#0f766e]/40 bg-[#0f766e]/7 dark:border-[#24d4c2]/46 dark:bg-[#24d4c2]/8"
-                : "border-black/8 bg-white/68 dark:border-white/10 dark:bg-white/5"
-            }`}
-            onClick={() => onSelect(null)}
-            type="button"
+        {continentOptions.map((option) => (
+          <SelectableCard
+            isSelected={selectedContinent === option.id}
+            key={option.id}
+            label={option.label}
+            onChange={() => onSelect(option.id)}
+            padding={4}
           >
-            <strong className="block font-serif-display text-xl tracking-[-0.035em] text-[#1f1b17] dark:text-[#f5f7fb]">
-              All continents
+            <strong className="block font-heading text-xl text-primary">
+              {option.label}
             </strong>
-            <span className="mt-1 block text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-              {totalCountryCount} countries
+            <span className="mt-1 block text-sm text-secondary">
+              {option.entityCount} countries
             </span>
-          </button>
-
-          {continentOptions.map((option) => (
-            <button
-              autoFocus={selectedContinent === option.id}
-              className={`rounded-[22px] border p-4 text-left transition hover:-translate-y-0.5 hover:border-[#0f766e]/42 hover:bg-[#0f766e]/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f766e] dark:hover:border-[#24d4c2]/48 dark:hover:bg-[#24d4c2]/7 ${
-                selectedContinent === option.id
-                  ? "border-[#0f766e]/40 bg-[#0f766e]/7 dark:border-[#24d4c2]/46 dark:bg-[#24d4c2]/8"
-                  : "border-black/8 bg-white/68 dark:border-white/10 dark:bg-white/5"
-              }`}
-              key={option.id}
-              onClick={() => onSelect(option.id)}
-              type="button"
-            >
-              <strong className="block font-serif-display text-xl tracking-[-0.035em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                {option.label}
-              </strong>
-              <span className="mt-1 block text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-                {option.entityCount} countries
-              </span>
-            </button>
-          ))}
-        </div>
+          </SelectableCard>
+        ))}
       </div>
-    </div>
+      <p className="m-0 pt-4 text-xs text-secondary">
+        {launcherModeCopy[mode].freeTitle} free play
+      </p>
+    </Dialog>
   );
 }
 
@@ -363,30 +319,26 @@ function LauncherBand({
   const BandIcon = isDaily ? CalendarDays : Gamepad2;
 
   return (
-    <section
-      className={`overflow-hidden rounded-[30px] border ${
-        isDaily
-          ? "border-[#0f766e]/24 bg-[linear-gradient(145deg,rgba(15,118,110,0.08),rgba(255,255,255,0.8))] shadow-[0_20px_48px_rgba(15,118,110,0.08)] dark:border-[#24d4c2]/22 dark:bg-[linear-gradient(145deg,rgba(36,212,194,0.075),rgba(13,21,32,0.92))] dark:shadow-[0_20px_48px_rgba(0,0,0,0.22)]"
-          : "border-black/10 bg-white/62 dark:border-white/10 dark:bg-white/[0.025]"
-      }`}
+    <Card
+      className="overflow-hidden"
+      elevation={isDaily ? "low" : "none"}
+      padding={0}
     >
       <div className="grid lg:grid-cols-[minmax(230px,0.72fr)_minmax(0,1.6fr)]">
-        <div className="flex flex-col justify-center border-b border-black/8 p-5 dark:border-white/10 sm:p-6 lg:border-b-0 lg:border-r">
-          <span className="mb-4 hidden size-12 items-center justify-center rounded-full border border-[#0f766e]/24 text-[#0f766e] dark:border-[#24d4c2]/32 dark:text-[#55e7d5] lg:inline-flex">
+        <div className="flex flex-col justify-center border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r">
+          <span className="mb-4 hidden size-12 items-center justify-center rounded-md border border-border bg-surface text-accent lg:inline-flex">
             <BandIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />
           </span>
-          <h2 className="m-0 font-serif-display text-[clamp(2.15rem,6vw,3.45rem)] font-semibold tracking-[-0.055em] text-[#1f1b17] dark:text-[#f5f7fb]">
+          <h2 className="m-0 font-heading text-3xl sm:text-4xl font-semibold tracking-tight text-primary">
             {title}
           </h2>
-          <p className="m-0 mt-2 text-[0.98rem] leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
+          <p className="m-0 mt-2 text-base leading-6 text-secondary">
             {description}
           </p>
         </div>
-        <div className="divide-y divide-black/8 px-4 dark:divide-white/10 sm:px-6">
-          {children}
-        </div>
+        <div className="divide-y divide-border px-4 sm:px-6">{children}</div>
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -414,14 +366,14 @@ function LauncherRow({
   return (
     <div className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:py-6">
       <div className="flex min-w-0 items-center gap-4">
-        <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-full border border-[#0f766e]/24 text-[#0f766e] dark:border-[#24d4c2]/32 dark:text-[#55e7d5]">
+        <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-accent">
           <ModeIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />
         </span>
         <div className="min-w-0">
-          <h3 className="m-0 font-serif-display text-[1.55rem] font-semibold tracking-[-0.035em] text-[#1f1b17] dark:text-[#f5f7fb]">
+          <h3 className="m-0 font-heading text-xl font-semibold tracking-tight text-primary">
             {title}
           </h3>
-          <p className="m-0 mt-1 text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
+          <p className="m-0 mt-1 text-sm leading-6 text-secondary">
             {description}
           </p>
         </div>
@@ -429,28 +381,28 @@ function LauncherRow({
 
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
         {status ? (
-          <span className="whitespace-nowrap text-sm font-medium text-[#6b6259] dark:text-[#9aa9bb]">
+          <span className="whitespace-nowrap text-sm font-medium text-secondary">
             {status}
           </span>
         ) : null}
-        <button
-          aria-label={`${actionLabel}: ${title}`}
-          className={`${variant === "primary" ? primaryButtonClass : launcherSecondaryButtonClass} w-full min-w-40 whitespace-nowrap px-5 disabled:hover:translate-y-0 sm:w-auto`}
-          disabled={disabled}
+        <Button
+          className="min-w-40 whitespace-nowrap"
+          icon={
+            disabled && actionLabel !== "Played" ? (
+              <LoaderCircle aria-hidden="true" className="animate-spin" />
+            ) : (
+              <Play aria-hidden="true" />
+            )
+          }
+          isDisabled={disabled}
+          label={`${actionLabel}: ${title}`}
           onClick={onClick}
-          type="button"
+          size="lg"
+          variant={variant}
+          width="100%"
         >
-          {disabled && actionLabel !== "Played" ? (
-            <LoaderCircle
-              aria-hidden="true"
-              className="size-4 animate-spin"
-              strokeWidth={2.2}
-            />
-          ) : (
-            <Play aria-hidden="true" className="size-4" strokeWidth={2.2} />
-          )}
           {actionLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );

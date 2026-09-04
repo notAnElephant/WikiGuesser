@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  primaryButtonClass,
-  secondaryButtonClass,
-  surfaceClass,
-} from "@/src/components/game-shell/config";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
 import type {
   ActiveRound,
   GuessAttempt,
@@ -179,17 +176,19 @@ export function GamePlayView({
   return (
     <div className="grid min-h-[calc(100dvh-1rem)] gap-3 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
       <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(400px,0.75fr)]">
-        <section
-          className={`${surfaceClass} grid content-start gap-2.5 p-3 sm:gap-4 sm:p-5`}
+        <Card
+          className="grid content-start gap-2.5 p-3 sm:gap-4 sm:p-5"
+          elevation="low"
+          padding={0}
         >
           <div className="min-w-0">
-            <h1 className="m-0 font-serif-display text-[1.9rem] font-semibold leading-[0.94] tracking-tighter text-[#1f1b17] dark:text-[#f5f7fb] sm:text-[clamp(2rem,4vw,2.6rem)]">
+            <h1 className="m-0 font-heading text-2xl font-semibold leading-tight tracking-tighter text-primary sm:text-3xl">
               {currentMode === "blurred-lines"
                 ? "Choose your clues"
                 : "Follow the clues"}
             </h1>
             {currentMode === "blurred-lines" ? (
-              <p className="m-0 mt-1 text-xs leading-4 text-[#6b6259] dark:text-[#9aa9bb] sm:mt-2 sm:text-sm">
+              <p className="m-0 mt-1 text-xs leading-4 text-secondary sm:mt-2 sm:text-sm">
                 Reveal only what you need.
               </p>
             ) : null}
@@ -208,10 +207,10 @@ export function GamePlayView({
                 aria-hidden="true"
                 className={`h-2.5 rounded-full sm:h-2 ${
                   clue.isRevealed
-                    ? "bg-[#0f766e] dark:bg-[#24d4c2]"
+                    ? "bg-accent-bg"
                     : clue.spoilerLevel === "late"
-                      ? "bg-[#d6d3d1] dark:bg-white/16"
-                      : "bg-[#d9d1c3] dark:bg-white/12"
+                      ? "bg-muted"
+                      : "bg-muted"
                 }`}
                 key={clue.key}
               />
@@ -219,14 +218,14 @@ export function GamePlayView({
           </div>
 
           {currentMode === "blurred-lines" ? (
-            <div className="overflow-hidden rounded-[28px] border border-[#a2a9b1] bg-[#f8f9fa] shadow-[0_18px_38px_rgba(60,64,67,0.08)] dark:border-white/10 dark:bg-[#111a27] dark:shadow-[0_18px_38px_rgba(0,0,0,0.34)]">
-              <table className="w-full border-collapse text-left text-sm text-[#202122] dark:text-[#edf3fa]">
+            <div className="overflow-hidden rounded-xl border border-border bg-muted shadow-md  ">
+              <table className="w-full border-collapse text-left text-sm text-primary">
                 <thead>
-                  <tr className="bg-white text-xs uppercase tracking-[0.16em] text-[#54595d] dark:bg-[#101926] dark:text-[#99a9bc]">
-                    <th className="w-[38%] border-b border-r border-[#c8ccd1] px-4 py-3 font-semibold dark:border-white/10">
+                  <tr className="bg-surface text-xs uppercase tracking-wider text-secondary ">
+                    <th className="w-[38%] border-b border-r border-border px-4 py-3 font-semibold">
                       Field
                     </th>
-                    <th className="border-b border-[#c8ccd1] px-4 py-3 font-semibold dark:border-white/10">
+                    <th className="border-b border-border px-4 py-3 font-semibold">
                       Reveal
                     </th>
                   </tr>
@@ -241,10 +240,10 @@ export function GamePlayView({
 
                     return (
                       <tr
-                        className={`${index % 2 === 0 ? "bg-white dark:bg-[#121c2a]" : "bg-[#f8f9fa] dark:bg-[#162231]"} ${isLocked ? "opacity-60" : ""}`}
+                        className={`${index % 2 === 0 ? "bg-surface " : "bg-muted "} ${isLocked ? "opacity-60" : ""}`}
                         key={clue.key}
                       >
-                        <th className="border-r border-t border-[#c8ccd1] px-4 py-3 align-top font-semibold text-[#202122] dark:border-white/10 dark:text-[#edf3fa]">
+                        <th className="border-r border-t border-border px-4 py-3 align-top font-semibold text-primary">
                           <span className="inline-flex items-center gap-2">
                             <ClueIcon
                               aria-hidden="true"
@@ -254,10 +253,10 @@ export function GamePlayView({
                             <span>{clue.label}</span>
                           </span>
                         </th>
-                        <td className="border-t border-[#c8ccd1] px-4 py-3 align-top dark:border-white/10">
+                        <td className="border-t border-border px-4 py-3 align-top">
                           {clue.isRevealed ? (
                             <div className="w-full">
-                              <span className="block min-w-0 text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">
+                              <span className="block min-w-0 text-base leading-7 text-primary">
                                 {renderClueValue(clue)}
                               </span>
                             </div>
@@ -267,7 +266,7 @@ export function GamePlayView({
                                 <span className="min-w-0">
                                   {renderHiddenCluePlaceholder(clue, true)}
                                 </span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(248,250,252,0.88)] px-2 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#54595d] dark:bg-[rgba(15,23,36,0.88)] dark:text-[#99a9bc]">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold uppercase tracking-wider text-secondary ">
                                   <Lock
                                     aria-hidden="true"
                                     className="size-3"
@@ -293,7 +292,7 @@ export function GamePlayView({
                                 </button>
                                 <button
                                   aria-label={`Reveal ${clue.label}`}
-                                  className="inline-flex items-center gap-1 rounded-full bg-[rgba(248,250,252,0.88)] px-2 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[#54595d] transition duration-150 hover:-translate-y-0.5 hover:bg-white dark:bg-[rgba(15,23,36,0.88)] dark:text-[#c7d3e2] dark:hover:bg-[rgba(30,41,59,0.96)]"
+                                  className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold uppercase tracking-wider text-secondary transition duration-150 hover:-translate-y-0.5 hover:bg-surface  hover:bg-card"
                                   disabled={isBusy}
                                   onClick={() => revealClue(clue.key)}
                                   type="button"
@@ -308,7 +307,7 @@ export function GamePlayView({
                               </div>
                             )
                           ) : (
-                            <span className="text-[1.02rem] leading-7 text-[#202122] dark:text-[#edf3fa]">
+                            <span className="text-base leading-7 text-primary">
                               {renderClueValue(clue)}
                             </span>
                           )}
@@ -326,15 +325,15 @@ export function GamePlayView({
 
                 return (
                   <li
-                    className={`rounded-[22px] border p-3 sm:rounded-[28px] sm:p-4 ${
+                    className={`rounded-lg border p-3 sm:rounded-xl sm:p-4 ${
                       index === visibleClassicClues.length - 1 && round
-                        ? "border-[#0f766e]/16 bg-[linear-gradient(160deg,rgba(15,118,110,0.12),rgba(255,255,255,0.92))] dark:border-[#24d4c2]/18 dark:bg-[linear-gradient(160deg,rgba(36,212,194,0.12),rgba(17,24,39,0.92))]"
-                        : "border-black/8 bg-white/84 dark:border-white/10 dark:bg-[rgba(255,255,255,0.05)]"
+                        ? "border-accent-bg bg-accent-muted"
+                        : "border-border bg-card"
                     }`}
                     key={clue.key}
                   >
                     <div className="flex items-start gap-3 sm:gap-4">
-                      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] text-[#1f1b17] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))] dark:text-[#f5f7fb] sm:size-11 sm:rounded-2xl">
+                      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent-muted text-primary bg-accent-muted sm:size-11 sm:rounded-2xl">
                         <ClueIcon
                           aria-hidden="true"
                           className="size-4 sm:size-5"
@@ -342,13 +341,13 @@ export function GamePlayView({
                         />
                       </span>
                       <div className="min-w-0">
-                        <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
-                          <span className="inline-flex size-5 items-center justify-center rounded-full bg-black/5 text-[0.65rem] dark:bg-white/8">
+                        <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-secondary">
+                          <span className="inline-flex size-5 items-center justify-center rounded-full bg-neutral text-xs">
                             {index + 1}
                           </span>
                           {clue.label}
                         </div>
-                        <strong className="mt-1.5 block text-[1.18rem] leading-[1.08] text-[#1f1b17] dark:text-[#f5f7fb] sm:mt-2 sm:text-[clamp(1.28rem,4vw,1.82rem)]">
+                        <strong className="mt-1.5 block text-lg leading-tight text-primary sm:mt-2 sm:text-2xl">
                           {renderClueValue(clue)}
                         </strong>
                       </div>
@@ -358,16 +357,16 @@ export function GamePlayView({
               })}
 
               {visibleClassicClues.length === 0 ? (
-                <li className="grid min-h-48 place-items-center rounded-[28px] border border-dashed border-black/10 bg-white/78 p-6 text-center dark:border-white/12 dark:bg-[rgba(255,255,255,0.05)]">
+                <li className="grid min-h-48 place-items-center rounded-xl border border-dashed border-border bg-card p-6 text-center ">
                   <div className="grid gap-3">
-                    <span className="mx-auto inline-flex size-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))]">
+                    <span className="mx-auto inline-flex size-12 items-center justify-center rounded-2xl bg-accent-muted">
                       <Sparkles
                         aria-hidden="true"
-                        className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
+                        className="size-5 text-primary"
                         strokeWidth={2.1}
                       />
                     </span>
-                    <strong className="font-serif-display text-[1.5rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
+                    <strong className="font-heading text-xl tracking-tight text-primary">
                       First clue coming up
                     </strong>
                   </div>
@@ -375,7 +374,7 @@ export function GamePlayView({
               ) : null}
             </ol>
           )}
-        </section>
+        </Card>
 
         <aside className="grid content-start gap-4">
           {isCountryRound &&
@@ -396,10 +395,12 @@ export function GamePlayView({
           ) : null}
 
           {round ? (
-            <div
-              className={`${surfaceClass} grid gap-4 p-4 ${isCountryListOpen ? "relative z-[90]" : ""}`}
+            <Card
+              className={`grid gap-4 p-4 ${isCountryListOpen ? "relative z-[90]" : ""}`}
+              elevation="low"
+              padding={0}
             >
-              <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
+              <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
                 <Target
                   aria-hidden="true"
                   className="size-4"
@@ -412,7 +413,7 @@ export function GamePlayView({
                 <div className="relative">
                   <Search
                     aria-hidden="true"
-                    className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#6b6259] dark:text-[#9aa9bb]"
+                    className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-secondary"
                     strokeWidth={2.2}
                   />
                   <input
@@ -425,7 +426,7 @@ export function GamePlayView({
                     }
                     aria-label="Submit your entity guess"
                     autoComplete="off"
-                    className="w-full rounded-[20px] border border-black/10 bg-white/86 px-12 py-4 text-[#1f1b17] outline-none transition focus:border-[#0f766e] focus:ring-2 focus:ring-[rgba(15,118,110,0.22)] dark:border-white/10 dark:bg-[rgba(255,255,255,0.06)] dark:text-[#f5f7fb] dark:focus:border-[#24d4c2] dark:focus:ring-[rgba(36,212,194,0.22)]"
+                    className="w-full rounded-lg border border-border bg-card px-12 py-4 text-primary outline-none transition focus:border-accent-bg focus:ring-2 focus:ring-accent-muted   dark:focus:ring-accent-muted"
                     disabled={isBusy}
                     onBlur={() => setIsCountryListOpen(false)}
                     onChange={(event) => {
@@ -444,13 +445,13 @@ export function GamePlayView({
                   matchingCountryOptions.length > 0 ? (
                     <div
                       aria-label="Country suggestions"
-                      className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-[min(16rem,40dvh)] touch-pan-y overflow-y-auto overscroll-contain rounded-[20px] border border-black/10 bg-white p-1.5 shadow-[0_18px_45px_rgba(31,27,23,0.2)] dark:border-white/12 dark:bg-[#172231]"
+                      className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-[min(16rem,40dvh)] touch-pan-y overflow-y-auto overscroll-contain rounded-lg border border-border bg-surface p-1.5 shadow-md "
                       id="country-guess-options"
                       role="listbox"
                     >
                       {matchingCountryOptions.map((option) => (
                         <button
-                          className="block w-full rounded-2xl px-3 py-3 text-left text-sm font-medium text-[#1f1b17] hover:bg-[#0f766e]/8 focus:bg-[#0f766e]/8 focus:outline-none dark:text-[#f5f7fb] dark:hover:bg-white/8 dark:focus:bg-white/8"
+                          className="block w-full rounded-2xl px-3 py-3 text-left text-sm font-medium text-primary hover:bg-accent-bg/8 focus:bg-accent-bg/8 focus:outline-none dark:hover:bg-surface/8 dark:focus:bg-surface/8"
                           key={option}
                           onMouseDown={(event) => event.preventDefault()}
                           onClick={() => {
@@ -468,7 +469,7 @@ export function GamePlayView({
                 </div>
 
                 {validationMessage ? (
-                  <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/18 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-warning bg-warning-muted px-3 py-2 text-sm font-medium text-warning">
                     <CircleAlert
                       aria-hidden="true"
                       className="size-4 shrink-0"
@@ -477,7 +478,7 @@ export function GamePlayView({
                     {validationMessage}
                   </div>
                 ) : !round.canGuess ? (
-                  <div className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/76 px-3 py-2 text-sm font-medium text-[#6b6259] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb]">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm font-medium text-secondary">
                     {round.mode === "blurred-lines" ? (
                       <Eye
                         aria-hidden="true"
@@ -497,44 +498,28 @@ export function GamePlayView({
                   </div>
                 ) : null}
 
-                <button
-                  className={`${primaryButtonClass} w-full`}
-                  disabled={!canSubmitGuess}
+                <Button
+                  icon={<ArrowRight aria-hidden="true" />}
+                  isDisabled={!canSubmitGuess}
+                  isLoading={isBusy}
+                  label={guessButtonLabel}
                   type="submit"
-                >
-                  {isBusy ? (
-                    <LoaderCircle
-                      aria-hidden="true"
-                      className="size-4 animate-spin"
-                      strokeWidth={2.2}
-                    />
-                  ) : (
-                    <ArrowRight
-                      aria-hidden="true"
-                      className="size-4"
-                      strokeWidth={2.3}
-                    />
-                  )}
-                  {guessButtonLabel}
-                </button>
-                <button
-                  className={`${secondaryButtonClass} w-full`}
-                  disabled={isBusy}
+                  variant="primary"
+                  width="100%"
+                />
+                <Button
+                  icon={<Ban aria-hidden="true" />}
+                  isDisabled={isBusy}
+                  label="Give up"
                   onClick={giveUpRound}
-                  type="button"
-                >
-                  <Ban
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={2.2}
-                  />
-                  Give up
-                </button>
+                  variant="secondary"
+                  width="100%"
+                />
               </form>
 
               {guessedEntities.length > 0 ? (
                 <div className="grid gap-2">
-                  <div className="text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-secondary">
                     Tried
                   </div>
                   <ol className="grid gap-2">
@@ -546,14 +531,14 @@ export function GamePlayView({
 
                       return (
                         <li
-                          className="flex items-center justify-between gap-3 rounded-[18px] border border-[rgba(220,38,38,0.14)] bg-[rgba(254,242,242,0.95)] px-3 py-2.5 text-sm font-medium text-[#991b1b] dark:border-[rgba(248,113,113,0.2)] dark:bg-[rgba(127,29,29,0.18)] dark:text-[#fca5a5]"
+                          className="flex items-center justify-between gap-3 rounded-lg border border-error bg-error-muted text-error"
                           key={attempt.name}
                         >
                           <span>{attempt.name}</span>
                           {DirectionIcon && directionMeta ? (
                             <span
                               aria-label={`The goal country is ${directionMeta.label} of ${attempt.name}`}
-                              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-white/80 text-[#b91c1c] shadow-sm dark:bg-white/10 dark:text-[#fca5a5]"
+                              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-error shadow-sm "
                               title={`Goal is ${directionMeta.label}`}
                             >
                               <DirectionIcon
@@ -569,35 +554,29 @@ export function GamePlayView({
                   </ol>
                 </div>
               ) : null}
-            </div>
+            </Card>
           ) : null}
 
-          <div className={`${surfaceClass} grid gap-3 p-4`}>
+          <Card className="grid gap-3" elevation="low" padding={4}>
             {showRestartButton ? (
-              <button
-                className={`${secondaryButtonClass} w-full`}
-                disabled={isBusy}
+              <Button
+                icon={<RotateCcw aria-hidden="true" />}
+                isDisabled={isBusy}
+                label={restartButtonLabel}
                 onClick={startRound}
-                type="button"
-              >
-                <RotateCcw
-                  aria-hidden="true"
-                  className="size-4"
-                  strokeWidth={2.2}
-                />
-                {restartButtonLabel}
-              </button>
+                variant="secondary"
+                width="100%"
+              />
             ) : null}
-            <button
-              className={`${secondaryButtonClass} w-full`}
-              disabled={isBusy}
+            <Button
+              icon={<House aria-hidden="true" />}
+              isDisabled={isBusy}
+              label={homeButtonLabel}
               onClick={clearForCategoryChoice}
-              type="button"
-            >
-              <House aria-hidden="true" className="size-4" strokeWidth={2.2} />
-              {homeButtonLabel}
-            </button>
-          </div>
+              variant="secondary"
+              width="100%"
+            />
+          </Card>
         </aside>
       </div>
     </div>

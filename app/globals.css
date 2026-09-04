@@ -1,4 +1,10 @@
-@import "tailwindcss";
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "@astryxdesign/core/reset.css";
+@import "@astryxdesign/core/astryx.css";
+@import "../src/themes/butter/butter.css";
+@import "@astryxdesign/core/tailwind-theme.css";
+@import "tailwindcss/utilities.css" layer(utilities);
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
@@ -12,6 +18,21 @@
       radial-gradient(circle at bottom, rgba(255, 255, 255, 0.32), transparent 28%),
       linear-gradient(180deg, #fbf5eb 0%, #f2eadb 100%);
     --app-foreground: #1f1b17;
+    --wg-map-water: #dce9ed;
+    --wg-map-land: #fbf7ef;
+    --wg-map-border: #8b9aa0;
+    --wg-map-hover: #99d8ce;
+    --wg-map-guess: #dc2626;
+    --wg-map-solution: #2563eb;
+  }
+
+  .dark {
+    --wg-map-water: #172430;
+    --wg-map-land: #282a24;
+    --wg-map-border: #73776d;
+    --wg-map-hover: #466865;
+    --wg-map-guess: #f87171;
+    --wg-map-solution: #93c5fd;
   }
 
   * {
@@ -71,12 +92,16 @@
   body {
     margin: 0;
     min-height: 100vh;
+    background: var(--color-background-body);
+    color: var(--color-text-primary);
   }
 }
 
 @layer utilities {
-  .font-serif-display {
-    font-family: var(--font-serif);
+  .clue-redaction {
+    background: var(--color-neutral);
+    filter: blur(var(--spacing-1));
+    text-shadow: 0 0 var(--spacing-4) var(--color-text-primary);
   }
 
   .scrollbar-hidden {
@@ -153,12 +178,12 @@
   }
 
   .map-world-canvas {
-    background: #dce9ed;
+    background: var(--wg-map-water);
   }
 
   .map-country {
-    fill: #fbf7ef;
-    stroke: #8b9aa0;
+    fill: var(--wg-map-land);
+    stroke: var(--wg-map-border);
     stroke-width: 0.72px;
     transition:
       fill 160ms ease,
@@ -168,7 +193,7 @@
   .map-world-guessing
     .map-country:not(.map-country--guessed):not(.map-country--solution):hover {
     cursor: pointer;
-    fill: #99d8ce;
+    fill: var(--wg-map-hover);
   }
 
   .dark
@@ -212,12 +237,12 @@
   }
 
   .dark .map-world-canvas {
-    background: #0d1b2a;
+    background: var(--wg-map-water);
   }
 
   .dark .map-country {
-    fill: #172838;
-    stroke: #617487;
+    fill: var(--wg-map-land);
+    stroke: var(--wg-map-border);
   }
 
   .dark .map-country--guessed {

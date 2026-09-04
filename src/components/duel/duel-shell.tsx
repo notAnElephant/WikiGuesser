@@ -1,10 +1,8 @@
 "use client";
 
-import {
-  primaryButtonClass,
-  secondaryButtonClass,
-  surfaceClass,
-} from "@/src/components/game-shell/config";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { TextInput } from "@astryxdesign/core/TextInput";
 import {
   Check,
   Clipboard,
@@ -266,20 +264,20 @@ export function DuelShell({ inviteCode }: DuelShellProps) {
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-3 pb-10 pt-24 sm:px-4 sm:pb-12 sm:pt-28">
       <div className="mb-5 flex items-center justify-between gap-3 px-1 sm:mb-7">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[#6b6259] dark:text-[#9aa9bb]">
-          <span className="inline-flex size-9 items-center justify-center rounded-full bg-[#0f766e]/10 text-[#0f766e] dark:bg-[#24d4c2]/12 dark:text-[#8ff4e7]">
+        <div className="flex items-center gap-2 text-sm font-semibold text-secondary">
+          <span className="inline-flex size-9 items-center justify-center rounded-full bg-accent-bg/10 text-accent">
             <Swords className="size-4" />
           </span>
           Duel mode
         </div>
-        <span className="rounded-full border border-black/8 bg-white/55 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#81776d] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb]">
+        <span className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-secondary">
           #{duel.inviteCode}
         </span>
       </div>
 
       {error ? (
         <div
-          className="mb-4 rounded-2xl border border-[#f59e0b]/30 bg-[#fef3c7]/70 px-4 py-3 text-sm text-[#92400e] dark:bg-[#451a03]/40 dark:text-[#fcd34d]"
+          className="mb-4 rounded-2xl border border-warning bg-warning-muted text-warning"
           role="alert"
         >
           {error}
@@ -355,12 +353,14 @@ export function DuelShell({ inviteCode }: DuelShellProps) {
 function LoadingState() {
   return (
     <main className="grid min-h-screen place-items-center px-4 pt-20">
-      <div
-        className={`${surfaceClass} flex items-center gap-3 px-5 py-4 text-sm text-[#6b6259] dark:text-[#b7c4d1]`}
+      <Card
+        className="flex items-center gap-3 text-sm text-secondary"
+        elevation="low"
+        padding={5}
       >
-        <LoaderCircle className="size-4 animate-spin text-[#0f766e]" /> Loading
+        <LoaderCircle className="size-4 animate-spin text-accent" /> Loading
         duel…
-      </div>
+      </Card>
     </main>
   );
 }
@@ -374,18 +374,23 @@ function ErrorState({
 }) {
   return (
     <main className="mx-auto grid min-h-screen max-w-xl place-items-center px-4 pt-20">
-      <div className={`${surfaceClass} w-full p-7 text-center sm:p-10`}>
-        <Shield className="mx-auto size-8 text-[#b45309]" />
-        <h1 className="mt-4 font-serif-display text-3xl font-semibold">
+      <Card
+        className="w-full p-7 text-center sm:p-10"
+        elevation="low"
+        padding={0}
+      >
+        <Shield className="mx-auto size-8 text-warning" />
+        <h1 className="mt-4 font-heading text-3xl font-semibold">
           Duel unavailable
         </h1>
-        <p className="mt-2 text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-          {message}
-        </p>
-        <button className={`${primaryButtonClass} mt-6`} onClick={onRetry}>
-          Try again
-        </button>
-      </div>
+        <p className="mt-2 text-sm text-secondary">{message}</p>
+        <Button
+          className="mt-6"
+          label="Try again"
+          onClick={onRetry}
+          variant="primary"
+        />
+      </Card>
     </main>
   );
 }
@@ -400,41 +405,40 @@ function InviteState({
   onAccept: () => void;
 }) {
   return (
-    <section className={`${surfaceClass} mx-auto max-w-3xl overflow-hidden`}>
-      <div className="bg-[linear-gradient(135deg,rgba(15,118,110,0.12),rgba(245,158,11,0.12),transparent)] p-6 sm:p-10">
-        <div className="flex size-14 items-center justify-center rounded-[20px] bg-[#0f766e] text-white shadow-[0_14px_32px_rgba(15,118,110,0.24)] dark:bg-[#24d4c2] dark:text-[#082825]">
+    <Card
+      className="mx-auto max-w-3xl overflow-hidden"
+      elevation="low"
+      padding={0}
+    >
+      <div className="bg-accent-muted p-6 sm:p-10">
+        <div className="flex size-14 items-center justify-center rounded-lg bg-accent-bg text-on-accent shadow-md ">
           <Swords className="size-7" />
         </div>
-        <p className="mt-7 text-xs font-bold uppercase tracking-[0.18em] text-[#0f766e] dark:text-[#8ff4e7]">
+        <p className="mt-7 text-xs font-bold uppercase tracking-wider text-accent">
           You’ve been challenged
         </p>
-        <h1 className="mt-2 max-w-xl font-serif-display text-4xl font-semibold leading-[0.98] tracking-tight sm:text-6xl">
+        <h1 className="mt-2 max-w-xl font-heading text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
           Settle it over {duel.settings.rounds} rounds.
         </h1>
-        <p className="mt-5 max-w-lg text-base leading-7 text-[#6b6259] dark:text-[#b7c4d1]">
+        <p className="mt-5 max-w-lg text-base leading-7 text-secondary">
           {playerLabel(duel.challenger, "A player")} picked a duel in{" "}
           {formatCategory(duel.settings.category)}. Every round is the same for
           both players.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
-          <button
-            className={primaryButtonClass}
-            disabled={isBusy}
+          <Button
+            icon={<LogIn />}
+            isLoading={isBusy}
+            label="Accept challenge"
             onClick={onAccept}
-          >
-            {isBusy ? (
-              <LoaderCircle className="size-4 animate-spin" />
-            ) : (
-              <LogIn className="size-4" />
-            )}{" "}
-            Accept challenge
-          </button>
-          <span className="text-xs text-[#81776d] dark:text-[#9aa9bb]">
+            variant="primary"
+          />
+          <span className="text-xs text-secondary">
             {formatCategory(duel.settings.mode)} · {duel.settings.rounds} rounds
           </span>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -448,40 +452,38 @@ function WaitingState({
   onCopy: () => void;
 }) {
   return (
-    <section className={`${surfaceClass} mx-auto max-w-3xl p-6 sm:p-10`}>
-      <div className="flex size-12 items-center justify-center rounded-2xl bg-[#f59e0b]/15 text-[#b45309] dark:bg-[#fbbf24]/15 dark:text-[#fcd34d]">
+    <Card className="mx-auto max-w-3xl p-6 sm:p-10" elevation="low" padding={0}>
+      <div className="flex size-12 items-center justify-center rounded-2xl bg-warning-muted text-warning">
         <Users className="size-6" />
       </div>
-      <p className="mt-7 text-xs font-bold uppercase tracking-[0.18em] text-[#b45309] dark:text-[#fcd34d]">
+      <p className="mt-7 text-xs font-bold uppercase tracking-wider text-warning">
         Challenge created
       </p>
-      <h1 className="mt-2 font-serif-display text-4xl font-semibold leading-none sm:text-5xl">
+      <h1 className="mt-2 font-heading text-4xl font-semibold leading-none sm:text-5xl">
         Your opponent is one link away.
       </h1>
-      <p className="mt-4 max-w-xl text-base leading-7 text-[#6b6259] dark:text-[#b7c4d1]">
+      <p className="mt-4 max-w-xl text-base leading-7 text-secondary">
         Share the invite and this room will unlock as soon as they accept.
       </p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-black/8 bg-white/65 px-4 py-3 text-sm text-[#6b6259] dark:border-white/10 dark:bg-white/6 dark:text-[#c6d1dc]">
-          <Share2 className="size-4 shrink-0 text-[#0f766e]" />
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-secondary">
+          <Share2 className="size-4 shrink-0 text-accent" />
           <span className="truncate">
             {duel.shareUrl ?? `wikiguesser.com/duel/${duel.inviteCode}`}
           </span>
         </div>
-        <button className={secondaryButtonClass} onClick={onCopy}>
-          {copied ? (
-            <Check className="size-4 text-[#0f766e]" />
-          ) : (
-            <Copy className="size-4" />
-          )}
-          {copied ? "Copied" : "Copy link"}
-        </button>
+        <Button
+          icon={copied ? <Check /> : <Copy />}
+          label={copied ? "Copied" : "Copy link"}
+          onClick={onCopy}
+          variant="secondary"
+        />
       </div>
-      <div className="mt-8 flex items-center gap-2 text-sm text-[#81776d] dark:text-[#9aa9bb]">
-        <span className="inline-flex size-2 rounded-full bg-[#f59e0b]" />{" "}
-        Waiting for opponent to join
+      <div className="mt-8 flex items-center gap-2 text-sm text-secondary">
+        <span className="inline-flex size-2 rounded-full bg-warning" /> Waiting
+        for opponent to join
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -531,17 +533,17 @@ function ActiveDuel({
         opponentName={opponentName}
       />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <section className={`${surfaceClass} p-5 sm:p-7`}>
+        <Card className="p-5 sm:p-7" elevation="low" padding={0}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#0f766e] dark:text-[#8ff4e7]">
+              <p className="text-xs font-bold uppercase tracking-wider text-accent">
                 Round {currentRound.position} of {duel.settings.rounds}
               </p>
-              <h1 className="mt-2 font-serif-display text-3xl font-semibold sm:text-4xl">
+              <h1 className="mt-2 font-heading text-3xl font-semibold sm:text-4xl">
                 Find the answer.
               </h1>
             </div>
-            <div className="rounded-full bg-[#0f766e]/10 px-3 py-1.5 text-xs font-semibold text-[#0f766e] dark:bg-[#24d4c2]/12 dark:text-[#8ff4e7]">
+            <div className="rounded-full bg-accent-bg/10 px-3 py-1.5 text-xs font-semibold text-accent">
               {revealedCount}/{currentRound.clues.length} clues revealed
             </div>
           </div>
@@ -556,21 +558,21 @@ function ActiveDuel({
             {currentRound.clues.map((clue) => (
               <span
                 key={clue.key}
-                className={`h-2 rounded-full ${clue.isRevealed ? "bg-[#0f766e] dark:bg-[#24d4c2]" : "bg-[#ded7cc] dark:bg-white/12"}`}
+                className={`h-2 rounded-full ${clue.isRevealed ? "bg-accent-bg" : "bg-track"}`}
               />
             ))}
           </div>
-          <div className="mt-6 overflow-hidden rounded-[22px] border border-black/8 dark:border-white/10">
+          <div className="mt-6 overflow-hidden rounded-lg border border-border">
             {currentRound.clues.map((clue, index) => (
               <div
-                className={`flex items-start justify-between gap-4 px-4 py-4 ${index % 2 === 0 ? "bg-white/65 dark:bg-white/5" : "bg-transparent"}`}
+                className={`flex items-start justify-between gap-4 px-4 py-4 ${index % 2 === 0 ? "bg-card" : "bg-transparent"}`}
                 key={clue.key}
               >
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#81776d] dark:text-[#9aa9bb]">
+                  <p className="text-xs font-bold uppercase tracking-wide text-secondary">
                     {clue.label}
                   </p>
-                  <p className="mt-1 text-base leading-6 text-[#1f1b17] dark:text-[#f5f7fb]">
+                  <p className="mt-1 text-base leading-6 text-primary">
                     {clue.isRevealed
                       ? (clue.value ?? "No value")
                       : "Clue hidden"}
@@ -579,16 +581,16 @@ function ActiveDuel({
                 {!clue.isRevealed &&
                 !roundFinished &&
                 duel.settings.mode === "blurred-lines" ? (
-                  <button
-                    aria-label={`Reveal ${clue.label}`}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#0f766e]/20 px-3 py-2 text-xs font-semibold text-[#0f766e] transition hover:bg-[#0f766e]/8 disabled:opacity-50 dark:border-[#24d4c2]/20 dark:text-[#8ff4e7]"
-                    disabled={isBusy}
+                  <Button
+                    icon={<LockKeyhole />}
+                    isDisabled={isBusy}
+                    label={`Reveal ${clue.label}`}
                     onClick={() => onReveal(clue.key)}
-                  >
-                    <LockKeyhole className="size-3.5" /> Reveal
-                  </button>
+                    size="sm"
+                    variant="ghost"
+                  />
                 ) : (
-                  <span className="mt-1 text-[#b3aa9f] dark:text-[#607286]">
+                  <span className="mt-1 text-secondary ">
                     <Flag className="size-4" />
                   </span>
                 )}
@@ -596,18 +598,14 @@ function ActiveDuel({
             ))}
           </div>
           {currentRound.status === "available" ? (
-            <button
-              className={`${primaryButtonClass} mt-6 w-full sm:w-auto`}
-              disabled={isBusy}
+            <Button
+              className="mt-6"
+              icon={<Sparkles />}
+              isLoading={isBusy}
+              label="Start round"
               onClick={onStart}
-            >
-              {isBusy ? (
-                <LoaderCircle className="size-4 animate-spin" />
-              ) : (
-                <Sparkles className="size-4" />
-              )}{" "}
-              Start round
-            </button>
+              variant="primary"
+            />
           ) : null}
           {currentRound.status === "in-progress" && !roundFinished ? (
             <form
@@ -617,46 +615,47 @@ function ActiveDuel({
                 if (guess.trim() && currentRound.canGuess) onGuess();
               }}
             >
-              <input
-                className="min-h-12 min-w-0 flex-1 rounded-full border border-black/10 bg-white/75 px-5 text-sm outline-none transition placeholder:text-[#a79e93] focus:border-[#0f766e] dark:border-white/10 dark:bg-white/6 dark:placeholder:text-[#718297]"
+              <TextInput
+                isDisabled={!currentRound.canGuess}
+                isLabelHidden
+                label="Your answer"
                 value={guess}
-                onChange={(event) => onGuessChange(event.target.value)}
+                onChange={onGuessChange}
                 placeholder={
                   currentRound.canGuess
                     ? "Type your answer…"
                     : "Reveal a clue first…"
                 }
-                autoComplete="off"
-                disabled={!currentRound.canGuess}
+                size="lg"
+                width="100%"
               />
-              <button
-                className={primaryButtonClass}
-                disabled={isBusy || !guess.trim() || !currentRound.canGuess}
-              >
-                {isBusy ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : (
-                  <Send className="size-4" />
-                )}{" "}
-                Submit guess
-              </button>
+              <Button
+                icon={<Send />}
+                isDisabled={isBusy || !guess.trim() || !currentRound.canGuess}
+                isLoading={isBusy}
+                label="Submit guess"
+                type="submit"
+                variant="primary"
+              />
             </form>
           ) : null}
           {currentRound.status === "in-progress" ? (
-            <button
-              className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-[#81776d] transition hover:text-[#b91c1c] dark:text-[#9aa9bb] dark:hover:text-[#fca5a5]"
-              disabled={isBusy}
+            <Button
+              className="mt-4"
+              icon={<Flag />}
+              isDisabled={isBusy}
+              label="Give up this round"
               onClick={onGiveUp}
-            >
-              <Flag className="size-3.5" /> Give up this round
-            </button>
+              size="sm"
+              variant="destructive"
+            />
           ) : null}
           {currentRound.message ? (
-            <p className="mt-4 rounded-2xl bg-[#0f766e]/8 px-4 py-3 text-sm text-[#0f766e] dark:bg-[#24d4c2]/10 dark:text-[#8ff4e7]">
+            <p className="mt-4 rounded-2xl bg-accent-bg/8 px-4 py-3 text-sm text-accent">
               {currentRound.message}
             </p>
           ) : null}
-        </section>
+        </Card>
         <aside className="grid content-start gap-4">
           <ProgressCard
             duel={duel}
@@ -680,34 +679,36 @@ function DuelScoreRail({
 }) {
   const opponentCompleted = duel.opponentProgress?.completed ?? 0;
   return (
-    <section
-      className={`${surfaceClass} grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-4 sm:px-7`}
+    <Card
+      className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-4 sm:px-7"
       aria-label="Duel scoreboard"
+      elevation="low"
+      padding={0}
     >
       <div className="min-w-0">
-        <p className="truncate font-serif-display text-xl font-semibold sm:text-2xl">
+        <p className="truncate font-heading text-xl font-semibold sm:text-2xl">
           You
         </p>
-        <p className="mt-1 text-xs font-semibold text-[#0f766e] dark:text-[#8ff4e7]">
+        <p className="mt-1 text-xs font-semibold text-accent">
           {completedRounds}/{duel.settings.rounds} rounds ·{" "}
           {duel.ownProgress?.score ?? 0} pts
         </p>
       </div>
-      <div className="grid place-items-center gap-1 border-x border-black/8 px-4 text-center dark:border-white/10 sm:px-8">
-        <Swords className="size-4 text-[#0f766e] dark:text-[#8ff4e7]" />
-        <span className="text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#81776d] dark:text-[#9aa9bb]">
+      <div className="grid place-items-center gap-1 border-x border-border px-4 text-center sm:px-8">
+        <Swords className="size-4 text-accent" />
+        <span className="text-xs font-bold uppercase tracking-wide text-secondary">
           VS
         </span>
       </div>
       <div className="min-w-0 text-right">
-        <p className="truncate font-serif-display text-xl font-semibold sm:text-2xl">
+        <p className="truncate font-heading text-xl font-semibold sm:text-2xl">
           {opponentName}
         </p>
-        <p className="mt-1 text-xs font-semibold text-[#b45309] dark:text-[#fcd34d]">
+        <p className="mt-1 text-xs font-semibold text-warning">
           {opponentCompleted}/{duel.settings.rounds} rounds
         </p>
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -722,10 +723,9 @@ function ProgressCard({
 }) {
   const opponentCompleted = duel.opponentProgress?.completed ?? 0;
   return (
-    <div className={`${surfaceClass} p-5`}>
+    <Card elevation="low" padding={5}>
       <div className="flex items-center gap-2 text-sm font-semibold">
-        <Users className="size-4 text-[#0f766e] dark:text-[#8ff4e7]" /> Duel
-        progress
+        <Users className="size-4 text-accent" /> Duel progress
       </div>
       <div className="mt-5 space-y-4">
         <ProgressRow
@@ -740,10 +740,10 @@ function ProgressCard({
           muted
         />
       </div>
-      <div className="mt-5 border-t border-black/8 pt-4 text-xs leading-5 text-[#81776d] dark:border-white/10 dark:text-[#9aa9bb]">
+      <div className="mt-5 border-t border-border pt-4 text-xs leading-5 text-secondary">
         Scores stay private until the duel is complete.
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -762,13 +762,13 @@ function ProgressRow({
     <div>
       <div className="flex justify-between gap-3 text-xs font-semibold">
         <span className="truncate">{name}</span>
-        <span className="text-[#81776d] dark:text-[#9aa9bb]">
+        <span className="text-secondary">
           {value}/{total}
         </span>
       </div>
-      <div className="mt-2 h-2 rounded-full bg-[#ded7cc] dark:bg-white/10">
+      <div className="mt-2 h-2 rounded-full bg-track">
         <div
-          className={`h-2 rounded-full transition-all ${muted ? "bg-[#f59e0b]" : "bg-[#0f766e] dark:bg-[#24d4c2]"}`}
+          className={`h-2 rounded-full transition-all ${muted ? "bg-warning" : "bg-accent-bg"}`}
           style={{
             width: `${total ? Math.min(100, (value / total) * 100) : 0}%`,
           }}
@@ -804,60 +804,59 @@ function Scoreboard({
         ? "You take the duel."
         : "That was a close one.";
   return (
-    <section className={`${surfaceClass} mx-auto max-w-3xl overflow-hidden`}>
-      <div className="bg-[linear-gradient(135deg,rgba(15,118,110,0.12),rgba(245,158,11,0.14),transparent)] p-6 text-center sm:p-10">
-        <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-[#f59e0b]/18 text-[#b45309] dark:bg-[#fbbf24]/15 dark:text-[#fcd34d]">
+    <Card
+      className="mx-auto max-w-3xl overflow-hidden"
+      elevation="low"
+      padding={0}
+    >
+      <div className="bg-accent-muted p-6 text-center sm:p-10">
+        <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-warning-muted text-warning">
           <Trophy className="size-8" />
         </div>
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-[#b45309] dark:text-[#fcd34d]">
+        <p className="mt-6 text-xs font-bold uppercase tracking-wider text-warning">
           Duel complete
         </p>
-        <h1 className="mt-2 font-serif-display text-4xl font-semibold sm:text-5xl">
+        <h1 className="mt-2 font-heading text-4xl font-semibold sm:text-5xl">
           {title}
         </h1>
         <div className="mx-auto mt-8 grid max-w-md grid-cols-[1fr_auto_1fr] items-center gap-3">
           <div>
-            <p className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-[#81776d]">
+            <p className="truncate text-xs font-semibold uppercase tracking-wide text-secondary">
               You
             </p>
-            <p className="mt-1 text-4xl font-semibold text-[#0f766e] dark:text-[#8ff4e7]">
+            <p className="mt-1 text-4xl font-semibold text-accent">
               {youScore}
             </p>
           </div>
-          <span className="text-sm font-bold text-[#b3aa9f]">VS</span>
+          <span className="text-sm font-bold text-secondary">VS</span>
           <div>
-            <p className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-[#81776d]">
+            <p className="truncate text-xs font-semibold uppercase tracking-wide text-secondary">
               {playerLabel(otherPlayer, "Opponent")}
             </p>
             <p className="mt-1 text-4xl font-semibold">{theirScore}</p>
           </div>
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <button
-            className={primaryButtonClass}
-            disabled={isBusy}
+          <Button
+            icon={<RotateCcw />}
+            isLoading={isBusy}
+            label="Rematch"
             onClick={onRematch}
-          >
-            {isBusy ? (
-              <LoaderCircle className="size-4 animate-spin" />
-            ) : (
-              <RotateCcw className="size-4" />
-            )}
-            Rematch
-          </button>
-          <button
-            className={secondaryButtonClass}
+            variant="primary"
+          />
+          <Button
+            icon={<Clipboard />}
+            label="Share result"
             onClick={() =>
               void navigator.clipboard.writeText(
                 duel.shareUrl ?? window.location.href,
               )
             }
-          >
-            <Clipboard className="size-4" /> Share result
-          </button>
+            variant="secondary"
+          />
         </div>
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -871,18 +870,18 @@ function TerminalState({
   icon: React.ReactNode;
 }) {
   return (
-    <section
-      className={`${surfaceClass} mx-auto max-w-2xl p-8 text-center sm:p-12`}
+    <Card
+      className="mx-auto max-w-2xl p-8 text-center sm:p-12"
+      elevation="low"
+      padding={0}
     >
-      <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#0f766e]/10 text-[#0f766e] dark:bg-[#24d4c2]/12 dark:text-[#8ff4e7]">
+      <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-accent-bg/10 text-accent">
         {icon}
       </div>
-      <h1 className="mt-5 font-serif-display text-3xl font-semibold">
-        {title}
-      </h1>
-      <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
+      <h1 className="mt-5 font-heading text-3xl font-semibold">{title}</h1>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-secondary">
         {description}
       </p>
-    </section>
+    </Card>
   );
 }

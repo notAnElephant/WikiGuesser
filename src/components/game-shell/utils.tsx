@@ -28,12 +28,12 @@ export function selectionCardClass(
   isActive: boolean,
   isDisabled = false,
 ): string {
-  return `group grid gap-3 rounded-[26px] border p-4 text-left transition ${
+  return `group grid gap-3 rounded-xl border p-4 text-left transition ${
     isDisabled
-      ? "cursor-not-allowed border-black/5 bg-[rgba(255,255,255,0.56)] opacity-55 dark:border-white/8 dark:bg-white/6"
+      ? "cursor-not-allowed border-border bg-muted opacity-50"
       : isActive
-        ? "border-[#0f766e] bg-[linear-gradient(160deg,rgba(15,118,110,0.14),rgba(255,255,255,0.94))] shadow-[0_18px_44px_rgba(15,118,110,0.14)] dark:border-[#24d4c2]/60 dark:bg-[linear-gradient(160deg,rgba(36,212,194,0.14),rgba(17,24,39,0.94))] dark:shadow-[0_18px_44px_rgba(0,0,0,0.28)]"
-        : "border-black/10 bg-white/86 hover:-translate-y-0.5 hover:border-black/14 dark:border-white/10 dark:bg-[rgba(13,21,32,0.84)] dark:hover:border-white/14"
+        ? "border-accent-bg bg-accent-muted shadow-md"
+        : "border-border bg-card hover:-translate-y-0.5 hover:border-border-strong"
   }`;
 }
 
@@ -101,7 +101,7 @@ export function renderClueValue(
       >
         <span
           aria-hidden="true"
-          className="select-none rounded-[0.45rem] bg-black/10 px-1.5 text-transparent [text-shadow:0_0_14px_rgba(31,27,23,0.98)] blur-[4.8px] dark:bg-white/14 dark:[text-shadow:0_0_14px_rgba(245,247,251,0.98)]"
+          className="clue-redaction select-none rounded-sm px-1.5 text-transparent"
         >
           {segment.text}
         </span>
@@ -124,8 +124,8 @@ export function renderHiddenCluePlaceholder(
   return (
     <span
       aria-hidden="true"
-      className={`inline-block select-none align-top text-[1.02rem] leading-7 text-transparent [text-shadow:0_0_14px_rgba(31,27,23,0.98)] blur-[4.8px] dark:[text-shadow:0_0_14px_rgba(245,247,251,0.98)] ${
-        isLocked ? "opacity-55" : "opacity-78"
+      className={`clue-redaction inline-block select-none align-top text-base leading-7 text-transparent ${
+        isLocked ? "opacity-50" : "opacity-75"
       }`}
     >
       {clue.prefetchedValue}
@@ -140,8 +140,7 @@ export function getCategoryMeta(categoryId: string | null): CategoryCardMeta {
 
   return {
     icon: Sparkles,
-    accent:
-      "from-[#0f766e]/16 via-[#f59e0b]/6 to-transparent dark:from-[#24d4c2]/18 dark:via-[#fbbf24]/6",
+    accent: "from-teal-subtle via-yellow-subtle to-transparent",
     shortLabel: "Live category",
   };
 }
@@ -165,8 +164,7 @@ export function getMessageAppearance(
   if (resultStatus === "win" || lowerMessage.includes("correct")) {
     return {
       icon: PartyPopper,
-      className:
-        "border-emerald-500/18 bg-emerald-500/10 text-emerald-700 dark:border-emerald-400/18 dark:bg-emerald-400/10 dark:text-emerald-200",
+      className: "border-success bg-success-muted text-success",
       tone: "success",
     };
   }
@@ -179,8 +177,7 @@ export function getMessageAppearance(
   ) {
     return {
       icon: CircleAlert,
-      className:
-        "border-amber-500/18 bg-amber-500/10 text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200",
+      className: "border-warning bg-warning-muted text-warning",
       tone: "warning",
     };
   }
@@ -188,16 +185,14 @@ export function getMessageAppearance(
   if (lowerMessage.includes("out") || lowerMessage.includes("answer")) {
     return {
       icon: Ban,
-      className:
-        "border-rose-500/18 bg-rose-500/10 text-rose-700 dark:border-rose-300/18 dark:bg-rose-300/10 dark:text-rose-200",
+      className: "border-error bg-error-muted text-error",
       tone: "error",
     };
   }
 
   return {
     icon: Sparkles,
-    className:
-      "border-[#0f766e]/14 bg-[#0f766e]/8 text-[#115e59] dark:border-[#24d4c2]/14 dark:bg-[#24d4c2]/8 dark:text-[#8ff4e7]",
+    className: "border-accent-bg bg-accent-bg/8 text-accent",
     tone: "info",
   };
 }
