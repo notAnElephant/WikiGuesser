@@ -84,12 +84,16 @@
     font-family: var(--font-family-body);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-bold);
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1.2;
     box-shadow: var(--shadow-med);
     cursor: pointer;
     pointer-events: auto;
     transform: translate(-50%, calc(-100% - var(--spacing-2)));
+  }
+
+  .map-guess-marker-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .map-guess-marker:focus-visible {
@@ -244,8 +248,9 @@
     font-family: var(--font-family-body);
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-bold);
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1.2;
+    max-width: calc(var(--spacing-12) * 5);
+    overflow-wrap: anywhere;
     box-shadow: var(--shadow-med);
     cursor: pointer;
     transform: translate(-50%, calc(-100% - var(--spacing-2)));

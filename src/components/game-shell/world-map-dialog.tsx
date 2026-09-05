@@ -963,7 +963,9 @@ export function WorldMapDialog({
                     title={`Focus ${country.name}`}
                     type="button"
                   >
-                    <span>{country.name}</span>
+                    <span className="map-guess-marker-label">
+                      {country.name}
+                    </span>
                     <span className="map-guess-marker-arrow">
                       <DirectionArrow direction={country.direction} />
                     </span>
@@ -992,7 +994,9 @@ export function WorldMapDialog({
                     title={`Focus ${country.name}`}
                     type="button"
                   >
-                    <span>{country.name}</span>
+                    <span className="map-guess-marker-label">
+                      {country.name}
+                    </span>
                     <span className="map-guess-marker-arrow">
                       <DirectionArrow direction={country.direction} />
                     </span>
