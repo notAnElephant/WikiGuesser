@@ -19,7 +19,12 @@ import {
   shouldDisplayGameStatusToast,
 } from "@/src/components/game-shell/utils";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
-import type { GameMode, GuessDirection, RoundClue } from "@/src/lib/types";
+import type {
+  GameMode,
+  GuessDirection,
+  RoundClue,
+  SolutionCountryMapData,
+} from "@/src/lib/types";
 import {
   ArrowDown,
   ArrowDownLeft,
@@ -41,7 +46,13 @@ import {
   Target,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { type FormEvent, useDeferredValue, useEffect, useState } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useDeferredValue,
+  useEffect,
+  useState,
+} from "react";
 import { preload } from "react-dom";
 import { toast } from "sonner";
 
@@ -100,6 +111,11 @@ interface GamePlayViewProps {
   validationMessage: string | null;
   view: "round" | "result";
   visibleClassicClues: RoundClue[];
+  boardAction?: ReactNode;
+  header?: ReactNode;
+  showHomeButton?: boolean;
+  sideFooter?: ReactNode;
+  solutionCountry?: SolutionCountryMapData | null;
 }
 
 export function GamePlayView({
@@ -135,6 +151,11 @@ export function GamePlayView({
   validationMessage,
   view,
   visibleClassicClues,
+  boardAction,
+  header,
+  showHomeButton = true,
+  sideFooter,
+  solutionCountry,
 }: GamePlayViewProps) {
   const flagImageUrl = getFlagImageUrl(currentClues);
 
@@ -175,6 +196,7 @@ export function GamePlayView({
 
   return (
     <div className="grid min-h-[calc(100dvh-1rem)] gap-3 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
+      {header}
       <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(400px,0.75fr)]">
         <Card
           className="grid content-start gap-2.5 p-3 sm:gap-4 sm:p-5"
@@ -374,6 +396,7 @@ export function GamePlayView({
               ) : null}
             </ol>
           )}
+          {boardAction}
         </Card>
 
         <aside className="grid content-start gap-4">
@@ -390,7 +413,9 @@ export function GamePlayView({
               onCountryGuess={
                 round?.canGuess && !isBusy ? handleMapGuess : undefined
               }
-              solutionCountry={result?.solutionCountry ?? null}
+              solutionCountry={
+                solutionCountry ?? result?.solutionCountry ?? null
+              }
             />
           ) : null}
 
@@ -557,26 +582,32 @@ export function GamePlayView({
             </Card>
           ) : null}
 
-          <Card className="grid gap-3" elevation="low" padding={4}>
-            {showRestartButton ? (
-              <Button
-                icon={<RotateCcw aria-hidden="true" />}
-                isDisabled={isBusy}
-                label={restartButtonLabel}
-                onClick={startRound}
-                variant="secondary"
-                width="100%"
-              />
-            ) : null}
-            <Button
-              icon={<House aria-hidden="true" />}
-              isDisabled={isBusy}
-              label={homeButtonLabel}
-              onClick={clearForCategoryChoice}
-              variant="secondary"
-              width="100%"
-            />
-          </Card>
+          {sideFooter}
+
+          {showRestartButton || showHomeButton ? (
+            <Card className="grid gap-3" elevation="low" padding={4}>
+              {showRestartButton ? (
+                <Button
+                  icon={<RotateCcw aria-hidden="true" />}
+                  isDisabled={isBusy}
+                  label={restartButtonLabel}
+                  onClick={startRound}
+                  variant="secondary"
+                  width="100%"
+                />
+              ) : null}
+              {showHomeButton ? (
+                <Button
+                  icon={<House aria-hidden="true" />}
+                  isDisabled={isBusy}
+                  label={homeButtonLabel}
+                  onClick={clearForCategoryChoice}
+                  variant="secondary"
+                  width="100%"
+                />
+              ) : null}
+            </Card>
+          ) : null}
         </aside>
       </div>
     </div>
