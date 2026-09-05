@@ -207,29 +207,56 @@ async function getOrCreateChallengeForDay(
     mode,
   );
 
-  return prisma.dailyChallenge.upsert({
-    where: {
-      dayKey_category_mode: {
+  try {
+    return await prisma.dailyChallenge.upsert({
+      where: {
+        dayKey_category_mode: {
+          dayKey,
+          category,
+          mode,
+        },
+      },
+      // A non-empty update makes Prisma emit a native INSERT ... ON CONFLICT
+      // DO UPDATE. An empty update falls back to a non-atomic read-then-insert,
+      // so two requests at the day rollover both insert and one hits the unique
+      // constraint. Writing dayKey to its own value keeps the row unchanged.
+      update: {
+        dayKey,
+      },
+      create: {
         dayKey,
         category,
         mode,
+        snapshotKey: activeSnapshot.key,
+        entityId: entity.id,
+        entityQid: entity.qid,
+        canonicalAnswer: entity.canonicalAnswer,
+        acceptedAnswers:
+          entity.acceptedAnswers as unknown as Prisma.InputJsonValue,
+        clues: entity.clues as unknown as Prisma.InputJsonValue,
+        metadata: entity.metadata as unknown as Prisma.InputJsonValue,
       },
-    },
-    update: {},
-    create: {
-      dayKey,
-      category,
-      mode,
-      snapshotKey: activeSnapshot.key,
-      entityId: entity.id,
-      entityQid: entity.qid,
-      canonicalAnswer: entity.canonicalAnswer,
-      acceptedAnswers:
-        entity.acceptedAnswers as unknown as Prisma.InputJsonValue,
-      clues: entity.clues as unknown as Prisma.InputJsonValue,
-      metadata: entity.metadata as unknown as Prisma.InputJsonValue,
-    },
-  });
+    });
+  } catch (error) {
+    // If a concurrent request wrote the row between our read and insert, re-read
+    // the row it created instead of crashing the page render.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return prisma.dailyChallenge.findUniqueOrThrow({
+        where: {
+          dayKey_category_mode: {
+            dayKey,
+            category,
+            mode,
+          },
+        },
+      });
+    }
+
+    throw error;
+  }
 }
 
 export async function getOrCreateDailyChallenge(
