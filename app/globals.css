@@ -85,6 +85,7 @@
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-bold);
     line-height: 1.2;
+    width: max-content;
     box-shadow: var(--shadow-med);
     cursor: pointer;
     pointer-events: auto;
@@ -251,6 +252,7 @@
     line-height: 1.2;
     max-width: calc(var(--spacing-12) * 5);
     overflow-wrap: anywhere;
+    width: max-content;
     box-shadow: var(--shadow-med);
     cursor: pointer;
     transform: translate(-50%, calc(-100% - var(--spacing-2)));
