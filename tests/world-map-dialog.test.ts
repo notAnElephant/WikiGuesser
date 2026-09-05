@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   getFocusedMapTransform,
+  getLastGuessedCountry,
   getResizedMapTransform,
   WorldMapDialog,
 } from "@/src/components/game-shell/world-map-dialog";
@@ -138,6 +139,32 @@ describe("getFocusedMapTransform", () => {
       mapSize.width / 2,
       mapSize.height / 2,
     ]);
+  });
+});
+
+describe("getLastGuessedCountry", () => {
+  it("selects only the newest guess for automatic map focus", () => {
+    const guesses = [
+      {
+        qid: "Q142",
+        name: "France",
+        mapNames: ["France"],
+        latitude: 46.23,
+        longitude: 2.21,
+        direction: "east" as const,
+      },
+      {
+        qid: "Q183",
+        name: "Germany",
+        mapNames: ["Germany"],
+        latitude: 51.17,
+        longitude: 10.45,
+        direction: "west" as const,
+      },
+    ];
+
+    expect(getLastGuessedCountry(guesses)).toBe(guesses[1]);
+    expect(getLastGuessedCountry([])).toBeNull();
   });
 });
 

@@ -102,7 +102,7 @@ function scoreForRevealCount(revealCount: number) {
   );
 }
 
-function participantId(duel: DuelWithDetails, profileId: string) {
+function participantId(duel: DuelWithDetails, profileId: string | null) {
   if (duel.challengerId === profileId) return profileId;
   if (duel.opponentId === profileId) return profileId;
   return null;
@@ -204,7 +204,7 @@ function roundView(
 
 export function buildDuelView(
   duel: DuelWithDetails,
-  profileId: string,
+  profileId: string | null,
   origin?: string,
 ) {
   const ownId = participantId(duel, profileId);
@@ -241,7 +241,11 @@ export function buildDuelView(
     status,
     challenger: publicPlayer(duel.challenger)!,
     opponent: publicPlayer(duel.opponent),
-    playerRole: isChallenger ? ("challenger" as const) : ("opponent" as const),
+    playerRole: ownId
+      ? isChallenger
+        ? ("challenger" as const)
+        : ("opponent" as const)
+      : ("spectator" as const),
     canAccept: duel.status === "INVITED" && !duel.opponentId && !isChallenger,
     settings: {
       rounds: duel.roundCount,
@@ -348,11 +352,18 @@ export async function getDuel(
   if (
     duel.opponentId &&
     duel.challengerId !== profile.id &&
-    duel.opponentId !== profile.id
+    duel.opponentId !== profile.id &&
+    duel.status !== "COMPLETED"
   ) {
     throw new Error("This duel belongs to two other players.");
   }
-  return buildDuelView(duel, profile.id, origin);
+  return buildDuelView(
+    duel,
+    duel.challengerId === profile.id || duel.opponentId === profile.id
+      ? profile.id
+      : null,
+    origin,
+  );
 }
 
 export async function acceptDuel(

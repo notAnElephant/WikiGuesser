@@ -193,6 +193,19 @@ describe("duel service", () => {
     );
   });
 
+  it("allows a nonparticipant to read a completed duel as a spectator", async () => {
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "outsider" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(
+      duel({ status: "COMPLETED", completedAt: date }),
+    );
+
+    const result = await getDuel("abc123", "clerk-outsider");
+
+    expect(result.playerRole).toBe("spectator");
+    expect(result.status).toBe("completed");
+    expect(result.scores).toEqual({ challenger: 0, opponent: 0 });
+  });
+
   it("recognizes an authenticated actor ID as the duel creator", async () => {
     repository.ensureDuelUserProfile.mockResolvedValue({ id: "challenger" });
     repository.getOrRefreshDuelByInviteCode.mockResolvedValue(duel());

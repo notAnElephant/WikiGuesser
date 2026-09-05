@@ -52,6 +52,12 @@ interface MapLocation {
   longitude: number;
 }
 
+export function getLastGuessedCountry(
+  guessedCountries: readonly GuessedCountryMapData[],
+): GuessedCountryMapData | null {
+  return guessedCountries.at(-1) ?? null;
+}
+
 const DIRECTION_ROTATION: Record<GuessDirection, number> = {
   north: 0,
   northeast: 45,
@@ -563,16 +569,23 @@ export function WorldMapDialog({
     return focusLocations(guessedCountries, 10, 0.72);
   }
 
-  function focusCountry(country: GuessedCountryMapData) {
+  function focusCountry(country: GuessedCountryMapData): boolean {
     const didFocusCountry = focusCountries(
       getMapCountryNames(country.mapNames),
       7,
       0.56,
     );
 
-    if (!didFocusCountry) {
-      focusLocation(country);
+    if (didFocusCountry) {
+      return true;
     }
+
+    if (!projection || !zoomBehaviorRef.current) {
+      return false;
+    }
+
+    focusLocation(country);
+    return true;
   }
 
   useEffect(() => {
@@ -596,7 +609,9 @@ export function WorldMapDialog({
       return;
     }
 
-    if (fitGuessedCountries()) {
+    const lastGuessedCountry = getLastGuessedCountry(guessedCountries);
+
+    if (lastGuessedCountry && focusCountry(lastGuessedCountry)) {
       focusedGuessedCountryCountRef.current = guessedCountries.length;
     }
   }, [guessedCountries, mapSize, presentation, projection]);

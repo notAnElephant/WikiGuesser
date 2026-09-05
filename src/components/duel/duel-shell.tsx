@@ -79,7 +79,7 @@ export interface DuelResponse {
   status: DuelStatus;
   challenger: DuelPlayer;
   opponent?: DuelPlayer | null;
-  playerRole: "challenger" | "opponent";
+  playerRole: "challenger" | "opponent" | "spectator";
   canAccept?: boolean;
   settings: {
     rounds: number;
@@ -228,6 +228,9 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
     if (!duel?.scores) return null;
     if (duel.scores.challenger === duel.scores.opponent) return "draw";
     const challengerWon = duel.scores.challenger > duel.scores.opponent;
+    if (duel.playerRole === "spectator") {
+      return challengerWon ? "challenger" : "opponent";
+    }
     return (duel.playerRole === "challenger") === challengerWon
       ? "you"
       : "opponent";
@@ -332,7 +335,11 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
           duel={duel}
           winner={winner}
           isBusy={isBusy}
-          onRematch={() => void createRematch()}
+          onRematch={
+            duel.playerRole === "spectator"
+              ? undefined
+              : () => void createRematch()
+          }
         />
       ) : null}
       {duel.status === "active" ? (
@@ -805,27 +812,32 @@ function Scoreboard({
   onRematch,
 }: {
   duel: DuelResponse;
-  winner: "you" | "opponent" | "draw" | null;
+  winner: "you" | "challenger" | "opponent" | "draw" | null;
   isBusy: boolean;
-  onRematch: () => void;
+  onRematch?: () => void;
 }) {
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">(
     "idle",
   );
   const challengerScore = duel.scores?.challenger ?? 0;
   const opponentScore = duel.scores?.opponent ?? 0;
+  const isSpectator = duel.playerRole === "spectator";
   const youScore =
-    duel.playerRole === "challenger" ? challengerScore : opponentScore;
+    duel.playerRole === "opponent" ? opponentScore : challengerScore;
   const theirScore =
-    duel.playerRole === "challenger" ? opponentScore : challengerScore;
+    duel.playerRole === "opponent" ? challengerScore : opponentScore;
   const otherPlayer =
-    duel.playerRole === "challenger" ? duel.opponent : duel.challenger;
+    duel.playerRole === "opponent" ? duel.challenger : duel.opponent;
   const title =
     winner === "draw"
       ? "A perfectly matched duel."
-      : winner === "you"
-        ? "You take the duel."
-        : "That was a close one.";
+      : winner === "challenger"
+        ? `${playerLabel(duel.challenger, "The challenger")} won the duel.`
+        : isSpectator
+          ? `${playerLabel(duel.opponent, "The opponent")} won the duel.`
+          : winner === "you"
+            ? "You take the duel."
+            : "That was a close one.";
   const resultText = `${title} Final score: ${youScore}–${theirScore}.`;
 
   async function shareResult() {
@@ -872,7 +884,7 @@ function Scoreboard({
         <div className="mx-auto mt-8 grid max-w-md grid-cols-[1fr_auto_1fr] items-center gap-3">
           <div>
             <p className="truncate text-xs font-semibold uppercase tracking-wide text-secondary">
-              You
+              {isSpectator ? playerLabel(duel.challenger, "Challenger") : "You"}
             </p>
             <p className="mt-1 text-4xl font-semibold text-accent">
               {youScore}
@@ -887,13 +899,15 @@ function Scoreboard({
           </div>
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button
-            icon={<RotateCcw />}
-            isLoading={isBusy}
-            label="Rematch"
-            onClick={onRematch}
-            variant="primary"
-          />
+          {onRematch ? (
+            <Button
+              icon={<RotateCcw />}
+              isLoading={isBusy}
+              label="Rematch"
+              onClick={onRematch}
+              variant="primary"
+            />
+          ) : null}
           <Button
             icon={shareStatus === "copied" ? <Check /> : <Share2 />}
             label={
@@ -908,7 +922,7 @@ function Scoreboard({
           />
         </div>
       </div>
-      <DuelRoundResults rounds={duel.rounds} />
+      {isSpectator ? null : <DuelRoundResults rounds={duel.rounds} />}
     </Card>
   );
 }
