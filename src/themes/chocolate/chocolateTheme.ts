@@ -1,34 +1,32 @@
 /**
  * Chocolate Theme
  *
- * A warm, cozy theme inspired by rich chocolate and caramel tones.
- * Core palette: #8C5927, #B88859, #C4AC95, #EDE4D4, #FFFCF7
+ * Warm Chocolate shapes with an onyx, turquoise and pastel palette.
+ * Core palette: #25d4c2, #111111, #b9a394, #d4c5c7, #dad4ef
  * Uses Fraunces for headings and Albert Sans for body text.
  */
 
 import {defineTheme, defineSyntaxTheme} from '@astryxdesign/core/theme';
 import {chocolateIconRegistry} from './icons';
 
-/** Chocolate syntax palette — warm browns and amber tones. */
+/** Syntax colors share the UI's accessible light/dark color roles. */
 const chocolateSyntax = defineSyntaxTheme({
   name: 'xds-chocolate',
   tokens: {
-    keyword: ['#8C5927', '#d4a06a'],
-    string: ['#2e6b4a', '#7bc49e'],
-    comment: ['#B88859', '#B88859'],
-    number: ['#a06018', '#d4b870'],
-    function: ['#3a5e8c', '#7ba8d4'],
-    type: ['#6b4a8c', '#b08ed4'],
-    variable: ['#4a3520', '#EDE4D4'],
-    operator: ['#B88859', '#c4a882'],
-    constant: ['#a06018', '#d4b870'],
-    tag: ['#8c3a3a', '#d47a7a'],
-    attribute: ['#8C5927', '#d4a06a'],
-    property: ['#3a7c6b', '#70c4b0'],
-    // #B88859/#6b5540 failed WCAG AA against the syntax background: 3.06:1
-    // light, 2.56:1 dark. #5386.
-    punctuation: ['#9e622e', '#cb884d'], // 4.84:1 / 6.12:1
-    background: ['#FFFCF7', '#1c1610'],
+    keyword: ['#006e64', '#25d4c2'],
+    string: ['#276749', '#8acda3'],
+    comment: ['#6b5b51', '#b9a394'],
+    number: ['#805300', '#e8bd67'],
+    function: ['#625085', '#dad4ef'],
+    type: ['#625085', '#dad4ef'],
+    variable: ['#111111', '#d4c5c7'],
+    operator: ['#6b5b51', '#b9a394'],
+    constant: ['#805300', '#e8bd67'],
+    tag: ['#b13f4b', '#ee939c'],
+    attribute: ['#006e64', '#25d4c2'],
+    property: ['#006e64', '#25d4c2'],
+    punctuation: ['#6b5b51', '#b9a394'],
+    background: ['#fffaf7', '#1c1918'],
   },
 });
 
@@ -38,17 +36,17 @@ export const chocolateTheme = defineTheme({
   typography: {
     scale: {base: 14, ratio: 1.2},
     body: {
-      family: 'Albert Sans',
+      family: 'var(--font-albert-sans)',
       fallbacks:
         '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
     },
     heading: {
-      family: 'Fraunces',
+      family: 'var(--font-fraunces)',
       fallbacks: 'Georgia, "Times New Roman", Times, serif',
       weights: {3: 'bold', 4: 'bold'},
     },
     code: {
-      family: 'JetBrains Mono',
+      family: 'var(--font-jetbrains-mono)',
       fallbacks: '"SF Mono", Monaco, Consolas, monospace',
     },
   },
@@ -59,120 +57,89 @@ export const chocolateTheme = defineTheme({
 
   tokens: {
     // =========================================================================
-    // Colors — warm chocolate palette
-    // Core: #8C5927, #B88859, #C4AC95, #EDE4D4, #FFFCF7
-    // =========================================================================
-
-    // Core semantic
-    '--color-accent': ['#8C5927', '#d4a06a'],
-    '--color-accent-muted': ['#8C592714', '#d4a06a20'],
-    '--color-neutral': ['#8C59270F', '#EDE4D41A'],
-    '--color-background-surface': ['#FFFCF7', '#1c1610'],
-    '--color-background-body': ['#FFFCF7', '#141010'],
-    '--color-overlay': ['#4a352080', '#140e0aCC'],
-    '--color-overlay-hover': ['#4a35200D', '#EDE4D40D'],
-    '--color-overlay-pressed': ['#4a35201A', '#EDE4D41A'],
-    '--color-background-muted': ['#EDE4D4', '#2a2018'],
-
-    // Text
-    '--color-text-primary': ['#4a3520', '#EDE4D4'],
-    '--color-text-secondary': ['#B88859', '#c4a882'],
-    '--color-text-disabled': ['#C4AC95', '#6b5540'],
-    '--color-text-accent': ['#8C5927', '#d4a06a'],
-    '--color-on-dark': '#FFFCF7',
-    '--color-on-light': '#4a3520',
-    '--color-on-accent': ['#FFFFFF', '#4a3520'],
-    '--color-on-success': ['#FFFFFF', '#4a3520'],
-    '--color-on-error': ['#FFFFFF', '#4a3520'],
-    '--color-on-warning': ['#4a3520', '#4a3520'],
-
-    // Icon
-    '--color-icon-accent': ['#8C5927', '#d4a06a'],
-    '--color-icon-primary': ['#4a3520', '#EDE4D4'],
-    '--color-icon-secondary': ['#B88859', '#c4a882'],
-    '--color-icon-disabled': ['#C4AC95', '#6b5540'],
-
-    // Surface variants
-    '--color-background-card': ['#EDE4D4', '#2a2018'],
-    '--color-background-popover': ['#FFFCF7', '#2a2018'],
-    '--color-background-inverted': ['#4a3520', '#EDE4D4'],
-
-    // Status / Sentiment
-    '--color-success': ['#709900', '#96bf2a'],
-    '--color-success-muted': ['#70990020', '#96bf2a20'],
-    '--color-error': ['#FD0000', '#ff5c5c'],
-    '--color-error-muted': ['#FD000020', '#ff5c5c20'],
-    '--color-warning': ['#FFB600', '#ffc940'],
-    '--color-warning-muted': ['#FFB60020', '#ffc94020'],
-
-    // Border
-    '--color-border': ['#C4AC95', '#EDE4D41A'],
-    '--color-border-emphasized': ['#B88859', '#6b5540'],
-
-    // Effects
-    '--color-skeleton': ['#C4AC95', '#6b5540'],
-    '--color-shadow': ['#4a35201A', '#0000004D'],
+    // Colors — original palette plus mode-specific surfaces and readable shades.
+    // Tuples are [light, dark]. Accent fills keep Onyx labels in both modes;
+    // light-mode accent text uses deep teal rather than bright turquoise.
+    '--focus-outline-color': 'var(--color-text-accent)',
+    '--color-accent': ['#25d4c2', '#25d4c2'],
+    '--color-accent-muted': ['#d5f4ef', '#18322e'],
+    '--color-neutral': ['#e8dfd9', '#302926'],
+    '--color-background-surface': ['#fffaf7', '#1c1918'],
+    '--color-background-body': ['#f7f2ee', '#111111'],
+    '--color-overlay': ['#11111180', '#111111cc'],
+    '--color-overlay-hover': ['#1111110d', '#d4c5c70d'],
+    '--color-overlay-pressed': ['#1111111a', '#d4c5c71a'],
+    '--color-background-muted': ['#eee5df', '#302926'],
+    '--color-text-primary': ['#111111', '#d4c5c7'],
+    '--color-text-secondary': ['#6b5b51', '#b9a394'],
+    '--color-text-disabled': ['#97877c', '#82736a'],
+    '--color-text-accent': ['#006e64', '#25d4c2'],
+    '--color-on-dark': '#f7f2ee',
+    '--color-on-light': '#111111',
+    '--color-on-accent': '#111111',
+    '--color-on-success': ['#ffffff', '#111111'],
+    '--color-on-error': ['#ffffff', '#111111'],
+    '--color-on-warning': ['#ffffff', '#111111'],
+    '--color-icon-accent': ['#006e64', '#25d4c2'],
+    '--color-icon-primary': ['#111111', '#d4c5c7'],
+    '--color-icon-secondary': ['#6b5b51', '#b9a394'],
+    '--color-icon-disabled': ['#97877c', '#82736a'],
+    '--color-background-card': ['#fffaf7', '#241f1c'],
+    '--color-background-popover': ['#fffaf7', '#241f1c'],
+    '--color-background-inverted': ['#111111', '#d4c5c7'],
+    '--color-success': ['#276749', '#8acda3'],
+    '--color-success-muted': ['#e1eee4', '#24372b'],
+    '--color-error': ['#b13f4b', '#ee939c'],
+    '--color-error-muted': ['#f8e5e6', '#3b2428'],
+    '--color-warning': ['#805300', '#e8bd67'],
+    '--color-warning-muted': ['#f5e9d0', '#3b3020'],
+    '--color-border': ['#d4c5c7', '#51443d'],
+    '--color-border-emphasized': ['#8b776a', '#9c8778'],
+    '--color-skeleton': ['#d4c5c7', '#51443d'],
+    '--color-shadow': ['#1111111a', '#0000004d'],
     '--color-tint-hover': ['black', 'white'],
 
-    // Categorical — Blue
-    '--color-background-blue': ['#3a5e8c33', '#3a5e8c33'],
-    '--color-border-blue': ['#3a5e8c', '#7ba8d4'],
-    '--color-icon-blue': ['#3a5e8c', '#7ba8d4'],
-    '--color-text-blue': ['#2e4a6e', '#8dbce0'],
-
-    // Categorical — Cyan
-    '--color-background-cyan': ['#3a7c7c33', '#3a7c7c33'],
-    '--color-border-cyan': ['#3a7c7c', '#70c4c4'],
-    '--color-icon-cyan': ['#3a7c7c', '#70c4c4'],
-    '--color-text-cyan': ['#2e6060', '#82d4d4'],
-
-    // Categorical — Gray
-    '--color-background-gray': ['#B8885933', '#6b554033'],
-    '--color-border-gray': ['#B88859', '#B88859'],
-    '--color-icon-gray': ['#B88859', '#c4a882'],
-    '--color-text-gray': ['#4a3520', '#EDE4D4'],
-
-    // Categorical — Green
-    '--color-background-green': ['#70990033', '#96bf2a33'],
-    '--color-border-green': ['#709900', '#96bf2a'],
-    '--color-icon-green': ['#709900', '#96bf2a'],
-    '--color-text-green': ['#5a7a00', '#a8d43a'],
-
-    // Categorical — Orange
-    '--color-background-orange': ['#c4762033', '#d4903a33'],
-    '--color-border-orange': ['#c47620', '#d4903a'],
-    '--color-icon-orange': ['#c47620', '#d4903a'],
-    '--color-text-orange': ['#a06018', '#e0a04a'],
-
-    // Categorical — Pink
-    '--color-background-pink': ['#c44a7033', '#e07a9a33'],
-    '--color-border-pink': ['#c44a70', '#e07a9a'],
-    '--color-icon-pink': ['#c44a70', '#e07a9a'],
-    '--color-text-pink': ['#a03a5a', '#f08aaa'],
-
-    // Categorical — Purple
-    '--color-background-purple': ['#6b4a8c33', '#b08ed433'],
-    '--color-border-purple': ['#6b4a8c', '#b08ed4'],
-    '--color-icon-purple': ['#6b4a8c', '#b08ed4'],
-    '--color-text-purple': ['#553a70', '#c0a0e0'],
-
-    // Categorical — Red
-    '--color-background-red': ['#FD000033', '#ff5c5c33'],
-    '--color-border-red': ['#FD0000', '#ff5c5c'],
-    '--color-icon-red': ['#FD0000', '#ff5c5c'],
-    '--color-text-red': ['#cc0000', '#ff7a7a'],
-
-    // Categorical — Teal
-    '--color-background-teal': ['#2e6b5a33', '#5ab89833'],
-    '--color-border-teal': ['#2e6b5a', '#5ab898'],
-    '--color-icon-teal': ['#2e6b5a', '#5ab898'],
-    '--color-text-teal': ['#245546', '#6ccaaa'],
-
-    // Categorical — Yellow
-    '--color-background-yellow': ['#FFB60033', '#ffc94033'],
-    '--color-border-yellow': ['#FFB600', '#ffc940'],
-    '--color-icon-yellow': ['#FFB600', '#ffc940'],
-    '--color-text-yellow': ['#cc9200', '#ffd960'],
+    // Categorical surfaces pair with their own readable foreground colors.
+    '--color-background-blue': ['#e2e9f3', '#243044'],
+    '--color-border-blue': ['#355b85', '#a8c7ee'],
+    '--color-icon-blue': ['#355b85', '#a8c7ee'],
+    '--color-text-blue': ['#355b85', '#a8c7ee'],
+    '--color-background-cyan': ['#d5f0f0', '#203333'],
+    '--color-border-cyan': ['#006a70', '#91d6dc'],
+    '--color-icon-cyan': ['#006a70', '#91d6dc'],
+    '--color-text-cyan': ['#006a70', '#91d6dc'],
+    '--color-background-gray': ['#eee5df', '#302926'],
+    '--color-border-gray': ['#6b5b51', '#b9a394'],
+    '--color-icon-gray': ['#6b5b51', '#b9a394'],
+    '--color-text-gray': ['#6b5b51', '#b9a394'],
+    '--color-background-green': ['#e1eee4', '#24372b'],
+    '--color-border-green': ['#276749', '#8acda3'],
+    '--color-icon-green': ['#276749', '#8acda3'],
+    '--color-text-green': ['#276749', '#8acda3'],
+    '--color-background-orange': ['#f4e6d9', '#3b2c20'],
+    '--color-border-orange': ['#8a4d19', '#e4b080'],
+    '--color-icon-orange': ['#8a4d19', '#e4b080'],
+    '--color-text-orange': ['#8a4d19', '#e4b080'],
+    '--color-background-pink': ['#f5e2ea', '#382630'],
+    '--color-border-pink': ['#923e68', '#e4a4c1'],
+    '--color-icon-pink': ['#923e68', '#e4a4c1'],
+    '--color-text-pink': ['#923e68', '#e4a4c1'],
+    '--color-background-purple': ['#dad4ef', '#30293f'],
+    '--color-border-purple': ['#625085', '#dad4ef'],
+    '--color-icon-purple': ['#625085', '#dad4ef'],
+    '--color-text-purple': ['#625085', '#dad4ef'],
+    '--color-background-red': ['#f8e5e6', '#3b2428'],
+    '--color-border-red': ['#b13f4b', '#ee939c'],
+    '--color-icon-red': ['#b13f4b', '#ee939c'],
+    '--color-text-red': ['#b13f4b', '#ee939c'],
+    '--color-background-teal': ['#d5f4ef', '#18322e'],
+    '--color-border-teal': ['#006e64', '#25d4c2'],
+    '--color-icon-teal': ['#006e64', '#25d4c2'],
+    '--color-text-teal': ['#006e64', '#25d4c2'],
+    '--color-background-yellow': ['#f5e9d0', '#3b3020'],
+    '--color-border-yellow': ['#805300', '#e8bd67'],
+    '--color-icon-yellow': ['#805300', '#e8bd67'],
+    '--color-text-yellow': ['#805300', '#e8bd67'],
 
     // =========================================================================
     // Radius — soft and rounded
@@ -193,11 +160,11 @@ export const chocolateTheme = defineTheme({
     '--shadow-low': '0 2px 4px #4a35200D, 0 4px 8px #4a35201A',
     '--shadow-med': '0 2px 4px #4a35200D, 0 4px 12px #4a35201A',
     '--shadow-high': '0 4px 6px #4a35201A, 0 12px 24px #4a352026',
-    '--shadow-inset-hover': 'inset 0px 0px 0px 2px #8C592730',
-    '--shadow-inset-selected': 'inset 0px 0px 0px 2px #8C592750',
-    '--shadow-inset-success': 'inset 0px 0px 0px 2px #70990050',
-    '--shadow-inset-warning': 'inset 0px 0px 0px 2px #FFB60050',
-    '--shadow-inset-error': 'inset 0px 0px 0px 2px #FD000050',
+    '--shadow-inset-hover': 'inset 0px 0px 0px 2px var(--color-text-accent)',
+    '--shadow-inset-selected': 'inset 0px 0px 0px 2px var(--color-text-accent)',
+    '--shadow-inset-success': 'inset 0px 0px 0px 2px var(--color-success)',
+    '--shadow-inset-warning': 'inset 0px 0px 0px 2px var(--color-warning)',
+    '--shadow-inset-error': 'inset 0px 0px 0px 2px var(--color-error)',
   },
 
   components: {

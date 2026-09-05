@@ -14,7 +14,13 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Dice5, LogIn, Trophy, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
-import { JetBrains_Mono, Outfit, Sarina } from "next/font/google";
+import {
+  Albert_Sans,
+  Fraunces,
+  JetBrains_Mono,
+  Outfit,
+  Sarina,
+} from "next/font/google";
 import Link from "next/link";
 
 import "./layers.css";
@@ -39,6 +45,18 @@ const sarina = Sarina({
   weight: "400",
 });
 
+const albertSans = Albert_Sans({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-albert-sans",
+});
+
+const fraunces = Fraunces({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+});
+
 export const metadata: Metadata = {
   title: "WikiGuesser",
   description:
@@ -52,15 +70,9 @@ export default async function RootLayout({
   const isAdmin = isAdminUser(userId);
 
   return (
-    <html
-      className="dark"
-      data-astryx-theme="butter"
-      data-theme="dark"
-      lang="en"
-      suppressHydrationWarning
-    >
+    <html data-astryx-theme="chocolate" lang="en" suppressHydrationWarning>
       <body
-        className={`${outfit.variable} ${jetBrainsMono.variable} ${sarina.variable} min-h-screen bg-body font-sans text-primary transition-colors`}
+        className={`${outfit.variable} ${jetBrainsMono.variable} ${sarina.variable} ${albertSans.variable} ${fraunces.variable} min-h-screen bg-body font-sans text-primary transition-colors`}
       >
         <ThemeProvider>
           <ClerkProvider signUpForceRedirectUrl="/profile-name">
@@ -73,6 +85,7 @@ export default async function RootLayout({
               >
                 <Link
                   className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-muted"
+                  aria-label="WikiGuesser"
                   href="/"
                 >
                   <span className="inline-flex size-9 items-center justify-center rounded-md bg-muted text-accent">
@@ -82,7 +95,7 @@ export default async function RootLayout({
                       strokeWidth={2.2}
                     />
                   </span>
-                  <span>WikiGuesser</span>
+                  <span className="hidden sm:inline">WikiGuesser</span>
                 </Link>
 
                 <div className="flex items-center gap-2">

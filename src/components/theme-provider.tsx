@@ -11,6 +11,10 @@ import {
 } from "react";
 import { Theme, type DefinedTheme } from "@astryxdesign/core/theme";
 import { neutralTheme } from "@astryxdesign/theme-neutral/built";
+import {
+  ThemeProvider as ColorModeProvider,
+  useTheme as useColorMode,
+} from "next-themes";
 
 import { butterTheme } from "@/src/themes/butter/butter";
 import { chocolateTheme } from "@/src/themes/chocolate/chocolate";
@@ -20,6 +24,7 @@ import { stoneTheme } from "@/src/themes/stone/stone";
 import { y2kTheme } from "@/src/themes/y2k/y2k";
 
 const ASTRYX_THEME_STORAGE_KEY = "wikiguesser-astryx-theme";
+const COLOR_MODE_STORAGE_KEY = "wikiguesser-color-mode";
 
 export const astryxThemeOptions = [
   { id: "butter", label: "Butter" },
@@ -33,6 +38,14 @@ export const astryxThemeOptions = [
 
 export type AstryxThemeName = (typeof astryxThemeOptions)[number]["id"];
 
+export const colorModeOptions = [
+  { id: "light", label: "Light" },
+  { id: "dark", label: "Dark" },
+  { id: "system", label: "System" },
+] as const;
+
+export type ColorMode = (typeof colorModeOptions)[number]["id"];
+
 const astryxThemes: Record<AstryxThemeName, DefinedTheme> = {
   butter: butterTheme,
   chocolate: chocolateTheme,
@@ -44,6 +57,9 @@ const astryxThemes: Record<AstryxThemeName, DefinedTheme> = {
 };
 
 interface AstryxThemeContextValue {
+  colorMode: ColorMode;
+  resolvedColorMode: "light" | "dark";
+  setColorMode: (colorMode: ColorMode) => void;
   themeName: AstryxThemeName;
   setThemeName: (themeName: AstryxThemeName) => void;
 }
@@ -65,9 +81,29 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [themeName, setThemeName] = useState<AstryxThemeName>("butter");
+  return (
+    <ColorModeProvider
+      attribute={["class", "data-theme"]}
+      defaultTheme="system"
+      disableTransitionOnChange
+      enableSystem
+      storageKey={COLOR_MODE_STORAGE_KEY}
+    >
+      <AstryxThemeProvider>{children}</AstryxThemeProvider>
+    </ColorModeProvider>
+  );
+}
+
+function AstryxThemeProvider({ children }: ThemeProviderProps) {
+  const [themeName, setThemeName] = useState<AstryxThemeName>("chocolate");
+  const { resolvedTheme, setTheme, theme } = useColorMode();
+  const [mounted, setMounted] = useState(false);
+  const colorMode = mounted && isColorMode(theme) ? theme : "system";
+  const resolvedColorMode: "light" | "dark" =
+    resolvedTheme === "dark" ? "dark" : "light";
 
   useEffect(() => {
+    setMounted(true);
     const savedTheme = window.localStorage.getItem(ASTRYX_THEME_STORAGE_KEY);
 
     if (astryxThemeOptions.some(({ id }) => id === savedTheme)) {
@@ -80,16 +116,34 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setThemeName(nextTheme);
   }, []);
 
+  const selectColorMode = useCallback(
+    (nextMode: ColorMode) => setTheme(nextMode),
+    [setTheme],
+  );
+
   const contextValue = useMemo(
-    () => ({ themeName, setThemeName: selectTheme }),
-    [selectTheme, themeName],
+    () => ({
+      colorMode,
+      resolvedColorMode,
+      setColorMode: selectColorMode,
+      themeName,
+      setThemeName: selectTheme,
+    }),
+    [colorMode, resolvedColorMode, selectColorMode, selectTheme, themeName],
   );
 
   return (
     <AstryxThemeContext value={contextValue}>
-      <Theme mode="dark" theme={astryxThemes[themeName]}>
+      <Theme
+        mode={mounted && resolvedTheme ? resolvedColorMode : "system"}
+        theme={astryxThemes[themeName]}
+      >
         {children}
       </Theme>
     </AstryxThemeContext>
   );
+}
+
+function isColorMode(value: string | undefined): value is ColorMode {
+  return colorModeOptions.some(({ id }) => id === value);
 }

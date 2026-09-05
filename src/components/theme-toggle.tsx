@@ -1,24 +1,37 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Popover } from "@astryxdesign/core/Popover";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@astryxdesign/core/SegmentedControl";
 import { Selector } from "@astryxdesign/core/Selector";
-import { Palette } from "lucide-react";
+import { Monitor, Moon, Palette, Sun } from "lucide-react";
 
 import {
   astryxThemeOptions,
+  colorModeOptions,
+  type ColorMode,
   type AstryxThemeName,
   useAstryxTheme,
 } from "@/src/components/theme-provider";
 
+const colorModeIcons = {
+  light: <Sun aria-hidden="true" className="size-4" strokeWidth={2} />,
+  dark: <Moon aria-hidden="true" className="size-4" strokeWidth={2} />,
+  system: <Monitor aria-hidden="true" className="size-4" strokeWidth={2} />,
+} satisfies Record<ColorMode, ReactNode>;
+
 export function ThemeToggle() {
-  const { themeName, setThemeName } = useAstryxTheme();
+  const { colorMode, setColorMode, themeName, setThemeName } = useAstryxTheme();
 
   return (
     <Popover
       alignment="end"
       content={
-        <fieldset className="w-52">
+        <fieldset className="flex w-64 flex-col gap-4">
           <legend className="sr-only">Style settings</legend>
           <Selector
             label="Style"
@@ -30,6 +43,22 @@ export function ThemeToggle() {
             value={themeName}
             width="100%"
           />
+          <SegmentedControl
+            label="Color mode"
+            layout="fill"
+            onChange={(nextMode) => setColorMode(nextMode as ColorMode)}
+            size="sm"
+            value={colorMode}
+          >
+            {colorModeOptions.map(({ id, label }) => (
+              <SegmentedControlItem
+                icon={colorModeIcons[id]}
+                key={id}
+                label={label}
+                value={id}
+              />
+            ))}
+          </SegmentedControl>
         </fieldset>
       }
       label="Choose style"

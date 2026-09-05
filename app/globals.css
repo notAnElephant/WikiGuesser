@@ -14,77 +14,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
-  :root {
-    --font-sans: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
-    --font-serif:
-      "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-    --app-background:
-      radial-gradient(
-        circle at top left,
-        rgba(15, 118, 110, 0.2),
-        transparent 34%
-      ),
-      radial-gradient(
-        circle at top right,
-        rgba(234, 179, 8, 0.18),
-        transparent 24%
-      ),
-      radial-gradient(
-        circle at bottom,
-        rgba(255, 255, 255, 0.32),
-        transparent 28%
-      ),
-      linear-gradient(180deg, #fbf5eb 0%, #f2eadb 100%);
-    --app-foreground: #1f1b17;
-    --wg-map-water: #dce9ed;
-    --wg-map-land: #fbf7ef;
-    --wg-map-border: #8b9aa0;
-    --wg-map-hover: #99d8ce;
-    --wg-map-guess: #dc2626;
-    --wg-map-solution: #2563eb;
-  }
-
-  .dark {
-    --wg-map-water: #172430;
-    --wg-map-land: #282a24;
-    --wg-map-border: #73776d;
-    --wg-map-hover: #466865;
-    --wg-map-guess: #f87171;
-    --wg-map-solution: #93c5fd;
-  }
-
   * {
     box-sizing: border-box;
   }
 
   html {
     min-height: 100%;
-  }
-
-  html.dark {
-    color-scheme: dark;
-    --app-background:
-      radial-gradient(
-        circle at top left,
-        rgba(20, 184, 166, 0.18),
-        transparent 28%
-      ),
-      radial-gradient(
-        circle at top right,
-        rgba(96, 165, 250, 0.14),
-        transparent 22%
-      ),
-      radial-gradient(
-        circle at bottom,
-        rgba(36, 212, 194, 0.08),
-        transparent 24%
-      ),
-      linear-gradient(180deg, #08111b 0%, #0f1724 54%, #16202d 100%);
-    --app-foreground: #f5f7fb;
-  }
-
-  html.light {
-    color-scheme: light;
   }
 
   body {
@@ -113,46 +48,46 @@
   .map-guess-marker {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    max-width: 12rem;
-    border: 1px solid #dc2626;
-    border-radius: 0.75rem;
-    background: rgba(255, 255, 255, 0.94);
-    padding: 0.38rem 0.55rem;
-    color: #991b1b;
-    font-family: var(--font-sans);
-    font-size: 0.76rem;
-    font-weight: 700;
+    gap: var(--spacing-1);
+    max-width: calc(var(--spacing-12) * 4);
+    border: var(--border-width) solid var(--color-error);
+    border-radius: var(--radius-container);
+    background: var(--color-background-popover);
+    padding: var(--spacing-1) var(--spacing-2);
+    color: var(--color-error);
+    font-family: var(--font-family-body);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
     line-height: 1;
     white-space: nowrap;
-    box-shadow: 0 8px 22px rgba(127, 29, 29, 0.2);
+    box-shadow: var(--shadow-med);
     cursor: pointer;
     pointer-events: auto;
-    transform: translate(-50%, calc(-100% - 0.45rem));
+    transform: translate(-50%, calc(-100% - var(--spacing-2)));
   }
 
   .map-guess-marker:focus-visible {
-    outline: 2px solid #0f766e;
-    outline-offset: 3px;
+    outline: var(--focus-outline-width) solid var(--color-text-accent);
+    outline-offset: var(--focus-outline-offset);
   }
 
   .map-guess-marker::after {
     position: absolute;
-    bottom: -0.28rem;
+    bottom: calc(var(--spacing-1) * -1);
     left: 50%;
-    width: 0.52rem;
-    height: 0.52rem;
-    border-right: 1px solid #dc2626;
-    border-bottom: 1px solid #dc2626;
-    background: rgba(255, 255, 255, 0.94);
+    width: var(--spacing-2);
+    height: var(--spacing-2);
+    border-right: var(--border-width) solid var(--color-error);
+    border-bottom: var(--border-width) solid var(--color-error);
+    background: var(--color-background-popover);
     content: "";
     transform: translateX(-50%) rotate(45deg);
   }
 
   .map-guess-marker-arrow {
     display: inline-flex;
-    width: 1rem;
-    height: 1rem;
+    width: var(--spacing-4);
+    height: var(--spacing-4);
     flex: none;
     align-items: center;
     justify-content: center;
@@ -163,99 +98,56 @@
     height: 100%;
   }
 
-  .dark .map-guess-marker {
-    border-color: #f87171;
-    background: rgba(69, 10, 10, 0.94);
-    color: #fecaca;
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.32);
-  }
-
-  .dark .map-guess-marker::after {
-    border-color: #f87171;
-    background: rgba(69, 10, 10, 0.94);
-  }
-
   .map-world-canvas {
-    background: var(--wg-map-water);
+    background: var(--color-background-muted);
   }
 
   .map-country {
-    fill: var(--wg-map-land);
-    stroke: var(--wg-map-border);
-    stroke-width: 0.72px;
+    fill: var(--color-background-surface);
+    stroke: var(--color-border-emphasized);
+    stroke-width: var(--border-width);
     transition:
-      fill 160ms ease,
-      stroke 160ms ease;
+      fill var(--duration-fast) ease,
+      stroke var(--duration-fast) ease;
   }
 
   .map-world-guessing
     .map-country:not(.map-country--guessed):not(.map-country--solution):hover {
     cursor: pointer;
-    fill: var(--wg-map-hover);
-  }
-
-  .dark
-    .map-world-guessing
-    .map-country:not(.map-country--guessed):not(.map-country--solution):hover {
-    fill: rgba(36, 212, 194, 0.38);
+    fill: var(--color-accent-muted);
   }
 
   .map-country--guessed {
     cursor: pointer;
-    fill: rgba(220, 38, 38, 0.36);
-    stroke: #dc2626;
-    stroke-width: 1.7px;
+    fill: var(--color-error-muted);
+    stroke: var(--color-error);
+    stroke-width: var(--focus-outline-width);
   }
 
   .map-country--solution {
-    fill: rgba(37, 99, 235, 0.52);
-    stroke: #2563eb;
-    stroke-width: 1.8px;
+    fill: var(--color-background-purple);
+    stroke: var(--color-text-purple);
+    stroke-width: var(--focus-outline-width);
   }
 
   .map-solution-marker {
-    border: 1px solid #2563eb;
-    border-radius: 0.75rem;
-    background: rgba(239, 246, 255, 0.96);
-    padding: 0.38rem 0.55rem;
-    color: #1d4ed8;
-    font-family: var(--font-sans);
-    font-size: 0.76rem;
-    font-weight: 700;
+    border: var(--border-width) solid var(--color-text-purple);
+    border-radius: var(--radius-container);
+    background: var(--color-background-popover);
+    padding: var(--spacing-1) var(--spacing-2);
+    color: var(--color-text-purple);
+    font-family: var(--font-family-body);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
     line-height: 1;
     white-space: nowrap;
-    box-shadow: 0 8px 22px rgba(29, 78, 216, 0.24);
+    box-shadow: var(--shadow-med);
     cursor: pointer;
-    transform: translate(-50%, calc(-100% - 0.45rem));
+    transform: translate(-50%, calc(-100% - var(--spacing-2)));
   }
 
   .map-solution-marker:focus-visible {
-    outline: 2px solid #0f766e;
-    outline-offset: 3px;
-  }
-
-  .dark .map-world-canvas {
-    background: var(--wg-map-water);
-  }
-
-  .dark .map-country {
-    fill: var(--wg-map-land);
-    stroke: var(--wg-map-border);
-  }
-
-  .dark .map-country--guessed {
-    fill: rgba(220, 38, 38, 0.46);
-    stroke: #fca5a5;
-  }
-
-  .dark .map-country--solution {
-    fill: rgba(59, 130, 246, 0.58);
-    stroke: #93c5fd;
-  }
-
-  .dark .map-solution-marker {
-    border-color: #93c5fd;
-    background: rgba(30, 58, 138, 0.94);
-    color: #dbeafe;
+    outline: var(--focus-outline-width) solid var(--color-text-accent);
+    outline-offset: var(--focus-outline-offset);
   }
 }
