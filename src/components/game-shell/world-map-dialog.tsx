@@ -87,6 +87,12 @@ const DIRECTION_LABEL: Record<GuessDirection, string> = {
   northwest: "northwest",
 };
 
+// Small-island countries (especially in the Pacific) stay tiny until the map
+// is zoomed well past 20x, so let users zoom in much further on touch screens
+// where the map canvas itself is smaller than on desktop.
+const MIN_MAP_SCALE = 1;
+const MAX_MAP_SCALE = 100;
+
 interface ResizeTransformOptions {
   currentTransform: ZoomTransform;
   mapSize: MapSize;
@@ -304,7 +310,7 @@ export function WorldMapDialog({
     }
 
     const behavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 20])
+      .scaleExtent([MIN_MAP_SCALE, MAX_MAP_SCALE])
       .extent([
         [0, 0],
         [mapSize.width, mapSize.height],
@@ -386,7 +392,10 @@ export function WorldMapDialog({
       centerX,
       centerY,
     ]);
-    const scale = Math.min(20, Math.max(1, currentTransform.k * factor));
+    const scale = Math.min(
+      MAX_MAP_SCALE,
+      Math.max(MIN_MAP_SCALE, currentTransform.k * factor),
+    );
     const targetTransform = zoomIdentity
       .translate(centerX, centerY)
       .scale(scale)
