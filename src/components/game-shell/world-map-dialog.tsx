@@ -31,11 +31,16 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+export type DuelResultMarkerTone = "challenger" | "opponent" | "both";
+
+export type DuelResultGuessedCountry = GuessedCountryMapData & {
+  markerTone?: DuelResultMarkerTone;
+};
+
 interface WorldMapDialogProps {
   drawerState?: "hidden" | "medium" | "expanded";
-  guessedCountries: readonly (GuessedCountryMapData & {
-    markerTone?: "challenger" | "opponent";
-  })[];
+  duelResult?: boolean;
+  guessedCountries: readonly DuelResultGuessedCountry[];
   isExpanded: boolean;
   onDrawerStateChange?: (drawerState: "hidden" | "medium" | "expanded") => void;
   onExpandedChange: (isExpanded: boolean) => void;
@@ -55,9 +60,7 @@ interface MapLocation {
 }
 
 export function getLastGuessedCountry(
-  guessedCountries: readonly (GuessedCountryMapData & {
-    markerTone?: "challenger" | "opponent";
-  })[],
+  guessedCountries: readonly DuelResultGuessedCountry[],
 ): GuessedCountryMapData | null {
   return guessedCountries.at(-1) ?? null;
 }
@@ -177,6 +180,7 @@ export function WorldMapDialog({
   onDrawerStateChange,
   onExpandedChange,
   onCountryGuess,
+  duelResult = false,
   presentation = "game",
   solutionCountry = null,
 }: WorldMapDialogProps) {
@@ -217,10 +221,7 @@ export function WorldMapDialog({
     [guessedCountries],
   );
   const guessedCountryByName = useMemo(() => {
-    const countriesByName = new Map<
-      string,
-      GuessedCountryMapData & { markerTone?: "challenger" | "opponent" }
-    >();
+    const countriesByName = new Map<string, DuelResultGuessedCountry>();
 
     for (const country of guessedCountries) {
       for (const normalizedName of getMapCountryNames(country.mapNames)) {
@@ -773,9 +774,9 @@ export function WorldMapDialog({
       >
         <div
           aria-label={
-            presentation === "result"
-              ? "Interactive duel result map. Each player's guesses use a different color and the answer is highlighted."
-              : "Interactive unlabeled world map. Guessed countries display their names and direction arrows."
+            presentation === "result" && duelResult
+              ? "Interactive duel result map. Each player's guesses use a different color, shared guesses are striped, and the correct answer is highlighted."
+              : "Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
           }
           className="map-world-canvas relative min-h-0 overflow-hidden"
           ref={mapContainerRef}
@@ -861,9 +862,13 @@ export function WorldMapDialog({
                       <path
                         className={
                           isSolution
-                            ? "map-country map-country--solution"
+                            ? duelResult
+                              ? "map-country map-country--solution-duel"
+                              : "map-country map-country--solution"
                             : guessedCountry
-                              ? `map-country map-country--guessed-${guessedCountry.markerTone ?? "challenger"}`
+                              ? guessedCountry.markerTone
+                                ? `map-country map-country--guessed-${guessedCountry.markerTone}`
+                                : "map-country map-country--guessed"
                               : "map-country"
                         }
                         d={countryPath}
@@ -884,6 +889,30 @@ export function WorldMapDialog({
                   })
                 : null}
             </g>
+            <defs>
+              <pattern
+                height={8}
+                id="map-duel-both-stripes"
+                patternTransform="rotate(45)"
+                patternUnits="userSpaceOnUse"
+                width={8}
+              >
+                <rect
+                  className="map-duel-stripe map-duel-stripe--challenger"
+                  height={8}
+                  width={4}
+                  x={0}
+                  y={0}
+                />
+                <rect
+                  className="map-duel-stripe map-duel-stripe--opponent"
+                  height={8}
+                  width={4}
+                  x={4}
+                  y={0}
+                />
+              </pattern>
+            </defs>
           </svg>
 
           {projection && solutionCountry
@@ -902,7 +931,7 @@ export function WorldMapDialog({
                 return (
                   <button
                     aria-label={`Focus solution: ${solutionCountry.name}`}
-                    className="map-solution-marker absolute z-5"
+                    className={`map-solution-marker absolute z-5 ${duelResult ? "map-solution-marker--duel" : ""}`}
                     onClick={() => focusLocation(solutionCountry)}
                     style={{ left, top }}
                     title={`Focus ${solutionCountry.name}`}
@@ -915,7 +944,7 @@ export function WorldMapDialog({
             : null}
 
           {presentation === "game" && projection
-            ? guessedCountries.map((country, index) => {
+            ? guessedCountries.map((country) => {
                 const point = projection([country.longitude, country.latitude]);
 
                 if (!point) {
@@ -927,8 +956,8 @@ export function WorldMapDialog({
                 return (
                   <button
                     aria-label={`${country.name}. Goal is ${DIRECTION_LABEL[country.direction]}.`}
-                    className={`map-guess-marker absolute z-5 ${country.markerTone === "opponent" ? "map-guess-marker--opponent" : "map-guess-marker--challenger"}`}
-                    key={`${country.markerTone ?? "challenger"}-${country.qid}-${index}`}
+                    className="map-guess-marker absolute z-5"
+                    key={country.qid}
                     onClick={() => focusCountry(country)}
                     style={{ left, top }}
                     title={`Focus ${country.name}`}
@@ -944,7 +973,7 @@ export function WorldMapDialog({
             : null}
 
           {presentation === "result" && projection
-            ? guessedCountries.map((country, index) => {
+            ? guessedCountries.map((country) => {
                 const point = projection([country.longitude, country.latitude]);
 
                 if (!point) {
@@ -956,8 +985,8 @@ export function WorldMapDialog({
                 return (
                   <button
                     aria-label={`Focus guess: ${country.name}. Goal is ${DIRECTION_LABEL[country.direction]}.`}
-                    className={`map-guess-marker absolute z-5 ${country.markerTone === "opponent" ? "map-guess-marker--opponent" : "map-guess-marker--challenger"}`}
-                    key={`${country.markerTone ?? "challenger"}-${country.qid}-${index}`}
+                    className={`map-guess-marker absolute z-5 ${country.markerTone ? `map-guess-marker--${country.markerTone}` : ""}`}
+                    key={`${country.markerTone ?? "guess"}-${country.qid}`}
                     onClick={() => focusCountry(country)}
                     style={{ left, top }}
                     title={`Focus ${country.name}`}

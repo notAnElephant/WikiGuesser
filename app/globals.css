@@ -45,6 +45,32 @@
     display: none;
   }
 
+  .duel-player-result--challenger {
+    border-color: var(--color-border-blue);
+    background: var(--color-background-blue);
+  }
+
+  .duel-player-result--opponent {
+    border-color: var(--color-border-purple);
+    background: var(--color-background-purple);
+  }
+
+  .duel-player-text--challenger {
+    color: var(--color-text-blue);
+  }
+
+  .duel-player-text--opponent {
+    color: var(--color-text-purple);
+  }
+
+  .duel-player-dot--challenger {
+    background: var(--color-border-blue);
+  }
+
+  .duel-player-dot--opponent {
+    background: var(--color-border-purple);
+  }
+
   .map-guess-marker {
     display: inline-flex;
     align-items: center;
@@ -66,26 +92,6 @@
     transform: translate(-50%, calc(-100% - var(--spacing-2)));
   }
 
-  .map-guess-marker--opponent {
-    border-color: var(--color-text-purple);
-    color: var(--color-text-purple);
-  }
-
-  .map-guess-marker--opponent::after {
-    border-right-color: var(--color-text-purple);
-    border-bottom-color: var(--color-text-purple);
-  }
-
-  .map-guess-marker--challenger {
-    border-color: var(--color-error);
-    color: var(--color-error);
-  }
-
-  .map-guess-marker--challenger::after {
-    border-right-color: var(--color-error);
-    border-bottom-color: var(--color-error);
-  }
-
   .map-guess-marker:focus-visible {
     outline: var(--focus-outline-width) solid var(--color-text-accent);
     outline-offset: var(--focus-outline-offset);
@@ -104,27 +110,45 @@
     transform: translateX(-50%) rotate(45deg);
   }
 
+  /* Duel result map marker tones (only applied when the marker data carries a tone). */
   .map-guess-marker--challenger {
-    border-color: var(--color-text-accent);
-    color: var(--color-text-accent);
+    border-color: var(--color-text-blue);
+    color: var(--color-text-blue);
   }
 
   .map-guess-marker--challenger::after {
-    border-color: var(--color-text-accent);
+    border-right-color: var(--color-text-blue);
+    border-bottom-color: var(--color-text-blue);
   }
 
-  .map-country--guessed-challenger {
-    cursor: pointer;
-    fill: var(--color-accent-muted);
-    stroke: var(--color-text-accent);
-    stroke-width: var(--focus-outline-width);
+  .map-guess-marker--opponent {
+    border-color: var(--color-text-purple);
+    color: var(--color-text-purple);
   }
 
-  .map-country--guessed-opponent {
-    cursor: pointer;
-    fill: var(--color-error-muted);
-    stroke: var(--color-error);
-    stroke-width: var(--focus-outline-width);
+  .map-guess-marker--opponent::after {
+    border-right-color: var(--color-text-purple);
+    border-bottom-color: var(--color-text-purple);
+  }
+
+  .map-guess-marker--both {
+    border-color: var(--color-border-emphasized);
+    background: repeating-linear-gradient(
+      45deg,
+      var(--color-background-blue) 0 0.375rem,
+      var(--color-background-purple) 0.375rem 0.75rem
+    );
+    color: var(--color-text-primary);
+  }
+
+  .map-guess-marker--both::after {
+    border-right-color: var(--color-border-emphasized);
+    border-bottom-color: var(--color-border-emphasized);
+    background: repeating-linear-gradient(
+      45deg,
+      var(--color-background-blue) 0 0.375rem,
+      var(--color-background-purple) 0.375rem 0.75rem
+    );
   }
 
   .map-guess-marker-arrow {
@@ -173,6 +197,44 @@
     stroke-width: var(--focus-outline-width);
   }
 
+  /* Duel result map: per-player country tones (only applied when map data carries a tone). */
+  .map-country--guessed-challenger {
+    cursor: pointer;
+    fill: var(--color-background-blue);
+    stroke: var(--color-border-blue);
+    stroke-width: var(--focus-outline-width);
+  }
+
+  .map-country--guessed-opponent {
+    cursor: pointer;
+    fill: var(--color-background-purple);
+    stroke: var(--color-border-purple);
+    stroke-width: var(--focus-outline-width);
+  }
+
+  .map-country--guessed-both {
+    cursor: pointer;
+    fill: url("#map-duel-both-stripes");
+    stroke: var(--color-border-emphasized);
+    stroke-width: var(--focus-outline-width);
+  }
+
+  .map-duel-stripe--challenger {
+    fill: var(--color-background-blue);
+  }
+
+  .map-duel-stripe--opponent {
+    fill: var(--color-background-purple);
+  }
+
+  /* Duel result map: the correct answer uses the success colour so it stays
+     distinct from both players' colours. */
+  .map-country--solution-duel {
+    fill: var(--color-success-muted);
+    stroke: var(--color-success);
+    stroke-width: var(--focus-outline-width);
+  }
+
   .map-solution-marker {
     border: var(--border-width) solid var(--color-text-purple);
     border-radius: var(--radius-container);
@@ -192,5 +254,10 @@
   .map-solution-marker:focus-visible {
     outline: var(--focus-outline-width) solid var(--color-text-accent);
     outline-offset: var(--focus-outline-offset);
+  }
+
+  .map-solution-marker--duel {
+    border-color: var(--color-success);
+    color: var(--color-success);
   }
 }

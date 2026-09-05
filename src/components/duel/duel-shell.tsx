@@ -4,6 +4,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import { getMapCountryNames } from "@/src/lib/game/world-map-data";
 import type {
   EntityCategory,
   GameMode,
@@ -939,6 +940,47 @@ function Scoreboard({
   );
 }
 
+type DuelMarkerTone = "challenger" | "opponent" | "both";
+
+type DuelGuessedCountry = GuessedCountryMapData & {
+  markerTone: DuelMarkerTone;
+};
+
+function guessedCountryToneKey(mapData: GuessedCountryMapData) {
+  const mapNames = [...getMapCountryNames(mapData.mapNames)].sort();
+  return mapNames.length > 0 ? mapNames.join("|") : mapData.qid;
+}
+
+/**
+ * Merges both players' guesses into one map entry per country so the map can
+ * show a single fill per country: challenger colour when only the challenger
+ * guessed it, opponent colour when only the opponent guessed it, and a striped
+ * blend when both guessed it.
+ */
+function mergeDuelGuessedCountries(
+  challengerGuesses: readonly DuelGuess[],
+  opponentGuesses: readonly DuelGuess[],
+): DuelGuessedCountry[] {
+  const countriesByKey = new Map<string, DuelGuessedCountry>();
+
+  const addGuesses = (guesses: readonly DuelGuess[], tone: DuelMarkerTone) => {
+    for (const guess of guesses) {
+      if (!guess.mapData) continue;
+      const key = guessedCountryToneKey(guess.mapData);
+      const existing = countriesByKey.get(key);
+      if (!existing) {
+        countriesByKey.set(key, { ...guess.mapData, markerTone: tone });
+      } else if (existing.markerTone !== tone) {
+        countriesByKey.set(key, { ...guess.mapData, markerTone: "both" });
+      }
+    }
+  };
+
+  addGuesses(challengerGuesses, "challenger");
+  addGuesses(opponentGuesses, "opponent");
+  return [...countriesByKey.values()];
+}
+
 function DuelRoundResults({ rounds }: { rounds: DuelRound[] }) {
   return (
     <section className="grid gap-4 p-6 sm:p-8">
@@ -961,18 +1003,10 @@ function DuelRoundResults({ rounds }: { rounds: DuelRound[] }) {
           const opponentAttempt = round.attempts.find(
             (attempt) => !attempt.isChallenger,
           );
-          const sharedGuessedCountries = [
-            ...(challengerAttempt?.guesses ?? []).flatMap((guess) =>
-              guess.mapData
-                ? [{ ...guess.mapData, markerTone: "challenger" as const }]
-                : [],
-            ),
-            ...(opponentAttempt?.guesses ?? []).flatMap((guess) =>
-              guess.mapData
-                ? [{ ...guess.mapData, markerTone: "opponent" as const }]
-                : [],
-            ),
-          ];
+          const sharedGuessedCountries = mergeDuelGuessedCountries(
+            challengerAttempt?.guesses ?? [],
+            opponentAttempt?.guesses ?? [],
+          );
 
           return (
             <li
@@ -1006,6 +1040,7 @@ function DuelRoundResults({ rounds }: { rounds: DuelRound[] }) {
                 {round.solutionCountry ? (
                   <div className="min-w-0">
                     <WorldMapDialog
+                      duelResult
                       guessedCountries={sharedGuessedCountries}
                       isExpanded={false}
                       onExpandedChange={() => undefined}
@@ -1042,8 +1077,8 @@ function PlayerRoundResult({
     <section
       className={`min-w-0 rounded-lg border p-4 ${
         tone === "challenger"
-          ? "border-accent-bg/30 bg-accent-muted"
-          : "border-error/30 bg-error-muted"
+          ? "duel-player-result--challenger"
+          : "duel-player-result--opponent"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -1056,7 +1091,7 @@ function PlayerRoundResult({
           </p>
         </div>
         <p
-          className={`shrink-0 text-lg font-bold ${tone === "challenger" ? "text-accent" : "text-error"}`}
+          className={`shrink-0 text-lg font-bold ${tone === "challenger" ? "duel-player-text--challenger" : "duel-player-text--opponent"}`}
         >
           {attempt?.score ?? 0} pts
         </p>
@@ -1074,7 +1109,7 @@ function PlayerRoundResult({
             >
               <span
                 aria-hidden="true"
-                className={`size-2 shrink-0 rounded-full ${tone === "challenger" ? "bg-accent-bg" : "bg-error"}`}
+                className={`size-2 shrink-0 rounded-full ${tone === "challenger" ? "duel-player-dot--challenger" : "duel-player-dot--opponent"}`}
               />
               <span className="truncate">{guess.name}</span>
             </li>
