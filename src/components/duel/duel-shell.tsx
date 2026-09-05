@@ -68,9 +68,21 @@ export interface DuelRound {
   score?: number | null;
   guess?: string | null;
   guesses: DuelGuess[];
+  attempts: DuelRoundAttempt[];
   answer?: string | null;
   solutionCountry?: SolutionCountryMapData | null;
   message?: string | null;
+}
+
+export interface DuelRoundAttempt {
+  playerId: string;
+  playerLabel: string;
+  isChallenger: boolean;
+  score: number | null;
+  isCorrect: boolean | null;
+  completed: boolean;
+  givenUp: boolean;
+  guesses: DuelGuess[];
 }
 
 export interface DuelResponse {
@@ -446,7 +458,7 @@ function InviteState({
 }) {
   return (
     <Card
-      className="mx-auto max-w-3xl overflow-hidden"
+      className="mx-auto max-w-6xl overflow-hidden"
       elevation="low"
       padding={0}
     >
@@ -867,7 +879,7 @@ function Scoreboard({
 
   return (
     <Card
-      className="mx-auto max-w-3xl overflow-hidden"
+      className="mx-auto max-w-6xl overflow-hidden"
       elevation="low"
       padding={0}
     >
@@ -922,7 +934,7 @@ function Scoreboard({
           />
         </div>
       </div>
-      {isSpectator ? null : <DuelRoundResults rounds={duel.rounds} />}
+      <DuelRoundResults rounds={duel.rounds} />
     </Card>
   );
 }
@@ -943,50 +955,133 @@ function DuelRoundResults({ rounds }: { rounds: DuelRound[] }) {
           const flagUrl = round.clues.find(
             (clue) => clue.key === "flag-colors",
           )?.value;
-          const guessedCountries = round.guesses.flatMap((guess) =>
-            guess.mapData ? [guess.mapData] : [],
+          const challengerAttempt = round.attempts.find(
+            (attempt) => attempt.isChallenger,
           );
+          const opponentAttempt = round.attempts.find(
+            (attempt) => !attempt.isChallenger,
+          );
+          const sharedGuessedCountries = [
+            ...(challengerAttempt?.guesses ?? []).flatMap((guess) =>
+              guess.mapData
+                ? [{ ...guess.mapData, markerTone: "challenger" as const }]
+                : [],
+            ),
+            ...(opponentAttempt?.guesses ?? []).flatMap((guess) =>
+              guess.mapData
+                ? [{ ...guess.mapData, markerTone: "opponent" as const }]
+                : [],
+            ),
+          ];
 
           return (
             <li
-              className="grid gap-4 rounded-xl border border-border bg-card p-4 sm:grid-cols-[minmax(0,1fr)_15rem]"
+              className="grid gap-5 rounded-xl border border-border bg-card p-4 sm:p-5"
               key={round.position}
             >
-              <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-wider text-secondary">
-                  Round {round.position}
-                </p>
-                <h3 className="mt-1 font-heading text-xl font-semibold">
-                  {round.answer ?? "Answer unavailable"}
-                </h3>
-                {round.guesses.length > 0 ? (
-                  <p className="mt-3 text-sm text-secondary">
-                    Your guesses:{" "}
-                    {round.guesses.map((guess) => guess.name).join(", ")}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-wider text-secondary">
+                    Round {round.position}
                   </p>
-                ) : null}
+                  <h3 className="mt-1 font-heading text-xl font-semibold">
+                    {round.answer ?? "Answer unavailable"}
+                  </h3>
+                </div>
                 {flagUrl ? (
                   <img
                     alt={`Flag of ${round.answer ?? "the answer"}`}
-                    className="mt-4 block h-auto max-h-40 w-auto max-w-full rounded-lg border border-border object-contain"
-                    height={160}
+                    className="block h-10 w-auto max-w-20 rounded border border-border object-contain"
+                    height={40}
                     src={flagUrl}
-                    width={240}
+                    width={80}
                   />
                 ) : null}
               </div>
-              {round.solutionCountry ? (
-                <WorldMapDialog
-                  guessedCountries={guessedCountries}
-                  isExpanded={false}
-                  onExpandedChange={() => undefined}
-                  presentation="result"
-                  solutionCountry={round.solutionCountry}
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1.5fr)_minmax(0,1fr)] lg:items-stretch">
+                <PlayerRoundResult
+                  attempt={challengerAttempt}
+                  tone="challenger"
                 />
-              ) : null}
+                {round.solutionCountry ? (
+                  <div className="min-w-0">
+                    <WorldMapDialog
+                      guessedCountries={sharedGuessedCountries}
+                      isExpanded={false}
+                      onExpandedChange={() => undefined}
+                      presentation="result"
+                      solutionCountry={round.solutionCountry}
+                    />
+                  </div>
+                ) : null}
+                <PlayerRoundResult attempt={opponentAttempt} tone="opponent" />
+              </div>
             </li>
           );
         })}
+      </ol>
+    </section>
+  );
+}
+
+function PlayerRoundResult({
+  attempt,
+  tone,
+}: {
+  attempt?: DuelRoundAttempt;
+  tone: "challenger" | "opponent";
+}) {
+  const guesses = attempt?.guesses ?? [];
+  const resultLabel = attempt?.givenUp
+    ? "Gave up"
+    : attempt?.isCorrect
+      ? "Solved"
+      : "Missed";
+
+  return (
+    <section
+      className={`min-w-0 rounded-lg border p-4 ${
+        tone === "challenger"
+          ? "border-accent-bg/30 bg-accent-muted"
+          : "border-error/30 bg-error-muted"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wider text-secondary">
+            {tone === "challenger" ? "Challenger" : "Opponent"}
+          </p>
+          <p className="mt-1 truncate font-semibold">
+            {attempt?.playerLabel ?? "Player"}
+          </p>
+        </div>
+        <p
+          className={`shrink-0 text-lg font-bold ${tone === "challenger" ? "text-accent" : "text-error"}`}
+        >
+          {attempt?.score ?? 0} pts
+        </p>
+      </div>
+      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-secondary">
+        {resultLabel} · {guesses.length}{" "}
+        {guesses.length === 1 ? "guess" : "guesses"}
+      </p>
+      <ol className="mt-3 grid gap-2">
+        {guesses.length > 0 ? (
+          guesses.map((guess, index) => (
+            <li
+              className="flex items-center gap-2 text-sm"
+              key={`${guess.name}-${index}`}
+            >
+              <span
+                aria-hidden="true"
+                className={`size-2 shrink-0 rounded-full ${tone === "challenger" ? "bg-accent-bg" : "bg-error"}`}
+              />
+              <span className="truncate">{guess.name}</span>
+            </li>
+          ))
+        ) : (
+          <li className="text-sm text-secondary">No guesses</li>
+        )}
       </ol>
     </section>
   );

@@ -163,12 +163,36 @@ function roundView(
   duel: DuelWithDetails,
   round: DuelWithDetails["rounds"][number],
   ownAttempt: DuelAttempt | null,
+  comparisonAttempts: readonly DuelAttempt[],
   isCurrent: boolean,
 ) {
-  const completed = Boolean(ownAttempt?.completedAt || ownAttempt?.givenUp);
+  const completed =
+    duel.status === "COMPLETED" ||
+    Boolean(ownAttempt?.completedAt || ownAttempt?.givenUp);
   const guesses = ownAttempt ? asGuesses(ownAttempt.guesses) : [];
   const clues =
     isCurrent || completed ? visibleClues(duel, round, ownAttempt) : [];
+
+  const attemptResult = (
+    playerId: string | null,
+    playerLabel: string,
+    isChallenger: boolean,
+  ) => {
+    const attempt = comparisonAttempts.find(
+      (candidate) => candidate.userProfileId === playerId,
+    );
+
+    return {
+      playerId: playerId ?? "",
+      playerLabel,
+      isChallenger,
+      score: attempt?.score ?? null,
+      isCorrect: attempt?.isCorrect ?? null,
+      completed: Boolean(attempt?.completedAt || attempt?.givenUp),
+      givenUp: Boolean(attempt?.givenUp),
+      guesses: attempt ? asGuesses(attempt.guesses) : [],
+    };
+  };
 
   return {
     position: round.position,
@@ -185,6 +209,21 @@ function roundView(
     score: ownAttempt?.score ?? null,
     guess: guesses.at(-1)?.name ?? null,
     guesses,
+    attempts:
+      duel.status === "COMPLETED"
+        ? [
+            attemptResult(
+              duel.challengerId,
+              duel.challenger.displayName?.trim() || "Challenger",
+              true,
+            ),
+            attemptResult(
+              duel.opponentId,
+              duel.opponent?.displayName?.trim() || "Opponent",
+              false,
+            ),
+          ]
+        : [],
     answer: completed ? round.canonicalAnswer : null,
     solutionCountry: completed
       ? getSolutionCountryMapData(roundEntity(duel, round))
@@ -223,6 +262,7 @@ export function buildDuelView(
       duel,
       round,
       attemptFor(round, ownId),
+      round.attempts,
       round.id === firstIncomplete?.id,
     ),
   );

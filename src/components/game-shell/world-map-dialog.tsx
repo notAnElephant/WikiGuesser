@@ -33,7 +33,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 interface WorldMapDialogProps {
   drawerState?: "hidden" | "medium" | "expanded";
-  guessedCountries: readonly GuessedCountryMapData[];
+  guessedCountries: readonly (GuessedCountryMapData & {
+    markerTone?: "challenger" | "opponent";
+  })[];
   isExpanded: boolean;
   onDrawerStateChange?: (drawerState: "hidden" | "medium" | "expanded") => void;
   onExpandedChange: (isExpanded: boolean) => void;
@@ -53,7 +55,9 @@ interface MapLocation {
 }
 
 export function getLastGuessedCountry(
-  guessedCountries: readonly GuessedCountryMapData[],
+  guessedCountries: readonly (GuessedCountryMapData & {
+    markerTone?: "challenger" | "opponent";
+  })[],
 ): GuessedCountryMapData | null {
   return guessedCountries.at(-1) ?? null;
 }
@@ -213,7 +217,10 @@ export function WorldMapDialog({
     [guessedCountries],
   );
   const guessedCountryByName = useMemo(() => {
-    const countriesByName = new Map<string, GuessedCountryMapData>();
+    const countriesByName = new Map<
+      string,
+      GuessedCountryMapData & { markerTone?: "challenger" | "opponent" }
+    >();
 
     for (const country of guessedCountries) {
       for (const normalizedName of getMapCountryNames(country.mapNames)) {
@@ -765,7 +772,11 @@ export function WorldMapDialog({
         }
       >
         <div
-          aria-label="Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
+          aria-label={
+            presentation === "result"
+              ? "Interactive duel result map. Each player's guesses use a different color and the answer is highlighted."
+              : "Interactive unlabeled world map. Guessed countries display their names and direction arrows."
+          }
           className="map-world-canvas relative min-h-0 overflow-hidden"
           ref={mapContainerRef}
           role="application"
@@ -852,7 +863,7 @@ export function WorldMapDialog({
                           isSolution
                             ? "map-country map-country--solution"
                             : guessedCountry
-                              ? "map-country map-country--guessed"
+                              ? `map-country map-country--guessed-${guessedCountry.markerTone ?? "challenger"}`
                               : "map-country"
                         }
                         d={countryPath}
@@ -904,7 +915,7 @@ export function WorldMapDialog({
             : null}
 
           {presentation === "game" && projection
-            ? guessedCountries.map((country) => {
+            ? guessedCountries.map((country, index) => {
                 const point = projection([country.longitude, country.latitude]);
 
                 if (!point) {
@@ -916,8 +927,8 @@ export function WorldMapDialog({
                 return (
                   <button
                     aria-label={`${country.name}. Goal is ${DIRECTION_LABEL[country.direction]}.`}
-                    className="map-guess-marker absolute z-5"
-                    key={country.qid}
+                    className={`map-guess-marker absolute z-5 ${country.markerTone === "opponent" ? "map-guess-marker--opponent" : "map-guess-marker--challenger"}`}
+                    key={`${country.markerTone ?? "challenger"}-${country.qid}-${index}`}
                     onClick={() => focusCountry(country)}
                     style={{ left, top }}
                     title={`Focus ${country.name}`}
@@ -933,7 +944,7 @@ export function WorldMapDialog({
             : null}
 
           {presentation === "result" && projection
-            ? guessedCountries.map((country) => {
+            ? guessedCountries.map((country, index) => {
                 const point = projection([country.longitude, country.latitude]);
 
                 if (!point) {
@@ -945,8 +956,8 @@ export function WorldMapDialog({
                 return (
                   <button
                     aria-label={`Focus guess: ${country.name}. Goal is ${DIRECTION_LABEL[country.direction]}.`}
-                    className="map-guess-marker absolute z-5"
-                    key={country.qid}
+                    className={`map-guess-marker absolute z-5 ${country.markerTone === "opponent" ? "map-guess-marker--opponent" : "map-guess-marker--challenger"}`}
+                    key={`${country.markerTone ?? "challenger"}-${country.qid}-${index}`}
                     onClick={() => focusCountry(country)}
                     style={{ left, top }}
                     title={`Focus ${country.name}`}

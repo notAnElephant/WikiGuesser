@@ -66,6 +66,26 @@
     transform: translate(-50%, calc(-100% - var(--spacing-2)));
   }
 
+  .map-guess-marker--opponent {
+    border-color: var(--color-text-purple);
+    color: var(--color-text-purple);
+  }
+
+  .map-guess-marker--opponent::after {
+    border-right-color: var(--color-text-purple);
+    border-bottom-color: var(--color-text-purple);
+  }
+
+  .map-guess-marker--challenger {
+    border-color: var(--color-error);
+    color: var(--color-error);
+  }
+
+  .map-guess-marker--challenger::after {
+    border-right-color: var(--color-error);
+    border-bottom-color: var(--color-error);
+  }
+
   .map-guess-marker:focus-visible {
     outline: var(--focus-outline-width) solid var(--color-text-accent);
     outline-offset: var(--focus-outline-offset);
@@ -82,6 +102,29 @@
     background: var(--color-background-popover);
     content: "";
     transform: translateX(-50%) rotate(45deg);
+  }
+
+  .map-guess-marker--challenger {
+    border-color: var(--color-text-accent);
+    color: var(--color-text-accent);
+  }
+
+  .map-guess-marker--challenger::after {
+    border-color: var(--color-text-accent);
+  }
+
+  .map-country--guessed-challenger {
+    cursor: pointer;
+    fill: var(--color-accent-muted);
+    stroke: var(--color-text-accent);
+    stroke-width: var(--focus-outline-width);
+  }
+
+  .map-country--guessed-opponent {
+    cursor: pointer;
+    fill: var(--color-error-muted);
+    stroke: var(--color-error);
+    stroke-width: var(--focus-outline-width);
   }
 
   .map-guess-marker-arrow {
