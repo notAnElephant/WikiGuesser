@@ -422,11 +422,31 @@ export function WorldMapDialog({
 
     const selection = select(svg);
     const startTransform = mapTransformRef.current;
+    const centerX = mapSize.width / 2;
+    const centerY = mapSize.height / 2;
+    // Interpolate the geographic point under the viewport centre instead of
+    // x/y directly: easing the scale geometrically while x/y moved linearly
+    // made the view swing off-centre and back during zooms.
+    const startCenter = startTransform.invert([centerX, centerY]);
+    const endCenter = targetTransform.invert([centerX, centerY]);
+    const startScale = startTransform.k;
+    const endScale = targetTransform.k;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
     if (reduceMotion) {
+      selection.call(behavior.transform, targetTransform);
+      animationFrameRef.current = null;
+      return;
+    }
+
+    const didReachTarget =
+      Math.abs(startScale - endScale) < 0.0001 &&
+      Math.hypot(startCenter[0] - endCenter[0], startCenter[1] - endCenter[1]) <
+        0.5;
+
+    if (didReachTarget) {
       selection.call(behavior.transform, targetTransform);
       animationFrameRef.current = null;
       return;
@@ -438,16 +458,15 @@ export function WorldMapDialog({
     const updateTransform = (timestamp: number) => {
       const progress = Math.min(1, (timestamp - startedAt) / duration);
       const easedProgress = 1 - Math.pow(1 - progress, 3);
-      const scale =
-        startTransform.k *
-        Math.pow(targetTransform.k / startTransform.k, easedProgress);
-      const x =
-        startTransform.x +
-        (targetTransform.x - startTransform.x) * easedProgress;
-      const y =
-        startTransform.y +
-        (targetTransform.y - startTransform.y) * easedProgress;
-      const interpolatedTransform = zoomIdentity.translate(x, y).scale(scale);
+      const scale = startScale * Math.pow(endScale / startScale, easedProgress);
+      const center = [
+        startCenter[0] + (endCenter[0] - startCenter[0]) * easedProgress,
+        startCenter[1] + (endCenter[1] - startCenter[1]) * easedProgress,
+      ];
+      const interpolatedTransform = zoomIdentity
+        .translate(centerX, centerY)
+        .scale(scale)
+        .translate(-center[0], -center[1]);
 
       selection.call(behavior.transform, interpolatedTransform);
 
