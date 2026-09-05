@@ -11,6 +11,7 @@ import {
 } from "@/src/components/game-shell/world-map-dialog";
 import {
   getCountriesWithoutMapCoverage,
+  getMapCountryNames,
   hasMapGeometry,
 } from "@/src/lib/game/world-map-data";
 import type { NormalizedEntity } from "@/src/lib/types";
@@ -38,6 +39,19 @@ function country(
 }
 
 describe("world map coverage", () => {
+  it("keeps the two Congo countries on their own polygons", () => {
+    expect(
+      getMapCountryNames([
+        "Democratic Republic of the Congo",
+        "DR Congo",
+        "Congo",
+      ]),
+    ).toEqual(new Set(["dem rep congo"]));
+    expect(getMapCountryNames(["Republic of the Congo", "Congo"])).toEqual(
+      new Set(["congo"]),
+    );
+  });
+
   it("includes São Tomé and Príncipe in the map geometry", () => {
     expect(hasMapGeometry(["São Tomé and Príncipe"])).toBe(true);
   });

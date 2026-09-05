@@ -210,10 +210,8 @@ export function WorldMapDialog({
     const countriesByName = new Map<string, GuessedCountryMapData>();
 
     for (const country of guessedCountries) {
-      for (const mapName of country.mapNames) {
-        for (const normalizedName of getMapCountryNames([mapName])) {
-          countriesByName.set(normalizedName, country);
-        }
+      for (const normalizedName of getMapCountryNames(country.mapNames)) {
+        countriesByName.set(normalizedName, country);
       }
     }
 

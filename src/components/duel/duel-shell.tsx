@@ -13,7 +13,6 @@ import type {
 } from "@/src/lib/types";
 import {
   Check,
-  Clipboard,
   Clock3,
   Copy,
   Flag,
@@ -810,6 +809,9 @@ function Scoreboard({
   isBusy: boolean;
   onRematch: () => void;
 }) {
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">(
+    "idle",
+  );
   const challengerScore = duel.scores?.challenger ?? 0;
   const opponentScore = duel.scores?.opponent ?? 0;
   const youScore =
@@ -824,6 +826,33 @@ function Scoreboard({
       : winner === "you"
         ? "You take the duel."
         : "That was a close one.";
+  const resultText = `${title} Final score: ${youScore}–${theirScore}.`;
+
+  async function shareResult() {
+    const url = duel.shareUrl ?? window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "WikiGuesser duel result",
+          text: resultText,
+          url,
+        });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(`${resultText} ${url}`);
+      setShareStatus("copied");
+    } catch {
+      setShareStatus("failed");
+    }
+  }
+
   return (
     <Card
       className="mx-auto max-w-3xl overflow-hidden"
@@ -866,13 +895,15 @@ function Scoreboard({
             variant="primary"
           />
           <Button
-            icon={<Clipboard />}
-            label="Share result"
-            onClick={() =>
-              void navigator.clipboard.writeText(
-                duel.shareUrl ?? window.location.href,
-              )
+            icon={shareStatus === "copied" ? <Check /> : <Share2 />}
+            label={
+              shareStatus === "copied"
+                ? "Result copied"
+                : shareStatus === "failed"
+                  ? "Try sharing again"
+                  : "Share result"
             }
+            onClick={() => void shareResult()}
             variant="secondary"
           />
         </div>

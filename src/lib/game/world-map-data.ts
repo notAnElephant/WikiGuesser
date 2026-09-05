@@ -15,6 +15,11 @@ const MAP_NAME_ALIASES: Record<string, readonly string[]> = {
   "bosnia and herzegovina": ["Bosnia and Herz."],
 };
 
+const MAP_NAME_OVERRIDES: Record<string, readonly string[]> = {
+  "democratic republic of the congo": ["Dem. Rep. Congo"],
+  "republic of the congo": ["Congo"],
+};
+
 function buildCountryData(): FeatureCollection<Geometry, MapCountryProperties> {
   const topology = worldTopology as unknown as Topology;
   const countries = topology.objects.countries as GeometryCollection<{
@@ -48,6 +53,11 @@ const MAP_COUNTRY_NAMES = new Set(
 
 export function getMapCountryNames(mapNames: readonly string[]) {
   const normalizedNames = new Set(mapNames.map(normalizeGuess));
+
+  for (const name of normalizedNames) {
+    const override = MAP_NAME_OVERRIDES[name];
+    if (override) return new Set(override.map(normalizeGuess));
+  }
 
   for (const name of normalizedNames) {
     for (const alias of MAP_NAME_ALIASES[name] ?? []) {
