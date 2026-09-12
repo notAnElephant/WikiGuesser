@@ -17,9 +17,21 @@ export interface GameShellProps {
   countryOptions: string[];
 }
 
-export type ActiveRound = StartRoundResult | RevealClueResult;
+export type PlayOrigin = "server" | "offline";
+
+type ServerActiveRound = (StartRoundResult | RevealClueResult) & {
+  playOrigin: "server";
+};
+
+type OfflineActiveRound = Omit<StartRoundResult | RevealClueResult, "token"> & {
+  playOrigin: "offline";
+  token: null;
+};
+
+export type ActiveRound = ServerActiveRound | OfflineActiveRound;
 
 export interface RoundOutcome {
+  playOrigin: PlayOrigin;
   status: "win" | "loss";
   canonicalAnswer: string;
   score: number;

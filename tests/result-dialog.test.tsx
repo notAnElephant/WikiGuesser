@@ -6,6 +6,7 @@ import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
 
 const dailyResult: RoundOutcome = {
+  playOrigin: "server",
   status: "win",
   canonicalAnswer: "Netherlands",
   score: 100,

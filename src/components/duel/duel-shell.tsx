@@ -608,6 +608,7 @@ function ActiveDuel({
   const activeRound =
     currentRound.status === "in-progress"
       ? {
+          playOrigin: "server" as const,
           roundId: `${duel.id}:${currentRound.position}`,
           token: "duel",
           kind: "standard" as const,

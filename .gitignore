@@ -5,6 +5,7 @@
 .generated
 coverage
 dist
+/public/sw.js
 *.log
 *.tsbuildinfo
 *.sqlite

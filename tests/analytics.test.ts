@@ -8,16 +8,16 @@ describe("toGameContext", () => {
       category: "countries",
       game_type: "daily",
       mode: "classic",
+      play_origin: "server",
     });
   });
 
   it("labels standard rounds as free play", () => {
-    expect(
-      toGameContext("standard", "countries", "blurred-lines"),
-    ).toEqual({
+    expect(toGameContext("standard", "countries", "blurred-lines")).toEqual({
       category: "countries",
       game_type: "free_play",
       mode: "blurred-lines",
+      play_origin: "server",
     });
   });
 });

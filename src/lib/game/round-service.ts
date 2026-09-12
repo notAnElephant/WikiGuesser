@@ -7,8 +7,13 @@ import {
   getGuessedCountryMapData,
   getSolutionCountryMapData,
 } from "@/src/lib/game/guess-direction";
-import { getClueUnlockRoundsRemaining } from "@/src/lib/game/clue-locking";
-import { getCurrencyRedactionTexts } from "@/src/lib/game/currency-censor";
+import {
+  buildRoundProgress,
+  getEffectiveRoundClues,
+  getNextClassicClueKey,
+  getScoreForGuess,
+  validateManualClueReveal,
+} from "@/src/lib/game/round-rules";
 import {
   createRoundState,
   parseRoundState,
@@ -24,14 +29,12 @@ import { recordCompletedRound } from "@/src/lib/repository/game-stats-repository
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
   GameMode,
-  ContinentId,
   GiveUpRoundInput,
   GuessRoundInput,
   GuessRoundResult,
   NormalizedEntity,
   RevealClueInput,
   RevealClueResult,
-  RoundClue,
   RoundState,
   StartDailyRoundInput,
   StartRoundInput,
@@ -40,26 +43,7 @@ import type {
 import { ACTIVE_GAME_CATEGORIES, type EntityCategory } from "@/src/lib/types";
 import { hashString } from "@/src/lib/utils/hash";
 
-const SCORE_BY_REVEAL_INDEX = [100, 80, 60, 40, 20, 10];
 const DEFAULT_GAME_MODE: GameMode = "classic";
-
-function getScoreForRevealCount(revealCount: number): number {
-  const normalizedRevealCount = Math.max(revealCount, 1);
-  return (
-    SCORE_BY_REVEAL_INDEX[
-      Math.min(normalizedRevealCount - 1, SCORE_BY_REVEAL_INDEX.length - 1)
-    ] ?? 10
-  );
-}
-
-function getScoreForGuess(
-  revealCount: number,
-  method: GuessRoundInput["method"],
-): number {
-  const score = getScoreForRevealCount(revealCount);
-
-  return method === "map" ? Math.floor(score / 2) : score;
-}
 
 function pickEntity(
   entities: NormalizedEntity[],
@@ -70,133 +54,6 @@ function pickEntity(
   return entities[index]!;
 }
 
-function getEffectiveClues(
-  entity: NormalizedEntity,
-  mode: GameMode,
-  continent?: ContinentId,
-) {
-  return entity.clues.filter(
-    (clue) =>
-      (!clue.mode || clue.mode === mode) &&
-      (!continent || clue.key !== "continent"),
-  );
-}
-
-function getRevealedClues(
-  entity: NormalizedEntity,
-  revealedClueKeys: string[],
-  mode: GameMode,
-  continent?: ContinentId,
-) {
-  const revealedClueSet = new Set(revealedClueKeys);
-  return getEffectiveClues(entity, mode, continent).filter((clue) =>
-    revealedClueSet.has(clue.key),
-  );
-}
-
-function getClues(
-  entity: NormalizedEntity,
-  revealedClueKeys: string[],
-  mode: GameMode,
-  continent: ContinentId | undefined,
-  options?: { revealAll?: boolean },
-): RoundClue[] {
-  const revealedClueSet = new Set(revealedClueKeys);
-
-  return getEffectiveClues(entity, mode, continent).map((clue) => {
-    const isRevealed = options?.revealAll || revealedClueSet.has(clue.key);
-
-    return {
-      key: clue.key,
-      label: clue.label,
-      value: isRevealed ? clue.value : null,
-      prefetchedValue: clue.value,
-      isRevealed,
-      difficulty: clue.difficulty,
-      spoilerLevel: clue.spoilerLevel,
-      ...(clue.key === "currency"
-        ? {
-            currencyRedactionTexts: getCurrencyRedactionTexts(
-              clue.value,
-              entity.canonicalAnswer,
-            ),
-          }
-        : {}),
-    };
-  });
-}
-
-function getRemainingClues(
-  entity: NormalizedEntity,
-  revealedClueKeys: string[],
-  mode: GameMode,
-  continent?: ContinentId,
-): number {
-  return Math.max(
-    getEffectiveClues(entity, mode, continent).length - revealedClueKeys.length,
-    0,
-  );
-}
-
-function getClueUnlockState(
-  entity: NormalizedEntity,
-  revealedClueKeys: string[],
-  mode: GameMode,
-  continent?: ContinentId,
-) {
-  const revealedClueSet = new Set(revealedClueKeys);
-
-  return getEffectiveClues(entity, mode, continent).map((clue) => ({
-    key: clue.key,
-    spoilerLevel: clue.spoilerLevel,
-    isRevealed: revealedClueSet.has(clue.key),
-  }));
-}
-
-function getNextClassicClueKey(
-  entity: NormalizedEntity,
-  roundState: RoundState,
-): string | null {
-  const revealedClueSet = new Set(roundState.revealedClueKeys);
-  return (
-    getEffectiveClues(entity, roundState.mode, roundState.continent).find(
-      (clue) => !revealedClueSet.has(clue.key),
-    )?.key ?? null
-  );
-}
-
-function buildRoundProgress(
-  entity: NormalizedEntity,
-  roundState: RoundState,
-  options?: { revealAll?: boolean },
-) {
-  return {
-    kind: roundState.kind,
-    category: entity.category,
-    continent: roundState.continent ?? null,
-    mode: roundState.mode,
-    clues: getClues(
-      entity,
-      roundState.revealedClueKeys,
-      roundState.mode,
-      roundState.continent,
-      options,
-    ),
-    revealedClues: getRevealedClues(
-      entity,
-      roundState.revealedClueKeys,
-      roundState.mode,
-      roundState.continent,
-    ),
-    remainingClues: getRemainingClues(
-      entity,
-      roundState.revealedClueKeys,
-      roundState.mode,
-      roundState.continent,
-    ),
-    canGuess: roundState.canGuess,
-  };
-}
 
 function buildTokenizedRoundResult(
   entity: NormalizedEntity,
@@ -336,7 +193,11 @@ export async function startRound(
   const seed = input.seed ?? randomUUID();
   const entity = pickEntity(availableEntities, seed);
   const mode = input.mode ?? DEFAULT_GAME_MODE;
-  const effectiveClues = getEffectiveClues(entity, mode, input.continent);
+  const effectiveClues = getEffectiveRoundClues(
+    entity,
+    mode,
+    input.continent,
+  );
   const revealedClueKeys =
     mode === "classic" && effectiveClues[0] ? [effectiveClues[0].key] : [];
   const roundState = createRoundState({
@@ -371,7 +232,7 @@ export async function startDailyRound(
   }
 
   const { entity } = await getDailyEntityForChallenge(challenge.id);
-  const effectiveClues = getEffectiveClues(entity, input.mode);
+  const effectiveClues = getEffectiveRoundClues(entity, input.mode);
   const revealedClueKeys =
     input.mode === "classic" && effectiveClues[0]
       ? [effectiveClues[0].key]
@@ -399,45 +260,11 @@ export async function revealClue(
 ): Promise<RevealClueResult> {
   const { entity, roundState } = await getRoundEntity(input.token, userId);
 
-  if (roundState.mode !== "blurred-lines") {
-    throw new Error(
-      "Manual clue reveals are only available in blurred lines mode.",
-    );
-  }
-
-  const selectedClue = getEffectiveClues(
+  const selectedClue = validateManualClueReveal(
     entity,
-    roundState.mode,
-    roundState.continent,
-  ).find((clue) => clue.key === input.clueKey);
-
-  if (!selectedClue) {
-    throw new Error("That clue does not exist for this round.");
-  }
-
-  if (roundState.revealedClueKeys.includes(selectedClue.key)) {
-    throw new Error("That clue is already revealed.");
-  }
-
-  const clueUnlockState = getClueUnlockState(
-    entity,
-    roundState.revealedClueKeys,
-    roundState.mode,
-    roundState.continent,
+    roundState,
+    input.clueKey,
   );
-  const selectedClueUnlockState = clueUnlockState.find(
-    (clue) => clue.key === selectedClue.key,
-  )!;
-  const unlockRoundsRemaining = getClueUnlockRoundsRemaining(
-    clueUnlockState,
-    selectedClueUnlockState,
-  );
-
-  if (unlockRoundsRemaining > 0) {
-    throw new Error(
-      `That field unlocks in ${unlockRoundsRemaining} ${unlockRoundsRemaining === 1 ? "round" : "rounds"}.`,
-    );
-  }
 
   const nextState = {
     ...roundState,
@@ -507,7 +334,8 @@ export async function submitGuess(
   if (roundState.mode === "blurred-lines") {
     if (
       roundState.revealedClueKeys.length <
-      getEffectiveClues(entity, roundState.mode, roundState.continent).length
+      getEffectiveRoundClues(entity, roundState.mode, roundState.continent)
+        .length
     ) {
       const nextState = {
         ...roundState,

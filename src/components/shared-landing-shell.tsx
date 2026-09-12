@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { DuelCreator } from "@/src/components/duel/duel-creator";
+import { OfflinePackStatus } from "@/src/components/offline-pack-status";
 import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
@@ -43,6 +44,7 @@ import {
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import { captureAnalyticsEvent, toGameContext } from "@/src/lib/analytics";
 import { CONTINENT_LABELS } from "@/src/lib/content/continents";
+import { getActiveOfflineCountryPack } from "@/src/lib/offline";
 import {
   findOtherAvailableDaily,
   getDailyComboKey,
@@ -238,7 +240,7 @@ interface ContinentPickerDialogProps {
   totalCountryCount: number;
 }
 
-function ContinentPickerDialog({
+export function ContinentPickerDialog({
   continentOptions,
   mode,
   onClose,
@@ -706,11 +708,22 @@ export function SharedLandingShell({
             payload.continent,
           ),
         });
-        setRound(payload);
+        setRound({ ...payload, playOrigin: "server" });
         setMessage(
           payload.mode === "blurred-lines" ? "Tap a row." : "Round live.",
         );
       } catch {
+        const offlinePack = await getActiveOfflineCountryPack().catch(
+          () => null,
+        );
+
+        if (offlinePack) {
+          const params = new URLSearchParams({ mode });
+          if (continent) params.set("continent", continent);
+          router.push(`/offline?${params.toString()}`);
+          return;
+        }
+
         setMessage("Round failed. Retry.");
       }
     });
@@ -774,7 +787,7 @@ export function SharedLandingShell({
           payload.continent,
         ),
       });
-      setRound(payload);
+      setRound({ ...payload, playOrigin: "server" });
       setMessage(
         payload.mode === "blurred-lines" ? "Tap a row." : "Daily live.",
       );
@@ -791,7 +804,7 @@ export function SharedLandingShell({
   }
 
   function revealClue(clueKey: string) {
-    if (!round || isSyncingReveal) {
+    if (!round || round.playOrigin !== "server" || isSyncingReveal) {
       return;
     }
 
@@ -852,13 +865,13 @@ export function SharedLandingShell({
           clues_revealed: payload.clues.filter((entry) => entry.isRevealed)
             .length,
         });
-        setRound(payload);
+        setRound({ ...payload, playOrigin: "server" });
         setMessage(
           payload.remainingClues === 0 ? "Last clue." : "Clue unlocked.",
         );
       } catch {
         setRound(previousRound);
-        setMessage("Reveal failed.");
+        setMessage("Connection lost. Reconnect to continue this online round.");
       } finally {
         setIsSyncingReveal(false);
       }
@@ -873,7 +886,7 @@ export function SharedLandingShell({
     const isMapGuess = Boolean(mapCountryName);
     const guessValue = mapCountryName ?? guess.trim();
 
-    if (!round || !guessValue) {
+    if (!round || round.playOrigin !== "server" || !guessValue) {
       return;
     }
 
@@ -972,6 +985,7 @@ export function SharedLandingShell({
         if (payload.isCorrect) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: "win",
             canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
             score: payload.score,
@@ -999,6 +1013,7 @@ export function SharedLandingShell({
         if (payload.isComplete) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: "loss",
             canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
             score: 0,
@@ -1024,6 +1039,7 @@ export function SharedLandingShell({
         }
 
         setRound({
+          playOrigin: "server",
           roundId: payload.roundId,
           token: payload.token!,
           kind: payload.kind,
@@ -1036,6 +1052,8 @@ export function SharedLandingShell({
           canGuess: payload.canGuess,
         });
         setMessage(getMissMessage(payload));
+      } catch {
+        setMessage("Connection lost. Reconnect to continue this online round.");
       } finally {
         isSubmittingGuessRef.current = false;
         setIsSubmittingGuess(false);
@@ -1053,7 +1071,7 @@ export function SharedLandingShell({
   }
 
   function giveUpRound() {
-    if (!round) {
+    if (!round || round.playOrigin !== "server") {
       return;
     }
 
@@ -1101,6 +1119,7 @@ export function SharedLandingShell({
         });
         setRound(null);
         setResult({
+          playOrigin: "server",
           status: "loss",
           canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
           score: 0,
@@ -1132,6 +1151,7 @@ export function SharedLandingShell({
   if (view === "menu") {
     return (
       <div className="grid gap-6">
+        <OfflinePackStatus />
         <GameLauncher
           claimBanner={claimBanner}
           continentOptions={continentOptions}

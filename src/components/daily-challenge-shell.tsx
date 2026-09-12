@@ -328,7 +328,7 @@ export function DailyChallengeShell({
       }
 
       const payload = (await response.json()) as StartRoundResult;
-      setRound(payload);
+      setRound({ ...payload, playOrigin: "server" });
       setMessage(
         payload.mode === "blurred-lines" ? "Tap a row." : "Daily live.",
       );
@@ -386,7 +386,7 @@ export function DailyChallengeShell({
         }
 
         const payload = (await response.json()) as RevealClueResult;
-        setRound(payload);
+        setRound({ ...payload, playOrigin: "server" });
         setMessage(
           payload.remainingClues === 0 ? "Last clue." : "Clue unlocked.",
         );
@@ -475,6 +475,7 @@ export function DailyChallengeShell({
         if (payload.isCorrect || payload.isComplete) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: payload.isCorrect ? "win" : "loss",
             canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
             score: payload.isCorrect ? payload.score : 0,
@@ -500,6 +501,7 @@ export function DailyChallengeShell({
         }
 
         setRound({
+          playOrigin: "server",
           roundId: payload.roundId,
           token: payload.token!,
           kind: payload.kind,
@@ -559,6 +561,7 @@ export function DailyChallengeShell({
       const payload = (await response.json()) as GuessRoundResult;
       setRound(null);
       setResult({
+        playOrigin: "server",
         status: "loss",
         canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
         score: 0,

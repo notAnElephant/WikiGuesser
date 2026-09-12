@@ -2,8 +2,11 @@ import { AccountUserButton } from "@/src/components/account-user-button";
 import { AdminDailyAnswersProfilePage } from "@/src/components/admin-daily-answers-profile-page";
 import { AppToaster } from "@/src/components/app-toaster";
 import { PostHogIdentity } from "@/src/components/posthog-identity";
+import { PwaInstallButton } from "@/src/components/pwa-install-button";
+import { OfflinePackProvider } from "@/src/components/offline-pack-provider";
 import { ThemeProvider } from "@/src/components/theme-provider";
 import { ThemeToggle } from "@/src/components/theme-toggle";
+import { WikiGuesserSerwistProvider } from "@/app/serwist-provider";
 
 import { isAdminUser } from "@/src/lib/auth/admin";
 import { ClerkProvider, Show } from "@clerk/nextjs";
@@ -58,6 +61,11 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "WikiGuesser",
+  },
   title: "WikiGuesser",
   description:
     "A fast clue-based trivia game built from Wikipedia-inspired topics.",
@@ -74,81 +82,90 @@ export default async function RootLayout({
       <body
         className={`${outfit.variable} ${jetBrainsMono.variable} ${sarina.variable} ${albertSans.variable} ${fraunces.variable} min-h-screen bg-body font-sans text-primary transition-colors`}
       >
-        <ThemeProvider>
-          <ClerkProvider signUpForceRedirectUrl="/profile-name">
-            <PostHogIdentity />
-            <header className="fixed inset-x-0 top-0 z-40 bg-body/90 p-3 backdrop-blur-md sm:p-4">
-              <Card
-                className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3"
-                elevation="low"
-                padding={2}
-              >
-                <Link
-                  className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-muted"
-                  aria-label="WikiGuesser"
-                  href="/"
-                >
-                  <span className="inline-flex size-9 items-center justify-center rounded-md bg-muted text-accent">
-                    <Dice5
-                      aria-hidden="true"
-                      className="size-4.5"
-                      strokeWidth={2.2}
-                    />
-                  </span>
-                  <span className="hidden sm:inline">WikiGuesser</span>
-                </Link>
-
-                <div className="flex items-center gap-2">
-                  <Link
-                    aria-label="Leaderboard"
-                    className="inline-flex size-10 items-center justify-center rounded-md bg-muted text-accent transition-colors hover:bg-card"
-                    href="/leaderboard"
-                    title="Leaderboard"
+        <WikiGuesserSerwistProvider>
+          <OfflinePackProvider>
+            <ThemeProvider>
+              <ClerkProvider signUpForceRedirectUrl="/profile-name">
+                <PostHogIdentity />
+                <header className="fixed inset-x-0 top-0 z-40 bg-body/90 p-3 backdrop-blur-md sm:p-4">
+                  <Card
+                    className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3"
+                    elevation="low"
+                    padding={2}
                   >
-                    <Trophy
-                      aria-hidden="true"
-                      className="size-4"
-                      strokeWidth={2.2}
-                    />
-                  </Link>
-                  <ThemeToggle />
-                  <Show when="signed-out">
                     <Link
-                      aria-label="Log in"
-                      className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-muted hover:text-primary"
-                      href="/sign-in"
-                      title="Log in"
+                      className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-muted"
+                      aria-label="WikiGuesser"
+                      href="/"
                     >
-                      <LogIn
-                        aria-hidden="true"
-                        className="size-4"
-                        strokeWidth={2.2}
-                      />
-                      Log in
+                      <span className="inline-flex size-9 items-center justify-center rounded-md bg-muted text-accent">
+                        <Dice5
+                          aria-hidden="true"
+                          className="size-4.5"
+                          strokeWidth={2.2}
+                        />
+                      </span>
+                      <span className="hidden sm:inline">WikiGuesser</span>
                     </Link>
-                    <Button
-                      href="/sign-up"
-                      icon={<UserPlus aria-hidden="true" className="size-4" />}
-                      label="Sign up"
-                      size="lg"
-                      variant="primary"
-                    />
-                  </Show>
-                  <Show when="signed-in">
-                    <AccountUserButton
-                      adminDailyAnswersPage={
-                        isAdmin ? <AdminDailyAnswersProfilePage /> : undefined
-                      }
-                      isAdmin={isAdmin}
-                    />
-                  </Show>
-                </div>
-              </Card>
-            </header>
-            {children}
-            <AppToaster />
-          </ClerkProvider>
-        </ThemeProvider>
+
+                    <div className="flex items-center gap-2">
+                      <PwaInstallButton />
+                      <Link
+                        aria-label="Leaderboard"
+                        className="inline-flex size-10 items-center justify-center rounded-md bg-muted text-accent transition-colors hover:bg-card"
+                        href="/leaderboard"
+                        title="Leaderboard"
+                      >
+                        <Trophy
+                          aria-hidden="true"
+                          className="size-4"
+                          strokeWidth={2.2}
+                        />
+                      </Link>
+                      <ThemeToggle />
+                      <Show when="signed-out">
+                        <Link
+                          aria-label="Log in"
+                          className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-muted hover:text-primary"
+                          href="/sign-in"
+                          title="Log in"
+                        >
+                          <LogIn
+                            aria-hidden="true"
+                            className="size-4"
+                            strokeWidth={2.2}
+                          />
+                          Log in
+                        </Link>
+                        <Button
+                          href="/sign-up"
+                          icon={
+                            <UserPlus aria-hidden="true" className="size-4" />
+                          }
+                          label="Sign up"
+                          size="lg"
+                          variant="primary"
+                        />
+                      </Show>
+                      <Show when="signed-in">
+                        <AccountUserButton
+                          adminDailyAnswersPage={
+                            isAdmin ? (
+                              <AdminDailyAnswersProfilePage />
+                            ) : undefined
+                          }
+                          isAdmin={isAdmin}
+                        />
+                      </Show>
+                    </div>
+                  </Card>
+                </header>
+                {children}
+                <AppToaster />
+              </ClerkProvider>
+            </ThemeProvider>
+          </OfflinePackProvider>
+        </WikiGuesserSerwistProvider>
         <Analytics />
         <SpeedInsights />
       </body>

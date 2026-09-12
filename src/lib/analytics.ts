@@ -14,6 +14,7 @@ type GameContext = {
   continent?: ContinentId;
   game_type: "daily" | "free_play";
   mode: GameMode;
+  play_origin: "server";
 };
 
 type AnalyticsEvents = {
@@ -65,5 +66,6 @@ export function toGameContext(
     ...(continent ? { continent } : {}),
     game_type: kind === "daily" ? "daily" : "free_play",
     mode,
+    play_origin: "server",
   };
 }

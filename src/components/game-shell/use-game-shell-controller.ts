@@ -199,13 +199,13 @@ export function useGameShellController({
       }
 
       const data = (await response.json()) as StartRoundResult;
-      setRound(data);
+      setRound({ ...data, playOrigin: "server" });
       setMessage(data.mode === "blurred-lines" ? "Tap a row." : "Round live.");
     });
   }
 
   function revealClue(clueKey: string) {
-    if (!round || isSyncingReveal) {
+    if (!round || round.playOrigin !== "server" || isSyncingReveal) {
       return;
     }
 
@@ -255,7 +255,7 @@ export function useGameShellController({
         }
 
         const data = (await response.json()) as RevealClueResult;
-        setRound(data);
+        setRound({ ...data, playOrigin: "server" });
         setMessage(data.remainingClues === 0 ? "Last clue." : "Clue unlocked.");
       } catch {
         setRound(previousRound);
@@ -274,7 +274,7 @@ export function useGameShellController({
     const isMapGuess = Boolean(mapCountryName);
     const guessValue = mapCountryName ?? guess.trim();
 
-    if (!round || !guessValue) {
+    if (!round || round.playOrigin !== "server" || !guessValue) {
       return;
     }
 
@@ -339,6 +339,7 @@ export function useGameShellController({
         if (data.isCorrect) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: "win",
             canonicalAnswer: data.canonicalAnswer ?? "Unknown",
             score: data.score,
@@ -355,6 +356,7 @@ export function useGameShellController({
         if (data.isComplete) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: "loss",
             canonicalAnswer: data.canonicalAnswer ?? "Unknown",
             score: 0,
@@ -369,6 +371,7 @@ export function useGameShellController({
         }
 
         setRound({
+          playOrigin: "server",
           roundId: data.roundId,
           token: data.token!,
           category: data.category,
@@ -405,7 +408,7 @@ export function useGameShellController({
   }
 
   function giveUpRound() {
-    if (!round) {
+    if (!round || round.playOrigin !== "server") {
       return;
     }
 
@@ -431,6 +434,7 @@ export function useGameShellController({
       const data = (await response.json()) as GuessRoundResult;
       setRound(null);
       setResult({
+        playOrigin: "server",
         status: "loss",
         canonicalAnswer: data.canonicalAnswer ?? "Unknown",
         score: 0,
