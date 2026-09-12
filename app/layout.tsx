@@ -77,7 +77,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <ClerkProvider signUpForceRedirectUrl="/profile-name">
             <PostHogIdentity />
-            <header className="fixed inset-x-0 top-0 z-40 p-3 sm:p-4">
+            <header className="fixed inset-x-0 top-0 z-40 bg-body/90 p-3 backdrop-blur-md sm:p-4">
               <Card
                 className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3"
                 elevation="low"
