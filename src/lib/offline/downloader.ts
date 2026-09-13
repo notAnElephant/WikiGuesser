@@ -114,7 +114,10 @@ export async function downloadOfflineCountryPack(
   options: DownloadOfflineCountryPackOptions = {},
 ): Promise<OfflinePackState> {
   const manifest = offlineCountryManifestSchema.parse(unvalidatedManifest);
-  const fetcher = options.fetcher ?? fetch;
+  // Native `window.fetch` requires `window` as its receiver in installed PWAs.
+  // Wrap the default rather than passing the method reference around unbound.
+  const fetcher =
+    options.fetcher ?? ((input, init) => window.fetch(input, init));
   const cacheStorage = options.cacheStorage ?? caches;
   const retries = Math.max(0, options.retries ?? 3);
   try {
