@@ -10,6 +10,8 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+type ManualInstallInstructions = "ios" | "macos";
+
 function isStandaloneDisplay() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
@@ -22,17 +24,33 @@ function isIosDevice() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent);
 }
 
+function isSafariBrowser() {
+  return (
+    /safari/i.test(navigator.userAgent) &&
+    !/chrome|chromium|crios|fxios|edg|opr|opera|android/i.test(
+      navigator.userAgent,
+    )
+  );
+}
+
+function getManualInstallInstructions(): ManualInstallInstructions | null {
+  if (isIosDevice()) return "ios";
+  if (isSafariBrowser()) return "macos";
+  return null;
+}
+
 export function PwaInstallButton() {
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [showIosInstructions, setShowIosInstructions] = useState(false);
+  const [manualInstructions, setManualInstructions] =
+    useState<ManualInstallInstructions | null>(null);
 
   useEffect(() => {
     if (isStandaloneDisplay()) {
       return;
     }
 
-    setShowIosInstructions(isIosDevice());
+    setManualInstructions(getManualInstallInstructions());
 
     function handleBeforeInstallPrompt(event: Event) {
       event.preventDefault();
@@ -41,7 +59,7 @@ export function PwaInstallButton() {
 
     function handleInstalled() {
       setInstallPrompt(null);
-      setShowIosInstructions(false);
+      setManualInstructions(null);
       toast.success("WikiGuesser installed.");
     }
 
@@ -57,7 +75,7 @@ export function PwaInstallButton() {
     };
   }, []);
 
-  if (!installPrompt && !showIosInstructions) {
+  if (!installPrompt && !manualInstructions) {
     return null;
   }
 
@@ -72,7 +90,12 @@ export function PwaInstallButton() {
       return;
     }
 
-    toast.info("In Safari, tap Share, then Add to Home Screen.", {
+    const message =
+      manualInstructions === "macos"
+        ? "In Safari, choose File > Add to Dock, then click Add."
+        : "In Safari, tap Share, then Add to Home Screen.";
+
+    toast.info(message, {
       duration: 8_000,
     });
   }
