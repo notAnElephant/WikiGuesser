@@ -17,6 +17,12 @@ import type { DailyLeaderboardPageData, GameMode } from "@/src/lib/types";
 
 type LeaderboardPeriod = "today" | "total";
 
+const PODIUM_RANKS = [
+  { medal: "🥇" },
+  { medal: "🥈" },
+  { medal: "🥉" },
+] as const;
+
 interface DailyLeaderboardShellProps {
   data: DailyLeaderboardPageData;
   initialMode: GameMode;
@@ -158,16 +164,23 @@ export function DailyLeaderboardShell({
             ) : (
               entries.map((entry, index) => (
                 <div
-                  className={`items-center gap-2 rounded-lg border border-border bg-card px-4 py-3  ${
+                  className={`items-center gap-2 rounded-lg border px-4 py-3 ${
                     period === "total"
                       ? "grid grid-cols-[minmax(0,1fr)_4rem_4rem] sm:grid-cols-[minmax(0,1fr)_5rem_5rem]"
                       : "flex justify-between"
-                  }`}
+                  } border-border bg-card`}
                   key={`${entry.playerKey}-${index}`}
                 >
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-primary">
-                      {index + 1}. {entry.displayName}
+                      {PODIUM_RANKS[index] ? (
+                        <span aria-label={`Rank ${index + 1}`}>
+                          {PODIUM_RANKS[index].medal}
+                        </span>
+                      ) : (
+                        `${index + 1}.`
+                      )}{" "}
+                      {entry.displayName}
                     </div>
                     <div className="text-xs text-secondary">
                       {entry.completedAt ? (
