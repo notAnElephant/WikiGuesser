@@ -63,6 +63,10 @@ npm run ingest:build-snapshot:active
 npm run report:properties:cities
 ```
 
+## Database backups
+
+A daily, encrypted PostgreSQL backup can be stored in Cloudflare R2's free tier. Set it up with the [database backup guide](./docs/database-backups.md).
+
 Safe snapshot workflow:
 
 - Re-hydrate only the categories you changed, for example `npm run ingest:hydrate:cities`
