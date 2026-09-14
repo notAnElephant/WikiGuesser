@@ -98,6 +98,7 @@ describe("daily result dialog actions", () => {
 
     expect(markup).toContain('class="astryx-dialog');
     expect(markup).toContain('aria-label="Close"');
+    expect(markup).toContain('aria-label="Enlarge flag of Netherlands"');
     expect(markup).toContain('alt="Flag of Netherlands"');
     expect(markup).toContain("Flag%20of%20the%20Netherlands.svg");
     expect(markup).toContain('class="h-6 w-9 rounded-sm border border-border object-cover"');

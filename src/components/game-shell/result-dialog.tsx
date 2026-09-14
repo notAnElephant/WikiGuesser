@@ -3,14 +3,17 @@ import { Card } from "@astryxdesign/core/Card";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { VStack } from "@astryxdesign/core/VStack";
 import { FeedbackForm } from "@/src/components/feedback-form";
+import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import { getCategoryMeta } from "@/src/components/game-shell/utils";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
 import type { GuessedCountryMapData } from "@/src/lib/types";
 import type { LucideIcon } from "lucide-react";
+import { useState } from "react";
 import {
   Ban,
   House,
   LogIn,
+  MessageSquare,
   PartyPopper,
   RotateCcw,
   Trophy,
@@ -61,6 +64,7 @@ export function GameResultDialog({
   startRound,
   tertiaryActionLabel,
 }: GameResultDialogProps) {
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const flagUrl = result.clues.find(
     (clue) => clue.key === "flag-colors",
@@ -91,12 +95,9 @@ export function GameResultDialog({
         }}
         startContent={
           flagUrl ? (
-            <img
-              alt={`Flag of ${result.canonicalAnswer}`}
-              className="h-6 w-9 rounded-sm border border-border object-cover"
-              height={24}
+            <CountryFlagPreview
+              countryName={result.canonicalAnswer}
               src={flagUrl}
-              width={36}
             />
           ) : result.status === "win" ? (
             <PartyPopper aria-hidden="true" className="text-accent" />
@@ -186,20 +187,34 @@ export function GameResultDialog({
           width="100%"
         />
       ) : null}
-      <VStack gap={3} paddingBlockStart={6}>
-        <strong className="text-primary">How was that round?</strong>
-        <FeedbackForm
-          context={{
-            category: result.category,
-            cluesRevealed: result.clues.filter((clue) => clue.isRevealed).length,
-            gameType: result.kind === "daily" ? "daily" : "free_play",
-            mode: result.mode,
-            outcome: result.status,
-            score: result.score,
-            source: "round-result",
-          }}
+      {isFeedbackOpen ? (
+        <VStack gap={3} paddingBlockStart={6}>
+          <strong className="text-primary">How was that round?</strong>
+          <FeedbackForm
+            context={{
+              category: result.category,
+              cluesRevealed: result.clues.filter(
+                (clue) => clue.isRevealed,
+              ).length,
+              gameType: result.kind === "daily" ? "daily" : "free_play",
+              mode: result.mode,
+              outcome: result.status,
+              score: result.score,
+              source: "round-result",
+            }}
+            onSubmitted={() => setIsFeedbackOpen(false)}
+          />
+        </VStack>
+      ) : (
+        <Button
+          className="mt-4"
+          icon={<MessageSquare aria-hidden="true" />}
+          label="Give feedback"
+          onClick={() => setIsFeedbackOpen(true)}
+          variant="ghost"
+          width="100%"
         />
-      </VStack>
+      )}
     </Dialog>
   );
 }

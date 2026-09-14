@@ -3,6 +3,7 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack } from "@astryxdesign/core/HStack";
+import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import { getMapCountryNames } from "@/src/lib/game/world-map-data";
@@ -1029,12 +1030,9 @@ function DuelRoundResults({ rounds }: { rounds: DuelRound[] }) {
                       {round.answer ?? "Answer unavailable"}
                     </h3>
                     {flagUrl ? (
-                      <img
-                        alt={`Flag of ${round.answer ?? "the answer"}`}
-                        className="h-6 w-9 shrink-0 rounded-sm border border-border object-cover"
-                        height={24}
+                      <CountryFlagPreview
+                        countryName={round.answer ?? "the answer"}
                         src={flagUrl}
-                        width={36}
                       />
                     ) : null}
                   </HStack>
