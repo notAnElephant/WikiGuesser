@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 
 import { DuelCreator } from "@/src/components/duel/duel-creator";
-import { requestFeedback } from "@/src/components/feedback-button";
 import { OfflinePackStatus } from "@/src/components/offline-pack-status";
 import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
@@ -879,27 +878,6 @@ export function SharedLandingShell({
     });
   }
 
-  function reportClue(clueKey: string) {
-    const clue = currentClues.find((entry) => entry.key === clueKey);
-    const feedbackRound = round ?? result;
-
-    if (!clue || !feedbackRound) {
-      return;
-    }
-
-    requestFeedback({
-      category: feedbackRound.category,
-      clueKey: clue.key,
-      clueLabel: clue.label,
-      cluesRevealed: currentClues.filter((entry) => entry.isRevealed).length,
-      gameType: feedbackRound.kind === "daily" ? "daily" : "free_play",
-      mode: feedbackRound.mode,
-      outcome: result?.status,
-      score: result?.score,
-      source: "clue",
-    });
-  }
-
   function submitGuess(mapCountryName?: string) {
     if (isSubmittingGuessRef.current) {
       return;
@@ -1233,7 +1211,6 @@ export function SharedLandingShell({
           messageRevision={messageRevision}
           result={result}
           revealClue={revealClue}
-          reportClue={reportClue}
           revealedCount={revealedCount}
           round={round}
           setGuess={setGuess}
