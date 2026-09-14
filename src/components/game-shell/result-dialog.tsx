@@ -90,7 +90,15 @@ export function GameResultDialog({
           if (!isOpen) onClose();
         }}
         startContent={
-          result.status === "win" ? (
+          flagUrl ? (
+            <img
+              alt={`Flag of ${result.canonicalAnswer}`}
+              className="h-6 w-9 rounded-sm border border-border object-cover"
+              height={24}
+              src={flagUrl}
+              width={36}
+            />
+          ) : result.status === "win" ? (
             <PartyPopper aria-hidden="true" className="text-accent" />
           ) : (
             <Ban aria-hidden="true" className="text-error" />
@@ -100,29 +108,14 @@ export function GameResultDialog({
         title={result.canonicalAnswer}
       />
 
-      {flagUrl || result.solutionCountry ? (
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          {flagUrl ? (
-            <div className="flex min-h-64 items-center justify-center overflow-hidden rounded-xl border border-border bg-card p-3">
-              <img
-                alt={`Flag of ${result.canonicalAnswer}`}
-                className="block h-auto max-h-64 w-auto max-w-full object-contain drop-shadow-md sm:max-h-72 dark:drop-shadow-md"
-                height={320}
-                src={flagUrl}
-                width={480}
-              />
-            </div>
-          ) : null}
-          {result.solutionCountry ? (
-            <WorldMapDialog
-              guessedCountries={guessedCountries}
-              isExpanded={false}
-              onExpandedChange={() => undefined}
-              presentation="result"
-              solutionCountry={result.solutionCountry}
-            />
-          ) : null}
-        </div>
+      {result.solutionCountry ? (
+        <WorldMapDialog
+          guessedCountries={guessedCountries}
+          isExpanded={false}
+          onExpandedChange={() => undefined}
+          presentation="result"
+          solutionCountry={result.solutionCountry}
+        />
       ) : null}
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">

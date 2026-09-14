@@ -87,7 +87,7 @@ describe("daily result dialog actions", () => {
     expect(markup).toContain(">Home</span>");
   });
 
-  it("renders the completed round's flag without forcing a backdrop or aspect ratio", () => {
+  it("renders the completed round's flag beside the country name", () => {
     const markup = renderToStaticMarkup(
       <GameResultDialog
         {...sharedProps}
@@ -98,11 +98,10 @@ describe("daily result dialog actions", () => {
 
     expect(markup).toContain('class="astryx-dialog');
     expect(markup).toContain('aria-label="Close"');
-    expect(markup).toContain("items-center justify-center");
     expect(markup).toContain('alt="Flag of Netherlands"');
     expect(markup).toContain("Flag%20of%20the%20Netherlands.svg");
-    expect(markup).toContain('class="mt-5 grid gap-4 sm:grid-cols-2"');
-    expect(markup).toContain("block h-auto max-h-64 w-auto max-w-full");
-    expect(markup).not.toContain("aspect-[3/2]");
+    expect(markup).toContain('class="h-6 w-9 rounded-sm border border-border object-cover"');
+    expect(markup).not.toContain("max-h-64");
+    expect(markup).not.toContain("min-h-64");
   });
 });

@@ -2,6 +2,7 @@
 
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
+import { HStack } from "@astryxdesign/core/HStack";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import { getMapCountryNames } from "@/src/lib/game/world-map-data";
@@ -1014,25 +1015,31 @@ function DuelRoundResults({ rounds }: { rounds: DuelRound[] }) {
               className="grid gap-5 rounded-xl border border-border bg-card p-4 sm:p-5"
               key={round.position}
             >
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+              <HStack
+                align="center"
+                className="border-b border-border pb-4"
+                gap={3}
+              >
                 <div className="min-w-0">
                   <p className="text-xs font-bold uppercase tracking-wider text-secondary">
                     Round {round.position}
                   </p>
-                  <h3 className="mt-1 font-heading text-xl font-semibold">
-                    {round.answer ?? "Answer unavailable"}
-                  </h3>
+                  <HStack align="center" className="mt-1" gap={2}>
+                    <h3 className="font-heading text-xl font-semibold">
+                      {round.answer ?? "Answer unavailable"}
+                    </h3>
+                    {flagUrl ? (
+                      <img
+                        alt={`Flag of ${round.answer ?? "the answer"}`}
+                        className="h-6 w-9 shrink-0 rounded-sm border border-border object-cover"
+                        height={24}
+                        src={flagUrl}
+                        width={36}
+                      />
+                    ) : null}
+                  </HStack>
                 </div>
-                {flagUrl ? (
-                  <img
-                    alt={`Flag of ${round.answer ?? "the answer"}`}
-                    className="block h-10 w-auto max-w-20 rounded border border-border object-contain"
-                    height={40}
-                    src={flagUrl}
-                    width={80}
-                  />
-                ) : null}
-              </div>
+              </HStack>
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,1.5fr)_minmax(0,1fr)] lg:items-stretch">
                 <PlayerRoundResult
                   attempt={challengerAttempt}
