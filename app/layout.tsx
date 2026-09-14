@@ -121,26 +121,24 @@ export default async function RootLayout({
                       />
                       <ThemeToggle />
                       <Show when="signed-out">
-                        <Link
-                          aria-label="Log in"
-                          className="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-muted hover:text-primary"
+                        <Button
                           href="/sign-in"
-                          title="Log in"
-                        >
-                          <LogIn
-                            aria-hidden="true"
-                            className="size-4"
-                            strokeWidth={2.2}
-                          />
-                          Log in
-                        </Link>
+                          icon={
+                            <LogIn
+                              aria-hidden="true"
+                              className="size-4"
+                              strokeWidth={2.2}
+                            />
+                          }
+                          label="Log in"
+                          variant="ghost"
+                        />
                         <Button
                           href="/sign-up"
                           icon={
                             <UserPlus aria-hidden="true" className="size-4" />
                           }
                           label="Sign up"
-                          size="lg"
                           variant="primary"
                         />
                       </Show>
