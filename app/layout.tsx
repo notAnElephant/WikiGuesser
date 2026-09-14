@@ -18,7 +18,7 @@ import { Card } from "@astryxdesign/core/Card";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { LogIn, Trophy, UserPlus } from "lucide-react";
+import { ChartNoAxesCombined, LogIn, Trophy, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 import {
   Albert_Sans,
@@ -145,6 +145,19 @@ export default async function RootLayout({
                         />
                       </Show>
                       <Show when="signed-in">
+                        <IconButton
+                          href="/stats"
+                          icon={
+                            <ChartNoAxesCombined
+                              aria-hidden="true"
+                              className="size-4"
+                              strokeWidth={2.2}
+                            />
+                          }
+                          label="My stats"
+                          tooltip="My stats"
+                          variant="ghost"
+                        />
                         <AccountUserButton
                           adminDailyAnswersPage={
                             isAdmin ? (

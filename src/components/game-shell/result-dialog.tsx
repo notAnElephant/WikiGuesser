@@ -43,6 +43,7 @@ interface GameResultDialogProps {
   primaryActionLabel?: string;
   result: RoundOutcome;
   secondaryActionLabel?: string | null;
+  statsHref?: string;
   startRound: () => void;
   tertiaryActionLabel?: string;
 }
@@ -61,6 +62,7 @@ export function GameResultDialog({
   primaryActionLabel = "Play again",
   result,
   secondaryActionLabel = "Categories",
+  statsHref,
   startRound,
   tertiaryActionLabel,
 }: GameResultDialogProps) {
@@ -188,6 +190,16 @@ export function GameResultDialog({
             isDisabled={isBusy}
             label={tertiaryActionLabel}
             onClick={onTertiaryAction}
+            variant="secondary"
+            width="100%"
+          />
+        ) : null}
+        {statsHref ? (
+          <Button
+            className="mt-3"
+            icon={<Trophy aria-hidden="true" />}
+            label="View my stats"
+            href={statsHref}
             variant="secondary"
             width="100%"
           />

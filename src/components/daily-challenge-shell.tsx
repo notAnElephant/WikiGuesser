@@ -664,6 +664,7 @@ export function DailyChallengeShell({
                   : "Create account"
             }
             result={result}
+            statsHref={isSignedIn ? "/stats" : undefined}
             secondaryActionLabel={
               isSignedIn && !otherAvailableDailyCard ? null : "Daily hub"
             }

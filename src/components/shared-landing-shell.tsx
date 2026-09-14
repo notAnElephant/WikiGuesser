@@ -1316,6 +1316,7 @@ export function SharedLandingShell({
                   : "Play again"
               }
               result={result}
+              statsHref={isSignedIn ? "/stats" : undefined}
               secondaryActionLabel={
                 result.kind === "daily" && otherAvailableDailyOption
                   ? isSignedIn
