@@ -128,6 +128,10 @@ export function OfflinePackProvider({ children }: { children: ReactNode }) {
 
     function handleOffline() {
       setIsOnline(false);
+
+      if (standalone && window.location.pathname !== "/offline") {
+        window.location.assign("/offline");
+      }
     }
 
     window.addEventListener("online", handleOnline);
