@@ -166,6 +166,9 @@ export function GamePlayView({
   const currentModeMeta = getModeMeta(currentMode);
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const CurrentModeIcon = currentModeMeta.icon;
+  const isRevealMode = currentMode === "blurred-lines";
+  const isRevealStep = Boolean(round && isRevealMode && !round.canGuess);
+  const isGuessStep = Boolean(round && isRevealMode && round.canGuess);
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
   const [mapDrawerState, setMapDrawerState] = useState<
     "hidden" | "medium" | "expanded"
@@ -205,16 +208,48 @@ export function GamePlayView({
         >
           <div className="min-w-0">
             <h1 className="m-0 font-heading text-2xl font-semibold leading-tight tracking-tighter text-primary sm:text-3xl">
-              {currentMode === "blurred-lines"
-                ? "Choose your clues"
+              {isRevealMode
+                ? isGuessStep
+                  ? "Make your guess"
+                  : "Choose a clue"
                 : "Follow the clues"}
             </h1>
-            {currentMode === "blurred-lines" ? (
+            {isRevealMode ? (
               <p className="m-0 mt-1 text-xs leading-4 text-secondary sm:mt-2 sm:text-sm">
-                Reveal only what you need.
+                {isGuessStep
+                  ? "One clue is open. Make your best guess."
+                  : "Reveal only what you need, then make one guess."}
               </p>
             ) : null}
           </div>
+
+          {isRevealMode ? (
+            <div
+              aria-label={`Current step: ${isGuessStep ? "guess" : "reveal a clue"}`}
+              className="grid grid-cols-2 overflow-hidden rounded-xl border border-border bg-card text-xs font-semibold uppercase tracking-wider"
+            >
+              <span
+                className={`flex items-center gap-2 px-3 py-2.5 sm:px-4 ${isRevealStep ? "bg-accent-muted text-accent shadow-sm" : "text-secondary"}`}
+              >
+                <span
+                  className={`inline-flex size-5 items-center justify-center rounded-full text-xs ${isRevealStep ? "bg-accent-bg text-on-accent" : "bg-muted text-secondary"}`}
+                >
+                  1
+                </span>
+                Reveal
+              </span>
+              <span
+                className={`flex items-center gap-2 border-l border-border px-3 py-2.5 sm:px-4 ${isGuessStep ? "bg-accent-muted text-accent shadow-sm" : "text-secondary"}`}
+              >
+                <span
+                  className={`inline-flex size-5 items-center justify-center rounded-full text-xs ${isGuessStep ? "bg-accent-bg text-on-accent" : "bg-muted text-secondary"}`}
+                >
+                  2
+                </span>
+                Guess
+              </span>
+            </div>
+          ) : null}
 
           <div
             aria-label={`${revealedCount} of ${currentClues.length || 0} clues revealed`}
@@ -240,7 +275,9 @@ export function GamePlayView({
           </div>
 
           {currentMode === "blurred-lines" ? (
-            <div className="overflow-hidden rounded-xl border border-border bg-muted shadow-md  ">
+            <div
+              className={`overflow-hidden rounded-xl border border-border bg-muted shadow-md ${isRevealStep ? "outline-2 outline-offset-2 outline-accent-bg" : ""}`}
+            >
               <table className="w-full border-collapse text-left text-sm text-primary">
                 <thead>
                   <tr className="bg-surface text-xs uppercase tracking-wider text-secondary ">
@@ -301,31 +338,36 @@ export function GamePlayView({
                                   later
                                 </span>
                               </div>
-                            ) : (
+                            ) : isRevealStep ? (
                               <div className="flex w-full items-start justify-between gap-3">
                                 <button
                                   aria-label={`Reveal ${clue.label}`}
-                                  className="min-w-0 bg-transparent p-0 text-left transition duration-150 hover:-translate-y-0.5 hover:opacity-100"
+                                  className="group flex w-full items-center justify-between gap-3 rounded-lg border border-transparent bg-transparent px-2 py-1 text-left transition duration-150 hover:border-accent-bg hover:bg-accent-muted focus:border-accent-bg focus:bg-accent-muted focus:outline-none focus:ring-2 focus:ring-accent-muted"
                                   disabled={isBusy}
                                   onClick={() => revealClue(clue.key)}
                                   type="button"
                                 >
+                                  <span className="min-w-0">
+                                    {renderHiddenCluePlaceholder(clue, false)}
+                                  </span>
+                                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent-muted px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-accent transition group-hover:bg-accent-bg group-hover:text-on-accent">
+                                    <Eye
+                                      aria-hidden="true"
+                                      className="size-3"
+                                      strokeWidth={2.2}
+                                    />
+                                    Reveal
+                                  </span>
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex w-full items-center justify-between gap-3 px-2 py-1 text-secondary">
+                                <span className="min-w-0">
                                   {renderHiddenCluePlaceholder(clue, false)}
-                                </button>
-                                <button
-                                  aria-label={`Reveal ${clue.label}`}
-                                  className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold uppercase tracking-wider text-secondary transition duration-150 hover:-translate-y-0.5 hover:bg-surface  hover:bg-card"
-                                  disabled={isBusy}
-                                  onClick={() => revealClue(clue.key)}
-                                  type="button"
-                                >
-                                  <Eye
-                                    aria-hidden="true"
-                                    className="size-3"
-                                    strokeWidth={2.2}
-                                  />
-                                  Reveal
-                                </button>
+                                </span>
+                                <span className="inline-flex shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold uppercase tracking-wider">
+                                  Guess first
+                                </span>
                               </div>
                             )
                           ) : (
@@ -406,6 +448,7 @@ export function GamePlayView({
               countryOptions={availableCountryOptions}
               drawerState={mapDrawerState}
               guessedCountries={guessedCountries}
+              isActive={isGuessStep}
               isExpanded={mapDrawerState === "expanded"}
               onDrawerStateChange={setMapDrawerState}
               onExpandedChange={(isExpanded) =>
@@ -422,7 +465,7 @@ export function GamePlayView({
 
           {round ? (
             <Card
-              className={`grid gap-4 p-4 ${isCountryListOpen ? "relative z-[90]" : ""}`}
+              className={`grid gap-4 p-4 ${isCountryListOpen ? "relative z-[90]" : ""} ${isGuessStep ? "outline-2 outline-offset-2 outline-accent-bg" : ""}`}
               elevation="low"
               padding={0}
             >
@@ -432,116 +475,137 @@ export function GamePlayView({
                   className="size-4"
                   strokeWidth={2.2}
                 />
-                Guess
+                {isRevealMode
+                  ? isGuessStep
+                    ? "Next: make your guess"
+                    : "Next: reveal a clue"
+                  : "Guess"}
               </div>
 
-              <form className="grid gap-3" onSubmit={handleGuessSubmit}>
-                <div className="relative">
-                  <Search
-                    aria-hidden="true"
-                    className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-secondary"
-                    strokeWidth={2.2}
+              {isRevealStep ? (
+                <div className="grid gap-3">
+                  <div className="rounded-xl border border-accent-bg bg-accent-muted p-3 text-sm leading-5 text-primary">
+                    Choose any unlocked clue in the board. Your guess opens as
+                    soon as you reveal it.
+                  </div>
+                  <Button
+                    icon={<Ban aria-hidden="true" />}
+                    isDisabled={isBusy}
+                    label="Give up"
+                    onClick={giveUpRound}
+                    variant="secondary"
+                    width="100%"
                   />
-                  <input
-                    aria-autocomplete={isCountryRound ? "list" : undefined}
-                    aria-controls={
-                      isCountryRound ? "country-guess-options" : undefined
-                    }
-                    aria-expanded={
-                      isCountryRound ? isCountryListOpen : undefined
-                    }
-                    aria-label="Submit your entity guess"
-                    autoComplete="off"
-                    className="w-full rounded-lg border border-border bg-card px-12 py-4 text-primary outline-none transition focus:border-accent-bg focus:ring-2 focus:ring-accent-muted   dark:focus:ring-accent-muted"
-                    disabled={isBusy}
-                    onBlur={() => setIsCountryListOpen(false)}
-                    onChange={(event) => {
-                      setGuess(event.target.value);
-                      setIsCountryListOpen(true);
-                    }}
-                    onFocus={() => setIsCountryListOpen(true)}
-                    placeholder={
-                      isCountryRound ? "Search country" : "Type answer"
-                    }
-                    type="text"
-                    value={guess}
-                  />
-                  {isCountryRound &&
-                  isCountryListOpen &&
-                  matchingCountryOptions.length > 0 ? (
-                    <div
-                      aria-label="Country suggestions"
-                      className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-[min(16rem,40dvh)] touch-pan-y overflow-y-auto overscroll-contain rounded-lg border border-border bg-surface p-1.5 shadow-md "
-                      id="country-guess-options"
-                      role="listbox"
-                    >
-                      {matchingCountryOptions.map((option) => (
-                        <button
-                          className="block w-full rounded-2xl px-3 py-3 text-left text-sm font-medium text-primary hover:bg-accent-bg/8 focus:bg-accent-bg/8 focus:outline-none dark:hover:bg-surface/8 dark:focus:bg-surface/8"
-                          key={option}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => {
-                            setGuess(option);
-                            setIsCountryListOpen(false);
-                          }}
-                          role="option"
-                          type="button"
-                        >
-                          {option}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
                 </div>
-
-                {validationMessage ? (
-                  <div className="inline-flex items-center gap-2 rounded-full border border-warning bg-warning-muted px-3 py-2 text-sm font-medium text-warning">
-                    <CircleAlert
+              ) : (
+                <form className="grid gap-3" onSubmit={handleGuessSubmit}>
+                  <div className="relative">
+                    <Search
                       aria-hidden="true"
-                      className="size-4 shrink-0"
+                      className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-secondary"
                       strokeWidth={2.2}
                     />
-                    {validationMessage}
+                    <input
+                      aria-autocomplete={isCountryRound ? "list" : undefined}
+                      aria-controls={
+                        isCountryRound ? "country-guess-options" : undefined
+                      }
+                      aria-expanded={
+                        isCountryRound ? isCountryListOpen : undefined
+                      }
+                      aria-label="Submit your entity guess"
+                      autoComplete="off"
+                      className="w-full rounded-lg border border-border bg-card px-12 py-4 text-primary outline-none transition focus:border-accent-bg focus:ring-2 focus:ring-accent-muted   dark:focus:ring-accent-muted"
+                      disabled={isBusy}
+                      onBlur={() => setIsCountryListOpen(false)}
+                      onChange={(event) => {
+                        setGuess(event.target.value);
+                        setIsCountryListOpen(true);
+                      }}
+                      onFocus={() => setIsCountryListOpen(true)}
+                      placeholder={
+                        isCountryRound ? "Search country" : "Type answer"
+                      }
+                      type="text"
+                      value={guess}
+                    />
+                    {isCountryRound &&
+                    isCountryListOpen &&
+                    matchingCountryOptions.length > 0 ? (
+                      <div
+                        aria-label="Country suggestions"
+                        className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-[min(16rem,40dvh)] touch-pan-y overflow-y-auto overscroll-contain rounded-lg border border-border bg-surface p-1.5 shadow-md "
+                        id="country-guess-options"
+                        role="listbox"
+                      >
+                        {matchingCountryOptions.map((option) => (
+                          <button
+                            className="block w-full rounded-2xl px-3 py-3 text-left text-sm font-medium text-primary hover:bg-accent-bg/8 focus:bg-accent-bg/8 focus:outline-none dark:hover:bg-surface/8 dark:focus:bg-surface/8"
+                            key={option}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => {
+                              setGuess(option);
+                              setIsCountryListOpen(false);
+                            }}
+                            role="option"
+                            type="button"
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
-                ) : !round.canGuess ? (
-                  <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm font-medium text-secondary">
-                    {round.mode === "blurred-lines" ? (
-                      <Eye
-                        aria-hidden="true"
-                        className="size-4 shrink-0"
-                        strokeWidth={2.2}
-                      />
-                    ) : (
-                      <Lock
-                        aria-hidden="true"
-                        className="size-4 shrink-0"
-                        strokeWidth={2.2}
-                      />
-                    )}
-                    {round.mode === "blurred-lines"
-                      ? "Reveal a row."
-                      : "Next miss reveals more."}
-                  </div>
-                ) : null}
 
-                <Button
-                  icon={<ArrowRight aria-hidden="true" />}
-                  isDisabled={!canSubmitGuess}
-                  isLoading={isBusy}
-                  label={guessButtonLabel}
-                  type="submit"
-                  variant="primary"
-                  width="100%"
-                />
-                <Button
-                  icon={<Ban aria-hidden="true" />}
-                  isDisabled={isBusy}
-                  label="Give up"
-                  onClick={giveUpRound}
-                  variant="secondary"
-                  width="100%"
-                />
-              </form>
+                  {validationMessage ? (
+                    <div className="inline-flex items-center gap-2 rounded-full border border-warning bg-warning-muted px-3 py-2 text-sm font-medium text-warning">
+                      <CircleAlert
+                        aria-hidden="true"
+                        className="size-4 shrink-0"
+                        strokeWidth={2.2}
+                      />
+                      {validationMessage}
+                    </div>
+                  ) : !round.canGuess ? (
+                    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm font-medium text-secondary">
+                      {round.mode === "blurred-lines" ? (
+                        <Eye
+                          aria-hidden="true"
+                          className="size-4 shrink-0"
+                          strokeWidth={2.2}
+                        />
+                      ) : (
+                        <Lock
+                          aria-hidden="true"
+                          className="size-4 shrink-0"
+                          strokeWidth={2.2}
+                        />
+                      )}
+                      {round.mode === "blurred-lines"
+                        ? "Reveal a row."
+                        : "Next miss reveals more."}
+                    </div>
+                  ) : null}
+
+                  <Button
+                    icon={<ArrowRight aria-hidden="true" />}
+                    isDisabled={!canSubmitGuess}
+                    isLoading={isBusy}
+                    label={isRevealMode ? "Submit guess" : guessButtonLabel}
+                    type="submit"
+                    variant="primary"
+                    width="100%"
+                  />
+                  <Button
+                    icon={<Ban aria-hidden="true" />}
+                    isDisabled={isBusy}
+                    label="Give up"
+                    onClick={giveUpRound}
+                    variant="secondary"
+                    width="100%"
+                  />
+                </form>
+              )}
 
               {guessedEntities.length > 0 ? (
                 <div className="grid gap-2">

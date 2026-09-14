@@ -43,6 +43,7 @@ interface WorldMapDialogProps {
   drawerState?: "hidden" | "medium" | "expanded";
   duelResult?: boolean;
   guessedCountries: readonly DuelResultGuessedCountry[];
+  isActive?: boolean;
   isExpanded: boolean;
   onDrawerStateChange?: (drawerState: "hidden" | "medium" | "expanded") => void;
   onExpandedChange: (isExpanded: boolean) => void;
@@ -184,6 +185,7 @@ function DirectionArrow({ direction }: { direction: GuessDirection }) {
 export function WorldMapDialog({
   countryOptions = [],
   guessedCountries,
+  isActive = false,
   isExpanded,
   drawerState,
   onDrawerStateChange,
@@ -791,13 +793,13 @@ export function WorldMapDialog({
         aria-describedby="world-map-help"
         aria-label="World map"
         aria-modal={isMapExpanded ? true : undefined}
-        className={`pointer-events-auto grid w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden border border-border bg-body shadow-md outline-none transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"}  dark:shadow-md ${
+        className={`pointer-events-auto grid w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden border border-border bg-body shadow-md transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:shadow-md ${
           presentation === "result"
             ? "h-64 rounded-xl sm:h-72"
             : isMapExpanded
               ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-xl sm:h-[min(760px,calc(100dvh-2.5rem))]"
               : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-xl sm:border-b lg:mb-0 lg:h-[clamp(320px,42dvh,460px)] lg:max-w-none"
-        }`}
+        } ${isActive ? "outline-2 outline-offset-2 outline-accent-bg" : "outline-none"}`}
         onKeyDown={handleDialogKeyDown}
         ref={dialogRef}
         role={isMapExpanded ? "dialog" : "region"}
