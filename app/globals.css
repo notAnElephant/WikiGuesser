@@ -2,13 +2,8 @@
 @import "tailwindcss/preflight.css" layer(base);
 @import "@astryxdesign/core/reset.css";
 @import "@astryxdesign/core/astryx.css";
-@import "../src/themes/butter/butter.css";
 @import "../src/themes/chocolate/chocolate.css";
-@import "../src/themes/gothic/gothic.css";
 @import "../src/themes/matcha/matcha.css";
-@import "@astryxdesign/theme-neutral/theme.css";
-@import "../src/themes/stone/stone.css";
-@import "../src/themes/y2k/y2k.css";
 @import "@astryxdesign/core/tailwind-theme.css";
 @import "tailwindcss/utilities.css" layer(utilities);
 @custom-variant dark (&:where(.dark, .dark *));

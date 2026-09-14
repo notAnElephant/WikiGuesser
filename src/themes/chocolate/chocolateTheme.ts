@@ -57,12 +57,12 @@ export const chocolateTheme = defineTheme({
 
   tokens: {
     // =========================================================================
-    // Colors — original palette plus mode-specific surfaces and readable shades.
-    // Tuples are [light, dark]. Accent fills keep Onyx labels in both modes;
-    // light-mode accent text uses deep teal rather than bright turquoise.
+    // Colors — atlas blue establishes a calm, reliable primary action for a
+    // learning game; warm cocoa neutrals keep the theme inviting between rounds.
+    // Tuples are [light, dark].
     '--focus-outline-color': 'var(--color-text-accent)',
-    '--color-accent': ['#25d4c2', '#25d4c2'],
-    '--color-accent-muted': ['#d5f4ef', '#18322e'],
+    '--color-accent': ['#245E8A', '#7FC7FF'],
+    '--color-accent-muted': ['#DFECF5', '#182F42'],
     '--color-neutral': ['#e8dfd9', '#302926'],
     '--color-background-surface': ['#fffaf7', '#1c1918'],
     '--color-background-body': ['#f7f2ee', '#111111'],
@@ -73,14 +73,14 @@ export const chocolateTheme = defineTheme({
     '--color-text-primary': ['#111111', '#d4c5c7'],
     '--color-text-secondary': ['#6b5b51', '#b9a394'],
     '--color-text-disabled': ['#97877c', '#82736a'],
-    '--color-text-accent': ['#006e64', '#25d4c2'],
+    '--color-text-accent': ['#245E8A', '#7FC7FF'],
     '--color-on-dark': '#f7f2ee',
     '--color-on-light': '#111111',
-    '--color-on-accent': '#111111',
+    '--color-on-accent': ['#ffffff', '#0E1B29'],
     '--color-on-success': ['#ffffff', '#0D241A'],
     '--color-on-error': ['#ffffff', '#2A1015'],
     '--color-on-warning': ['#ffffff', '#2D1C00'],
-    '--color-icon-accent': ['#006e64', '#25d4c2'],
+    '--color-icon-accent': ['#245E8A', '#7FC7FF'],
     '--color-icon-primary': ['#111111', '#d4c5c7'],
     '--color-icon-secondary': ['#6b5b51', '#b9a394'],
     '--color-icon-disabled': ['#97877c', '#82736a'],
