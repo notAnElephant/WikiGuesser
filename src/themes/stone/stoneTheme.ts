@@ -128,12 +128,13 @@ export const stoneTheme = defineTheme({
     '--color-background-inverted': ['#25252a', '#f3f3f5'], // light: Stone Neutral T15
 
     // Status / Sentiment — T50 from palette for icons/borders (visible color)
-    '--color-success': ['#374c36', '#b4cdb2'], // Green T30 / T80
-    '--color-success-muted': ['#d0e9ce', '#b4cdb2'], // Green T90 / T80
-    '--color-error': ['#58413e', '#dcc0bc'], // Red T30 / T80
-    '--color-error-muted': ['#f9dcd7', '#dcc0bc'], // Red T90 / T80
-    '--color-warning': ['#524622', '#d7c59c'], // Yellow T30 / T80
-    '--color-warning-muted': ['#f4e1b7', '#d7c59c'], // Yellow T90 / T80
+    // Game feedback — stable win, miss, and streak cues across every skin.
+    '--color-success': ['#256B4A', '#7ED6A3'],
+    '--color-success-muted': ['#DCEFE3', '#173B2C'],
+    '--color-error': ['#B43B4A', '#FF9DA7'],
+    '--color-error-muted': ['#F8E3E6', '#41252C'],
+    '--color-warning': ['#8A5B10', '#FFD27A'],
+    '--color-warning-muted': ['#FAEECB', '#413116'],
 
     // Border — H=291
     '--color-border': ['#e2e2e8', '#f3f3f51a'], // light: Stone Neutral T90 / dark: T96 · 10%

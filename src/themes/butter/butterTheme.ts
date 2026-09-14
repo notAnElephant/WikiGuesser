@@ -105,13 +105,13 @@ export const butterTheme = defineTheme({
     "--color-background-popover": ["#FFFFFF", "#3A2A1F"],
     "--color-background-inverted": ["#1d1c11", "#FDFBE4"],
 
-    // Status semantics — T25 light / T80 dark from each status palette.
-    "--color-error": ["#771210", "#ffb4a6"],
-    "--color-error-muted": ["#77121033", "#ffb4a640"],
-    "--color-warning": ["#543700", "#f7be00"],
-    "--color-warning-muted": ["#54370033", "#f7be0040"],
-    "--color-success": ["#004700", "#99d94b"],
-    "--color-success-muted": ["#00470033", "#99d94b40"],
+    // Game feedback — consistent win, miss, and streak meanings across skins.
+    "--color-error": ["#B43B4A", "#FF9DA7"],
+    "--color-error-muted": ["#F8E3E6", "#41252C"],
+    "--color-warning": ["#8A5B10", "#FFD27A"],
+    "--color-warning-muted": ["#FAEECB", "#413116"],
+    "--color-success": ["#256B4A", "#7ED6A3"],
+    "--color-success-muted": ["#DCEFE3", "#173B2C"],
 
     // Border — softer taupe card outline (emphasized) in light mode.
     "--color-border": ["#e5e3d4", "#f3f2e21A"],
@@ -155,10 +155,10 @@ export const butterTheme = defineTheme({
     "--color-text-gray": ["#4a4732", "#4a4732"],
 
     // Green
-    "--color-background-green": ["#c1efb8", "#c1efb8"],
-    "--color-border-green": ["#a5d29d", "#a5d29d"],
-    "--color-icon-green": ["#004800", "#004800"],
-    "--color-text-green": ["#004800", "#004800"],
+    "--color-background-green": ["#DCEFE3", "#173B2C"],
+    "--color-border-green": ["#256B4A", "#7ED6A3"],
+    "--color-icon-green": ["#256B4A", "#7ED6A3"],
+    "--color-text-green": ["#256B4A", "#7ED6A3"],
 
     // Orange
     "--color-background-orange": ["#ffdcb6", "#ffdcb6"],
@@ -179,10 +179,10 @@ export const butterTheme = defineTheme({
     "--color-text-purple": ["#52237b", "#52237b"],
 
     // Red
-    "--color-background-red": ["#ffdad3", "#ffdad3"],
-    "--color-border-red": ["#f4b8ae", "#f4b8ae"],
-    "--color-icon-red": ["#6d211c", "#6d211c"],
-    "--color-text-red": ["#6d211c", "#6d211c"],
+    "--color-background-red": ["#F8E3E6", "#41252C"],
+    "--color-border-red": ["#B43B4A", "#FF9DA7"],
+    "--color-icon-red": ["#B43B4A", "#FF9DA7"],
+    "--color-text-red": ["#B43B4A", "#FF9DA7"],
 
     // Teal
     "--color-background-teal": ["#b0f0d7", "#b0f0d7"],
@@ -191,10 +191,10 @@ export const butterTheme = defineTheme({
     "--color-text-teal": ["#00482d", "#00482d"],
 
     // Yellow
-    "--color-background-yellow": ["#feee7b", "#feee7b"],
-    "--color-border-yellow": ["#d6c957", "#d6c957"],
-    "--color-icon-yellow": ["#413e00", "#413e00"],
-    "--color-text-yellow": ["#413e00", "#413e00"],
+    "--color-background-yellow": ["#FAEECB", "#413116"],
+    "--color-border-yellow": ["#8A5B10", "#FFD27A"],
+    "--color-icon-yellow": ["#8A5B10", "#FFD27A"],
+    "--color-text-yellow": ["#8A5B10", "#FFD27A"],
 
     // =========================================================================
     // Radius

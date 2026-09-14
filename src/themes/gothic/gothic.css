@@ -247,12 +247,12 @@
     --color-background-card: #1a1d20;
     --color-background-popover: #24292D;
     --color-background-inverted: #E8F1F6;
-    --color-success: #b3c79a;
-    --color-success-muted: #b3c79a;
-    --color-error: #c6a6a2;
-    --color-error-muted: #c6a6a2;
-    --color-warning: #d3c490;
-    --color-warning-muted: #d3c490;
+    --color-success: #7ED6A3;
+    --color-success-muted: #173B2C;
+    --color-error: #FF9DA7;
+    --color-error-muted: #41252C;
+    --color-warning: #FFD27A;
+    --color-warning-muted: #413116;
     --color-border: #E8F1F61A;
     --color-border-emphasized: #495056;
     --color-skeleton: #495056;

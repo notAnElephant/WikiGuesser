@@ -117,13 +117,13 @@ export const y2kTheme = defineTheme({
     '--color-background-popover': ['#FFFFFF', '#1f2238'],
     '--color-background-inverted': ['#2d241b', '#EDEFFC'],
 
-    // Status / Sentiment — same in light and dark
-    '--color-success': ['#C5E17A', '#C5E17A'],
-    '--color-success-muted': ['#C5E17A', '#C5E17A'],
-    '--color-error': ['#FFC5C3', '#FFC5C3'],
-    '--color-error-muted': ['#FFC5C3', '#FFC5C3'],
-    '--color-warning': ['#FFE08A', '#FFE08A'],
-    '--color-warning-muted': ['#FFE08A', '#FFE08A'],
+    // Game feedback — stable win, miss, and streak cues across every skin.
+    '--color-success': ['#256B4A', '#7ED6A3'],
+    '--color-success-muted': ['#DCEFE3', '#173B2C'],
+    '--color-error': ['#B43B4A', '#FF9DA7'],
+    '--color-error-muted': ['#F8E3E6', '#41252C'],
+    '--color-warning': ['#8A5B10', '#FFD27A'],
+    '--color-warning-muted': ['#FAEECB', '#413116'],
 
     // Bold charcoal borders in light mode (default + card) for the heavy-outline
     // Y2K look. Dark mode unchanged.
@@ -139,20 +139,20 @@ export const y2kTheme = defineTheme({
     '--text-supporting-size': '12px',
 
     // Categorical — hand-tuned for equal optical brightness, same light/dark
-    '--color-background-green': ['#C5E17A', '#C5E17A'],
-    '--color-border-green': ['#B5D16A', '#B5D16A'],
-    '--color-icon-green': ['#3a5500', '#1e3200'],
-    '--color-text-green': ['#3a5500', '#1e3200'],
+    '--color-background-green': ['#DCEFE3', '#173B2C'],
+    '--color-border-green': ['#256B4A', '#7ED6A3'],
+    '--color-icon-green': ['#256B4A', '#7ED6A3'],
+    '--color-text-green': ['#256B4A', '#7ED6A3'],
 
-    '--color-background-red': ['#FFC5C3', '#FFC5C3'],
-    '--color-border-red': ['#FF9E9A', '#FF9E9A'],
-    '--color-icon-red': ['#8b1d24', '#5c0008'],
-    '--color-text-red': ['#8b1d24', '#5c0008'],
+    '--color-background-red': ['#F8E3E6', '#41252C'],
+    '--color-border-red': ['#B43B4A', '#FF9DA7'],
+    '--color-icon-red': ['#B43B4A', '#FF9DA7'],
+    '--color-text-red': ['#B43B4A', '#FF9DA7'],
 
-    '--color-background-yellow': ['#FFE08A', '#FFE08A'],
-    '--color-border-yellow': ['#FFCC55', '#FFCC55'],
-    '--color-icon-yellow': ['#614400', '#3f2600'],
-    '--color-text-yellow': ['#614400', '#3f2600'],
+    '--color-background-yellow': ['#FAEECB', '#413116'],
+    '--color-border-yellow': ['#8A5B10', '#FFD27A'],
+    '--color-icon-yellow': ['#8A5B10', '#FFD27A'],
+    '--color-text-yellow': ['#8A5B10', '#FFD27A'],
 
     '--color-background-blue': ['#B8E0FF', '#B8E0FF'],
     '--color-border-blue': ['#8ECFFF', '#8ECFFF'],

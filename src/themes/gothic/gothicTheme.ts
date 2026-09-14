@@ -112,14 +112,14 @@ export const gothicTheme = defineTheme({
     '--color-background-popover': '#24292D',
     '--color-background-inverted': '#E8F1F6',
 
-    // Status / Sentiment — dusty pastels matching the categorical
-    // pattern. Used for status surfaces, destructive button bg, etc.
-    '--color-success': '#b3c79a', // sage moss
-    '--color-success-muted': '#b3c79a',
-    '--color-error': '#c6a6a2', // dusty rose
-    '--color-error-muted': '#c6a6a2',
-    '--color-warning': '#d3c490', // aged gold
-    '--color-warning-muted': '#d3c490',
+    // Game feedback — dark mode uses the shared dark ramp so results retain
+    // their learned meaning even when the visual skin changes.
+    '--color-success': '#7ED6A3',
+    '--color-success-muted': '#173B2C',
+    '--color-error': '#FF9DA7',
+    '--color-error-muted': '#41252C',
+    '--color-warning': '#FFD27A',
+    '--color-warning-muted': '#413116',
 
     // Border
     '--color-border': '#E8F1F61A',

@@ -251,12 +251,12 @@
     --color-background-card: light-dark(#FFFFFF, #242325);
     --color-background-popover: light-dark(#ffffff, #25252a);
     --color-background-inverted: light-dark(#25252a, #f3f3f5);
-    --color-success: light-dark(#374c36, #b4cdb2);
-    --color-success-muted: light-dark(#d0e9ce, #b4cdb2);
-    --color-error: light-dark(#58413e, #dcc0bc);
-    --color-error-muted: light-dark(#f9dcd7, #dcc0bc);
-    --color-warning: light-dark(#524622, #d7c59c);
-    --color-warning-muted: light-dark(#f4e1b7, #d7c59c);
+    --color-success: light-dark(#256B4A, #7ED6A3);
+    --color-success-muted: light-dark(#DCEFE3, #173B2C);
+    --color-error: light-dark(#B43B4A, #FF9DA7);
+    --color-error-muted: light-dark(#F8E3E6, #41252C);
+    --color-warning: light-dark(#8A5B10, #FFD27A);
+    --color-warning-muted: light-dark(#FAEECB, #413116);
     --color-border: light-dark(#e2e2e8, #f3f3f51a);
     --color-border-emphasized: light-dark(#83838a, #5e5e61);
     --color-skeleton: light-dark(#d4d4da, #5e5e64);

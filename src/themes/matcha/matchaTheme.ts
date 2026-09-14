@@ -97,13 +97,15 @@ export const matchaTheme = defineTheme({
     '--color-background-popover': ['#FFFFFF', '#3E481D'],
     '--color-background-inverted': ['#3E481D', '#C0CBA9'],
 
-    // Status / Sentiment
-    '--color-success': ['#4D9900', '#6dbf2a'],
-    '--color-success-muted': ['#4D990020', '#6dbf2a20'],
-    '--color-error': ['#FD0000', '#ff5c5c'],
-    '--color-error-muted': ['#FD000020', '#ff5c5c20'],
-    '--color-warning': ['#FFB600', '#ffc940'],
-    '--color-warning-muted': ['#FFB60020', '#ffc94020'],
+    // Game feedback — shared meaning across every WikiGuesser theme.
+    // Calm light fills support learning; bright dark values keep results
+    // immediately readable during a fast competitive round.
+    '--color-success': ['#256B4A', '#7ED6A3'],
+    '--color-success-muted': ['#DCEFE3', '#173B2C'],
+    '--color-error': ['#B43B4A', '#FF9DA7'],
+    '--color-error-muted': ['#F8E3E6', '#41252C'],
+    '--color-warning': ['#8A5B10', '#FFD27A'],
+    '--color-warning-muted': ['#FAEECB', '#413116'],
 
     // Border
     // Softer sage borders (default + emphasized/card) in light mode.
@@ -134,10 +136,10 @@ export const matchaTheme = defineTheme({
     '--color-text-gray': ['#3E481D', '#C0CBA9'],
 
     // Categorical — Green
-    '--color-background-green': ['#4D990033', '#6dbf2a33'],
-    '--color-border-green': ['#4D9900', '#6dbf2a'],
-    '--color-icon-green': ['#4D9900', '#6dbf2a'],
-    '--color-text-green': ['#3d7a00', '#80d43a'],
+    '--color-background-green': ['#DCEFE3', '#173B2C'],
+    '--color-border-green': ['#256B4A', '#7ED6A3'],
+    '--color-icon-green': ['#256B4A', '#7ED6A3'],
+    '--color-text-green': ['#256B4A', '#7ED6A3'],
 
     // Categorical — Orange
     '--color-background-orange': ['#c4762033', '#d4903a33'],
@@ -158,10 +160,10 @@ export const matchaTheme = defineTheme({
     '--color-text-purple': ['#553a70', '#c0a0e0'],
 
     // Categorical — Red
-    '--color-background-red': ['#FD000033', '#ff5c5c33'],
-    '--color-border-red': ['#FD0000', '#ff5c5c'],
-    '--color-icon-red': ['#FD0000', '#ff5c5c'],
-    '--color-text-red': ['#cc0000', '#ff7a7a'],
+    '--color-background-red': ['#F8E3E6', '#41252C'],
+    '--color-border-red': ['#B43B4A', '#FF9DA7'],
+    '--color-icon-red': ['#B43B4A', '#FF9DA7'],
+    '--color-text-red': ['#B43B4A', '#FF9DA7'],
 
     // Categorical — Teal
     '--color-background-teal': ['#2e6b5a33', '#5ab89833'],
@@ -170,10 +172,10 @@ export const matchaTheme = defineTheme({
     '--color-text-teal': ['#245546', '#6ccaaa'],
 
     // Categorical — Yellow
-    '--color-background-yellow': ['#FFB60033', '#ffc94033'],
-    '--color-border-yellow': ['#FFB600', '#ffc940'],
-    '--color-icon-yellow': ['#FFB600', '#ffc940'],
-    '--color-text-yellow': ['#cc9200', '#ffd960'],
+    '--color-background-yellow': ['#FAEECB', '#413116'],
+    '--color-border-yellow': ['#8A5B10', '#FFD27A'],
+    '--color-icon-yellow': ['#8A5B10', '#FFD27A'],
+    '--color-text-yellow': ['#8A5B10', '#FFD27A'],
 
     // =========================================================================
     // Spacing
