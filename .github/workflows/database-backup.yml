@@ -31,8 +31,8 @@ jobs:
           backup_file="wikiguesser-${backup_timestamp}.dump.gpg"
 
           # The PostgreSQL 18 client can dump current Neon PostgreSQL versions.
-          docker run --rm --env DATABASE_URL postgres:18 \
-            pg_dump --format=custom --no-owner --no-privileges --file=/dev/stdout "$DATABASE_URL" > backup.dump
+          docker run --rm --env DATABASE_URL --volume "$PWD:/backup" postgres:18 \
+            pg_dump --format=custom --no-owner --no-privileges --file=/backup/backup.dump "$DATABASE_URL"
           gpg --batch --yes --symmetric --cipher-algo AES256 \
             --passphrase "$BACKUP_PASSPHRASE" \
             --output "$backup_file" backup.dump
