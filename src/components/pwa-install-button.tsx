@@ -105,9 +105,8 @@ export function PwaInstallButton() {
       icon={<Download aria-hidden="true" />}
       label="Install WikiGuesser"
       onClick={() => void install()}
-      size="lg"
       tooltip="Install app"
-      variant="secondary"
+      variant="ghost"
     />
   );
 }

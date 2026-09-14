@@ -13,6 +13,7 @@ import { ClerkProvider, Show } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
+import { IconButton } from "@astryxdesign/core/IconButton";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Dice5, LogIn, Trophy, UserPlus } from "lucide-react";
@@ -110,18 +111,19 @@ export default async function RootLayout({
 
                     <div className="flex items-center gap-2">
                       <PwaInstallButton />
-                      <Link
-                        aria-label="Leaderboard"
-                        className="inline-flex size-10 items-center justify-center rounded-md bg-muted text-accent transition-colors hover:bg-card"
+                      <IconButton
                         href="/leaderboard"
-                        title="Leaderboard"
-                      >
-                        <Trophy
-                          aria-hidden="true"
-                          className="size-4"
-                          strokeWidth={2.2}
-                        />
-                      </Link>
+                        icon={
+                          <Trophy
+                            aria-hidden="true"
+                            className="size-4"
+                            strokeWidth={2.2}
+                          />
+                        }
+                        label="Leaderboard"
+                        tooltip="Leaderboard"
+                        variant="ghost"
+                      />
                       <ThemeToggle />
                       <Show when="signed-out">
                         <Link
