@@ -43,41 +43,27 @@ export async function getOfflineCountryFlagSourceUrl(
 
 export async function fetchWikimediaFlag(
   sourceUrl: URL,
-  fetchImplementation: typeof fetch = fetch,
+  fetchImplementation: typeof fetch = (input, init) =>
+    globalThis.fetch(input, init),
 ): Promise<Response> {
   if (!parseWikimediaFlagSourceUrl(sourceUrl.href)) {
     throw new Error("The Wikimedia flag source URL is not allowed.");
   }
 
-  let currentUrl = sourceUrl;
+  const response = await fetchImplementation(sourceUrl, {
+    cache: "no-store",
+    headers: {
+      Accept: "image/avif,image/webp,image/svg+xml,image/*,*/*;q=0.8",
+      "User-Agent":
+        "WikiGuesser/1.0 (https://www.wikiguesser.me; offline flag pack)",
+    },
+    redirect: "follow",
+  });
 
-  for (let redirectCount = 0; redirectCount <= 5; redirectCount += 1) {
-    const response = await fetchImplementation(currentUrl, {
-      headers: {
-        Accept: "image/avif,image/webp,image/svg+xml,image/*,*/*;q=0.8",
-        "User-Agent":
-          "WikiGuesser/1.0 (https://www.wikiguesser.me; offline flag pack)",
-      },
-      redirect: "manual",
-    });
-
-    if (![301, 302, 303, 307, 308].includes(response.status)) {
-      return response;
-    }
-
-    const location = response.headers.get("location");
-    if (!location) {
-      throw new Error("Wikimedia returned a redirect without a location.");
-    }
-
-    const nextUrl = new URL(location, currentUrl);
-    if (!isAllowedWikimediaAssetUrl(nextUrl.href)) {
-      throw new Error("Wikimedia redirected to a disallowed host.");
-    }
-
+  if (!isAllowedWikimediaAssetUrl(response.url)) {
     await response.body?.cancel();
-    currentUrl = nextUrl;
+    throw new Error("Wikimedia redirected to a disallowed host.");
   }
 
-  throw new Error("Wikimedia returned too many redirects.");
+  return response;
 }

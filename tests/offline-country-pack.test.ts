@@ -183,18 +183,16 @@ describe("offline flag URL safety", () => {
     ).toBe(false);
   });
 
-  it("follows an allowed Wikimedia redirect manually", async () => {
+  it("follows an allowed Wikimedia redirect", async () => {
+    const upstream = new Response("svg", {
+      headers: { "content-type": "image/svg+xml" },
+    });
+    Object.defineProperty(upstream, "url", {
+      value: "https://upload.wikimedia.org/flag.svg",
+    });
     const fetchImplementation = vi
       .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(null, {
-          status: 302,
-          headers: { location: "https://upload.wikimedia.org/flag.svg" },
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response("svg", { headers: { "content-type": "image/svg+xml" } }),
-      );
+      .mockResolvedValue(upstream);
 
     const response = await fetchWikimediaFlag(
       new URL(
@@ -204,19 +202,20 @@ describe("offline flag URL safety", () => {
     );
 
     expect(response.ok).toBe(true);
-    expect(fetchImplementation).toHaveBeenCalledTimes(2);
+    expect(fetchImplementation).toHaveBeenCalledOnce();
     expect(fetchImplementation.mock.calls[0]?.[1]).toMatchObject({
-      redirect: "manual",
+      redirect: "follow",
     });
   });
 
   it("rejects redirects away from Wikimedia", async () => {
-    const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(null, {
-        status: 302,
-        headers: { location: "https://evil.test/flag.svg" },
-      }),
-    );
+    const upstream = new Response(null);
+    Object.defineProperty(upstream, "url", {
+      value: "https://evil.test/flag.svg",
+    });
+    const fetchImplementation = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(upstream);
 
     await expect(
       fetchWikimediaFlag(
