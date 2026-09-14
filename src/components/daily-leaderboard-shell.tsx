@@ -138,6 +138,12 @@ export function DailyLeaderboardShell({
             {selectedModeMeta.label}
           </div>
           {period === "total" ? (
+            <p className="m-0 mb-3 text-sm text-secondary">
+              A win is a round where the player gets any points by guessing the
+              correct answer.
+            </p>
+          ) : null}
+          {period === "total" ? (
             <div className="mb-2 grid grid-cols-[minmax(0,1fr)_4rem_4rem] gap-2 px-4 text-xs font-semibold uppercase tracking-wide text-secondary sm:grid-cols-[minmax(0,1fr)_5rem_5rem]">
               <span>Player</span>
               <span className="text-center">Games</span>

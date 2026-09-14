@@ -1,12 +1,11 @@
+import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
+import type { PlayerStatsPageData } from "@/src/lib/repository/game-stats-repository";
+import type { GameMode } from "@/src/lib/types";
 import { Card } from "@astryxdesign/core/Card";
 import { Grid } from "@astryxdesign/core/Grid";
 import { VStack } from "@astryxdesign/core/VStack";
 import { ArrowLeft, Gamepad2, Trophy } from "lucide-react";
 import Link from "next/link";
-
-import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
-import type { PlayerStatsPageData } from "@/src/lib/repository/game-stats-repository";
-import type { GameMode } from "@/src/lib/types";
 
 interface PlayerStatsShellProps {
   data: PlayerStatsPageData;
@@ -107,6 +106,10 @@ export function PlayerStatsShell({ data }: PlayerStatsShellProps) {
             </h1>
             <p className="m-0 mt-3 max-w-2xl text-base leading-7 text-secondary">
               Your scores across online country rounds and daily challenges.
+            </p>
+            <p className="m-0 mt-2 text-sm text-secondary">
+              A win is a round where you get any points by guessing the correct
+              answer.
             </p>
           </section>
         </VStack>
