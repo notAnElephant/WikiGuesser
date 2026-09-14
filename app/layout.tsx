@@ -6,6 +6,7 @@ import { PwaInstallButton } from "@/src/components/pwa-install-button";
 import { OfflinePackProvider } from "@/src/components/offline-pack-provider";
 import { ThemeProvider } from "@/src/components/theme-provider";
 import { ThemeToggle } from "@/src/components/theme-toggle";
+import { WikiGuesserLogo } from "@/src/components/wikiguesser-logo";
 import { WikiGuesserSerwistProvider } from "@/app/serwist-provider";
 
 import { isAdminUser } from "@/src/lib/auth/admin";
@@ -16,7 +17,7 @@ import { Card } from "@astryxdesign/core/Card";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Dice5, LogIn, Trophy, UserPlus } from "lucide-react";
+import { LogIn, Trophy, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 import {
   Albert_Sans,
@@ -99,13 +100,7 @@ export default async function RootLayout({
                       aria-label="WikiGuesser"
                       href="/"
                     >
-                      <span className="inline-flex size-9 items-center justify-center rounded-md bg-muted text-accent">
-                        <Dice5
-                          aria-hidden="true"
-                          className="size-4.5"
-                          strokeWidth={2.2}
-                        />
-                      </span>
+                      <WikiGuesserLogo className="size-9 shrink-0" />
                       <span className="hidden sm:inline">WikiGuesser</span>
                     </Link>
 

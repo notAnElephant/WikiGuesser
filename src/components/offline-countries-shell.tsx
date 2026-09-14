@@ -4,7 +4,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { EmptyState } from "@astryxdesign/core/EmptyState";
 import { StatusDot } from "@astryxdesign/core/StatusDot";
-import { Dice5, Play, WifiOff } from "lucide-react";
+import { Play, WifiOff } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 
 import { GamePlayView } from "@/src/components/game-shell/play-view";
@@ -19,6 +19,7 @@ import { OfflinePackStatus } from "@/src/components/offline-pack-status";
 import { useOfflinePack } from "@/src/components/offline-pack-provider";
 import { ContinentPickerDialog } from "@/src/components/shared-landing-shell";
 import { ThemeToggle } from "@/src/components/theme-toggle";
+import { WikiGuesserLogo } from "@/src/components/wikiguesser-logo";
 import { CONTINENT_LABELS, isContinentId } from "@/src/lib/content/continents";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import {
@@ -487,7 +488,7 @@ function OfflineFrame({
             className="inline-flex items-center gap-2 font-semibold text-primary"
             href="/offline"
           >
-            <Dice5 aria-hidden="true" className="size-5 text-accent" />
+            <WikiGuesserLogo className="size-5 shrink-0" size={20} />
             WikiGuesser
           </a>
           <p className="m-0 inline-flex items-center gap-2 text-sm text-secondary">
