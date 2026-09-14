@@ -68,6 +68,20 @@ export function getMapCountryNames(mapNames: readonly string[]) {
   return normalizedNames;
 }
 
+export function getPlayableCountriesByMapName(
+  countryOptions: readonly string[],
+) {
+  const countriesByMapName = new Map<string, string>();
+
+  for (const country of countryOptions) {
+    for (const mapName of getMapCountryNames([country])) {
+      countriesByMapName.set(mapName, country);
+    }
+  }
+
+  return countriesByMapName;
+}
+
 export function hasMapGeometry(mapNames: readonly string[]) {
   return [...getMapCountryNames(mapNames)].some((name) =>
     MAP_COUNTRY_NAMES.has(name),

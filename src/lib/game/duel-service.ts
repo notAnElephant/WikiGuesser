@@ -6,6 +6,7 @@ import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
 import { getClueUnlockRoundsRemaining } from "@/src/lib/game/clue-locking";
 import {
+  findCountryEntityByGuess,
   getGuessedCountryMapData,
   getSolutionCountryMapData,
 } from "@/src/lib/game/guess-direction";
@@ -565,10 +566,21 @@ export async function guessDuelRound(
   if (!attempt.canGuess) throw new Error("Reveal a clue before guessing.");
 
   const entity = roundEntity(duel, round);
+  const mapGuessSnapshot =
+    input.method === "map" ? await getLatestSnapshot() : null;
+
+  if (
+    input.method === "map" &&
+    !findCountryEntityByGuess(input.guess, mapGuessSnapshot!.entities)
+  ) {
+    throw new Error("Pick a listed country.");
+  }
+
   const isCorrect = matchesEntityGuess(entity, input.guess);
   const revealed = asStrings(attempt.revealedClueKeys);
   const guesses = asGuesses(attempt.guesses);
-  const snapshot = isCorrect ? null : await getLatestSnapshot();
+  const snapshot =
+    mapGuessSnapshot ?? (isCorrect ? null : await getLatestSnapshot());
   const mapData = snapshot
     ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
     : null;

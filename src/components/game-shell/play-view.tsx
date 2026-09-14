@@ -403,6 +403,7 @@ export function GamePlayView({
           {isCountryRound &&
           (view === "round" || result?.showDialog === false) ? (
             <WorldMapDialog
+              countryOptions={availableCountryOptions}
               drawerState={mapDrawerState}
               guessedCountries={guessedCountries}
               isExpanded={mapDrawerState === "expanded"}

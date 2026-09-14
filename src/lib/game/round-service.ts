@@ -4,6 +4,7 @@ import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { getEntityContinentIds } from "@/src/lib/content/continents";
 import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
 import {
+  findCountryEntityByGuess,
   getGuessedCountryMapData,
   getSolutionCountryMapData,
 } from "@/src/lib/game/guess-direction";
@@ -281,8 +282,19 @@ export async function submitGuess(
 ): Promise<GuessRoundResult> {
   const { entity, roundState, snapshotKey, dailyChallengeId } =
     await getRoundEntity(input.token, userId);
+  const mapGuessSnapshot =
+    input.method === "map" ? await getLatestSnapshot() : null;
+
+  if (
+    input.method === "map" &&
+    !findCountryEntityByGuess(input.guess, mapGuessSnapshot!.entities)
+  ) {
+    throw new Error("Pick a listed country.");
+  }
+
   const isCorrect = matchesEntityGuess(entity, input.guess);
-  const snapshot = isCorrect ? null : await getLatestSnapshot();
+  const snapshot =
+    mapGuessSnapshot ?? (isCorrect ? null : await getLatestSnapshot());
   const guessedCountry = snapshot
     ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
     : null;

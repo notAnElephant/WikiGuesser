@@ -6,6 +6,7 @@ import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import {
   COUNTRY_DATA,
   getMapCountryNames,
+  getPlayableCountriesByMapName,
 } from "@/src/lib/game/world-map-data";
 import type {
   GuessDirection,
@@ -38,6 +39,7 @@ export type DuelResultGuessedCountry = GuessedCountryMapData & {
 };
 
 interface WorldMapDialogProps {
+  countryOptions?: readonly string[];
   drawerState?: "hidden" | "medium" | "expanded";
   duelResult?: boolean;
   guessedCountries: readonly DuelResultGuessedCountry[];
@@ -180,6 +182,7 @@ function DirectionArrow({ direction }: { direction: GuessDirection }) {
 }
 
 export function WorldMapDialog({
+  countryOptions = [],
   guessedCountries,
   isExpanded,
   drawerState,
@@ -237,6 +240,10 @@ export function WorldMapDialog({
 
     return countriesByName;
   }, [guessedCountries]);
+  const playableCountryByMapName = useMemo(
+    () => getPlayableCountriesByMapName(countryOptions),
+    [countryOptions],
+  );
   const solutionNames = useMemo(
     () =>
       solutionCountry
@@ -884,6 +891,7 @@ export function WorldMapDialog({
                     const name = country.properties.normalizedName;
                     const countryPath = path(country);
                     const guessedCountry = guessedCountryByName.get(name);
+                    const playableCountry = playableCountryByMapName.get(name);
                     const isSolution = solutionNames.has(name);
 
                     return countryPath ? (
@@ -904,11 +912,8 @@ export function WorldMapDialog({
                         onClick={
                           guessedCountry
                             ? () => focusCountry(guessedCountry)
-                            : onCountryGuess
-                              ? () =>
-                                  onCountryGuess(
-                                    country.properties.name ?? name,
-                                  )
+                            : onCountryGuess && playableCountry
+                              ? () => onCountryGuess(playableCountry)
                               : undefined
                         }
                         vectorEffect="non-scaling-stroke"

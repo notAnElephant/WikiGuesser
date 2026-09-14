@@ -168,6 +168,24 @@ describe("round service", () => {
     expect(result.guessedCountry?.longitude).toEqual(expect.any(Number));
   });
 
+  it("rejects map guesses that are not playable countries", async () => {
+    const round = await startRound(
+      { category: "countries", seed: "alpha" },
+      "user_invalid_map_guess",
+    );
+
+    await expect(
+      submitGuess(
+        {
+          token: round.token,
+          guess: "Siachen Glacier",
+          method: "map",
+        },
+        "user_invalid_map_guess",
+      ),
+    ).rejects.toThrow("Pick a listed country.");
+  });
+
   it("allows one final guess after the last classic clue is revealed", async () => {
     const round = await startRound(
       { category: "countries", seed: "alpha" },

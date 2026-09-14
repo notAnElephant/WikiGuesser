@@ -13,6 +13,7 @@ import {
 import {
   getCountriesWithoutMapCoverage,
   getMapCountryNames,
+  getPlayableCountriesByMapName,
   hasMapGeometry,
 } from "@/src/lib/game/world-map-data";
 import type { NormalizedEntity } from "@/src/lib/types";
@@ -229,6 +230,7 @@ describe("game world map drawer", () => {
       createElement(WorldMapDialog, {
         guessedCountries: [],
         isExpanded: false,
+        countryOptions: ["France"],
         onCountryGuess: () => undefined,
         onExpandedChange: () => undefined,
       }),
@@ -236,6 +238,13 @@ describe("game world map drawer", () => {
 
     expect(markup).toContain("Tap a country · half points");
     expect(markup).toContain("map-world-guessing");
+  });
+
+  it("maps only listed countries to clickable geometry", () => {
+    const playableCountries = getPlayableCountriesByMapName(["France"]);
+
+    expect(playableCountries.get("france")).toBe("France");
+    expect(playableCountries.has("siachen glacier")).toBe(false);
   });
 
   it("renders a compact control when the map drawer is hidden", () => {
