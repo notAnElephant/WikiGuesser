@@ -101,6 +101,7 @@ interface GamePlayViewProps {
   messageRevision: number;
   result: RoundOutcome | null;
   revealClue: (clueKey: string) => void;
+  reportClue?: (clueKey: string) => void;
   revealedCount: number;
   restartButtonLabel?: string;
   round: ActiveRound | null;
@@ -141,6 +142,7 @@ export function GamePlayView({
   messageRevision,
   result,
   revealClue,
+  reportClue,
   revealedCount,
   restartButtonLabel = "New round",
   round,
@@ -281,6 +283,15 @@ export function GamePlayView({
                               <span className="block min-w-0 text-base leading-7 text-primary">
                                 {renderClueValue(clue)}
                               </span>
+                              {reportClue ? (
+                                <Button
+                                  className="mt-2"
+                                  label="Report this clue"
+                                  onClick={() => reportClue(clue.key)}
+                                  size="sm"
+                                  variant="ghost"
+                                />
+                              ) : null}
                             </div>
                           ) : round ? (
                             isLocked ? (
@@ -372,6 +383,15 @@ export function GamePlayView({
                         <strong className="mt-1.5 block text-lg leading-tight text-primary sm:mt-2 sm:text-2xl">
                           {renderClueValue(clue)}
                         </strong>
+                        {reportClue ? (
+                          <Button
+                            className="mt-2"
+                            label="Report this clue"
+                            onClick={() => reportClue(clue.key)}
+                            size="sm"
+                            variant="ghost"
+                          />
+                        ) : null}
                       </div>
                     </div>
                   </li>

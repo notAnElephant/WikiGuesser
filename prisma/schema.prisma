@@ -218,3 +218,25 @@ model UserDailyCategoryModeStats {
 
   @@unique([userProfileId, category, mode])
 }
+
+enum FeedbackKind {
+  POSITIVE
+  BUG
+  CONTENT_ISSUE
+  CONFUSING
+  FEATURE_IDEA
+  OTHER
+}
+
+model Feedback {
+  id        String       @id @default(cuid())
+  kind      FeedbackKind
+  message   String?      @db.Text
+  context   Json?
+  actorId   String?
+  path      String?
+  createdAt DateTime     @default(now())
+
+  @@index([kind, createdAt])
+  @@index([actorId, createdAt])
+}

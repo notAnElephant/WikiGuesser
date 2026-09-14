@@ -21,6 +21,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/rounds/(.*)/reveal",
   "/api/rounds/(.*)/give-up",
   "/api/daily/start",
+  "/api/feedback",
   "/api/offline/(.*)",
 ]);
 

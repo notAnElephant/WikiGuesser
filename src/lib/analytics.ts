@@ -33,6 +33,10 @@ type AnalyticsEvents = {
     guesses: number;
   };
   game_started: GameContext;
+  feedback_submitted: {
+    feedback_kind: "positive" | "bug" | "content_issue" | "confusing" | "feature_idea" | "other";
+    source: "global" | "round-result" | "clue";
+  };
   guess_submitted: GameContext & {
     attempt_number: number;
     completed: boolean;

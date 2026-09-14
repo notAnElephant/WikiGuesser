@@ -1,6 +1,7 @@
 import { AccountUserButton } from "@/src/components/account-user-button";
 import { AdminDailyAnswersProfilePage } from "@/src/components/admin-daily-answers-profile-page";
 import { AppToaster } from "@/src/components/app-toaster";
+import { FeedbackButton } from "@/src/components/feedback-button";
 import { PostHogIdentity } from "@/src/components/posthog-identity";
 import { PwaInstallButton } from "@/src/components/pwa-install-button";
 import { OfflinePackProvider } from "@/src/components/offline-pack-provider";
@@ -120,6 +121,7 @@ export default async function RootLayout({
                         variant="ghost"
                       />
                       <ThemeToggle />
+                      <FeedbackButton />
                       <Show when="signed-out">
                         <Button
                           href="/sign-in"

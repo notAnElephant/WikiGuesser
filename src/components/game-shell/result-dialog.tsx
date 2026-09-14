@@ -1,6 +1,8 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { VStack } from "@astryxdesign/core/VStack";
+import { FeedbackForm } from "@/src/components/feedback-form";
 import { getCategoryMeta } from "@/src/components/game-shell/utils";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
 import type { GuessedCountryMapData } from "@/src/lib/types";
@@ -191,6 +193,20 @@ export function GameResultDialog({
           width="100%"
         />
       ) : null}
+      <VStack gap={3} paddingBlockStart={6}>
+        <strong className="text-primary">How was that round?</strong>
+        <FeedbackForm
+          context={{
+            category: result.category,
+            cluesRevealed: result.clues.filter((clue) => clue.isRevealed).length,
+            gameType: result.kind === "daily" ? "daily" : "free_play",
+            mode: result.mode,
+            outcome: result.status,
+            score: result.score,
+            source: "round-result",
+          }}
+        />
+      </VStack>
     </Dialog>
   );
 }
