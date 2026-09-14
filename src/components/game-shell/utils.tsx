@@ -201,6 +201,10 @@ export function getMessageAppearance(
 }
 
 export function shouldDisplayGameStatusToast(message: string): boolean {
+  if (!message.trim()) {
+    return false;
+  }
+
   if (
     message === "Round live." ||
     message === "Daily live." ||

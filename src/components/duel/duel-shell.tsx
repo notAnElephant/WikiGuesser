@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 const WorldMapDialog = dynamic(
   () =>
@@ -210,7 +211,20 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
               : "Something went wrong. Please try again.",
           );
         }
-        setDuel(unwrapDuel(payload));
+        const nextDuel = unwrapDuel(payload);
+        setDuel(nextDuel);
+        if (action === "guess" && position) {
+          const completedRound = nextDuel.rounds.find(
+            (round) => round.position === position,
+          );
+          if (completedRound?.status === "completed") {
+            const score = completedRound.score ?? 0;
+            toast.success(
+              `Round ${position} solved — ${score} ${score === 1 ? "point" : "points"}.`,
+              { id: "duel-round-result" },
+            );
+          }
+        }
         if (action === "guess") setGuess("");
       } catch (mutationError) {
         setError(

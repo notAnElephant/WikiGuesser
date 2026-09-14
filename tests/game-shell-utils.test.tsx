@@ -115,6 +115,13 @@ describe("blurred-lines clue locking", () => {
 });
 
 describe("game status toasts", () => {
+  it.each(["", "   "])(
+    "does not display a toast when the status message is blank: %j",
+    (message) => {
+      expect(shouldDisplayGameStatusToast(message)).toBe(false);
+    },
+  );
+
   it.each(["Correct.", "Answer: France."])(
     "does not display a toast for a completed round message: %s",
     (message) => {
