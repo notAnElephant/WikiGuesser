@@ -491,6 +491,7 @@ export function SharedLandingShell({
     isSignedIn && hasPendingClaim,
   );
   const [resetCountdown, setResetCountdown] = useState("00:00");
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [playedOverrides, setPlayedOverrides] = useState<
     Record<string, PlayedOverride>
   >({});
@@ -586,6 +587,16 @@ export function SharedLandingShell({
       : isAlreadyGuessed
         ? "Already tried."
         : null;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+
+    updatePreference();
+    mediaQuery.addEventListener("change", updatePreference);
+
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
 
   useEffect(() => {
     setResetCountdown(getTimeUntilBudapestMidnight());
@@ -1224,6 +1235,7 @@ export function SharedLandingShell({
 
         {result?.status === "win" &&
         result.showDialog !== false &&
+        !prefersReducedMotion &&
         viewportWidth > 0 &&
         viewportHeight > 0 ? (
           <Confetti

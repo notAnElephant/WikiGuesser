@@ -510,9 +510,15 @@ export function GamePlayView({
                       aria-controls={
                         isCountryRound ? "country-guess-options" : undefined
                       }
+                      aria-describedby={
+                        validationMessage
+                          ? "guess-validation-message"
+                          : undefined
+                      }
                       aria-expanded={
                         isCountryRound ? isCountryListOpen : undefined
                       }
+                      aria-invalid={validationMessage ? true : undefined}
                       aria-label="Submit your entity guess"
                       autoComplete="off"
                       className="w-full rounded-lg border border-border bg-card px-12 py-4 text-primary outline-none transition focus:border-accent-bg focus:ring-2 focus:ring-accent-muted   dark:focus:ring-accent-muted"
@@ -558,7 +564,11 @@ export function GamePlayView({
                   </div>
 
                   {validationMessage ? (
-                    <div className="inline-flex items-center gap-2 rounded-full border border-warning bg-warning-muted px-3 py-2 text-sm font-medium text-warning">
+                    <div
+                      aria-live="polite"
+                      className="inline-flex items-center gap-2 rounded-full border border-warning bg-warning-muted px-3 py-2 text-sm font-medium text-warning"
+                      id="guess-validation-message"
+                    >
                       <CircleAlert
                         aria-hidden="true"
                         className="size-4 shrink-0"
