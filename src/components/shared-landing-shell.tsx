@@ -1,6 +1,8 @@
 "use client";
 
 import { GoogleOneTap } from "@clerk/nextjs";
+import { VStack } from "@astryxdesign/core/VStack";
+import { Text } from "@astryxdesign/core/Text";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
@@ -89,13 +91,13 @@ const launcherModeCopy: Record<
   classic: {
     dailyDescription: "Clues reveal after every miss.",
     dailyTitle: "Classic Daily",
-    freeDescription: "Guess, miss, reveal.",
+    freeDescription: "Each miss reveals the next clue.",
     freeTitle: "Classic",
   },
   "blurred-lines": {
-    dailyDescription: "Reveal only what you need.",
+    dailyDescription: "Choose a clue, then make a guess.",
     dailyTitle: "Choose Clues Daily",
-    freeDescription: "Open only what you need.",
+    freeDescription: "Choose a clue, then make a guess.",
     freeTitle: "Choose Clues",
   },
 };
@@ -156,6 +158,33 @@ export function GameLauncher({
           </strong>
         </div>
       </header>
+      <VStack gap={2}>
+        <Text>
+          Guess the country from its clues. Fewer clues earn more points.
+        </Text>
+        <details className="text-sm text-secondary">
+          <summary className="cursor-pointer py-2 font-semibold text-accent">
+            How to play
+          </summary>
+          <VStack gap={2} paddingBlock={2}>
+            <Text>
+              Classic: start with one clue. Each wrong guess reveals the next.
+            </Text>
+            <Text>
+              Choose Clues: reveal an unlocked clue, then make one guess. After
+              a miss, choose another clue.
+            </Text>
+            <Text>
+              A correct answer earns 100, 80, 60, 40, 20, or 10 points as more
+              clues are revealed. Map guesses earn half points. Giving up earns
+              0.
+            </Text>
+            <Text>
+              Play each daily puzzle once, or practise with unlimited free play.
+            </Text>
+          </VStack>
+        </details>
+      </VStack>
 
       {claimBanner ? (
         <div className="rounded-2xl border border-success bg-success-muted px-4 py-3 text-sm font-medium text-success">
@@ -165,7 +194,7 @@ export function GameLauncher({
 
       <div className="grid gap-4">
         <LauncherBand
-          description="Two chances. One country each."
+          description="Two daily puzzles. One country each."
           isDaily
           title="Today"
         >
@@ -327,11 +356,11 @@ function LauncherBand({
       padding={0}
     >
       <div className="grid lg:grid-cols-[minmax(230px,0.72fr)_minmax(0,1.6fr)]">
-        <div className="flex flex-col justify-center border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r">
+        <div className="flex flex-col justify-center border-b border-border p-4 sm:p-5 lg:border-b-0 lg:border-r">
           <span className="mb-4 hidden size-12 items-center justify-center rounded-md border border-border bg-surface text-accent lg:inline-flex">
             <BandIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />
           </span>
-          <h2 className="m-0 font-heading text-3xl sm:text-4xl font-semibold tracking-tight text-primary">
+          <h2 className="m-0 font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-primary">
             {title}
           </h2>
           <p className="m-0 mt-2 text-base leading-6 text-secondary">
@@ -366,7 +395,7 @@ function LauncherRow({
   variant,
 }: LauncherRowProps) {
   return (
-    <div className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:py-6">
+    <div className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:py-5">
       <div className="flex min-w-0 items-center gap-4">
         <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-accent">
           <ModeIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />

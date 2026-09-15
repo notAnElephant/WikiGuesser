@@ -1,5 +1,6 @@
 "use client";
 
+import { HStack } from "@astryxdesign/core/HStack";
 import { Button } from "@astryxdesign/core/Button";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
@@ -760,17 +761,18 @@ export function WorldMapDialog({
 
   if (presentation === "game" && isMapHidden) {
     return (
-      <div className="fixed inset-x-0 bottom-0 z-[70] flex justify-center px-2 pb-2 sm:justify-end sm:px-5 sm:pb-5 lg:static lg:px-0 lg:pb-0">
+      <HStack justify="center">
         <Button
           elevation="med"
           icon={<ChevronUp aria-hidden="true" />}
+          aria-label="Show world map"
           label="Show world map"
           onClick={() => setDrawerState("medium")}
           variant="secondary"
         >
-          Show map
+          Show world map
         </Button>
-      </div>
+      </HStack>
     );
   }
 

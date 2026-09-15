@@ -170,7 +170,7 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
             {roundOptions.map((count) => (
               <SegmentedControlItem
                 key={count}
-                label={`${count} games`}
+                label={`${count}`}
                 value={String(count)}
               />
             ))}

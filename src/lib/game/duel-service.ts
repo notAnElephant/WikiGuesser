@@ -537,7 +537,7 @@ export async function revealDuelClue(
   );
   if (unlockRoundsRemaining > 0) {
     throw new Error(
-      `That field unlocks in ${unlockRoundsRemaining} ${unlockRoundsRemaining === 1 ? "round" : "rounds"}.`,
+      `Reveal ${unlockRoundsRemaining} more ${unlockRoundsRemaining === 1 ? "clue" : "clues"} to unlock this field.`,
     );
   }
   await updateDuelAttempt(attempt.id, profile.id, input.version, {

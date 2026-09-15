@@ -227,7 +227,7 @@ export function revealOfflineClue(
   const rounds = getClueUnlockRoundsRemaining(unlockState, selectedState);
   if (rounds > 0) {
     throw new Error(
-      `That field unlocks in ${rounds} ${rounds === 1 ? "round" : "rounds"}.`,
+      `Reveal ${rounds} more ${rounds === 1 ? "clue" : "clues"} to unlock this field.`,
     );
   }
   const next = {

@@ -64,8 +64,7 @@ export function getRoundClues(
   const revealedClueSet = new Set(state.revealedClueKeys);
   return getEffectiveRoundClues(entity, state.mode, state.continent).map(
     (clue) => {
-      const isRevealed =
-        options?.revealAll || revealedClueSet.has(clue.key);
+      const isRevealed = options?.revealAll || revealedClueSet.has(clue.key);
       return {
         key: clue.key,
         label: clue.label,
@@ -164,7 +163,7 @@ export function validateManualClueReveal(
   );
   if (unlockRoundsRemaining > 0) {
     throw new Error(
-      `That field unlocks in ${unlockRoundsRemaining} ${unlockRoundsRemaining === 1 ? "round" : "rounds"}.`,
+      `Reveal ${unlockRoundsRemaining} more ${unlockRoundsRemaining === 1 ? "clue" : "clues"} to unlock this field.`,
     );
   }
   return selectedClue;

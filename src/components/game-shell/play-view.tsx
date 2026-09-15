@@ -1,6 +1,12 @@
 "use client";
 
 import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { Grid } from "@astryxdesign/core/Grid";
+import { HStack } from "@astryxdesign/core/HStack";
+import { VStack } from "@astryxdesign/core/VStack";
+import { Text } from "@astryxdesign/core/Text";
+import { getScoreForGuess } from "@/src/lib/game/round-rules";
 import { Card } from "@astryxdesign/core/Card";
 import type {
   ActiveRound,
@@ -9,13 +15,11 @@ import type {
   RoundOutcome,
 } from "@/src/components/game-shell/types";
 import {
-  getCategoryMeta,
   getClueUnlockRoundsRemaining,
   getClueIcon,
   getFlagImageUrl,
   getModeMeta,
   renderClueValue,
-  renderHiddenCluePlaceholder,
   shouldDisplayGameStatusToast,
 } from "@/src/components/game-shell/utils";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
@@ -49,7 +53,7 @@ import dynamic from "next/dynamic";
 import {
   type FormEvent,
   type ReactNode,
-  useDeferredValue,
+  useRef,
   useEffect,
   useState,
 } from "react";
@@ -164,17 +168,23 @@ export function GamePlayView({
   }
 
   const currentModeMeta = getModeMeta(currentMode);
-  const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
-  const CurrentModeIcon = currentModeMeta.icon;
   const isRevealMode = currentMode === "blurred-lines";
   const isRevealStep = Boolean(round && isRevealMode && !round.canGuess);
   const isGuessStep = Boolean(round && isRevealMode && round.canGuess);
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
   const [mapDrawerState, setMapDrawerState] = useState<
     "hidden" | "medium" | "expanded"
-  >("medium");
-  const deferredGuess = useDeferredValue(guess);
-  const normalizedSearch = normalizeGuess(deferredGuess);
+  >("hidden");
+  const normalizedSearch = normalizeGuess(guess);
+  const [activeOption, setActiveOption] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [pendingExit, setPendingExit] = useState<
+    "give-up" | "restart" | "home" | null
+  >(null);
+  const [pendingMapGuess, setPendingMapGuess] = useState<string | null>(null);
+  const potentialScore = round
+    ? getScoreForGuess(revealedCount + (isRevealStep ? 1 : 0))
+    : displayScore;
   const matchingCountryOptions = isCountryRound
     ? availableCountryOptions.filter((option) =>
         normalizeGuess(option).includes(normalizedSearch),
@@ -194,13 +204,57 @@ export function GamePlayView({
   }, [message, messageRevision, statusAppearance.tone]);
 
   useEffect(() => {
-    setMapDrawerState("medium");
+    window.scrollTo({ top: 0, behavior: "instant" });
+    setMapDrawerState(
+      window.matchMedia("(min-width: 1024px)").matches ? "medium" : "hidden",
+    );
+    setIsCountryListOpen(false);
+    setActiveOption(-1);
+    setPendingMapGuess(null);
+    setPendingExit(null);
   }, [round?.roundId]);
 
+  useEffect(() => {
+    if (isBusy) return;
+    if (isGuessStep) {
+      inputRef.current?.focus({ preventScroll: true });
+      if (!window.matchMedia("(min-width: 1024px)").matches) {
+        inputRef.current?.scrollIntoView({
+          block: "center",
+          behavior: "instant",
+        });
+      }
+    } else if (isRevealStep) {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [isGuessStep, isRevealStep, isBusy]);
+
+  function requestExit(action: "give-up" | "restart" | "home") {
+    if (round) setPendingExit(action);
+    else if (action === "restart") startRound();
+    else if (action === "home") clearForCategoryChoice();
+  }
+
+  function selectCountry(option: string) {
+    setGuess(option);
+    setIsCountryListOpen(false);
+    setActiveOption(-1);
+    inputRef.current?.focus();
+  }
+
   return (
-    <div className="grid min-h-[calc(100dvh-1rem)] gap-3 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
+    <VStack gap={4}>
+      <HStack gap={3} wrap="wrap" justify="between" className="text-sm">
+        <Text weight="semibold">
+          {flowLabel} · {currentModeMeta.label} · {currentCategoryLabel}
+        </Text>
+        <Text color="accent" weight="semibold">
+          {round ? "Available score" : "Score"}: {potentialScore} pts ·{" "}
+          {revealedCount}/{currentClues.length} clues
+        </Text>
+      </HStack>
       {header}
-      <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(400px,0.75fr)]">
+      <Grid columns={{ minWidth: 480, max: 2 }} gap={4} align="start">
         <Card
           className="grid content-start gap-2.5 p-3 sm:gap-4 sm:p-5"
           elevation="low"
@@ -208,22 +262,24 @@ export function GamePlayView({
         >
           <div className="min-w-0">
             <h1 className="m-0 font-heading text-2xl font-semibold leading-tight tracking-tighter text-primary sm:text-3xl">
-              {isRevealMode
-                ? isGuessStep
-                  ? "Make your guess"
-                  : "Choose a clue"
-                : "Follow the clues"}
+              {view === "result"
+                ? "Round complete"
+                : isRevealMode
+                  ? isGuessStep
+                    ? "Make your guess"
+                    : "Choose a clue"
+                  : "Follow the clues"}
             </h1>
-            {isRevealMode ? (
+            {isRevealMode && round ? (
               <p className="m-0 mt-1 text-xs leading-4 text-secondary sm:mt-2 sm:text-sm">
                 {isGuessStep
-                  ? "One clue is open. Make your best guess."
+                  ? "Use the revealed clues to make your best guess."
                   : "Reveal only what you need, then make one guess."}
               </p>
             ) : null}
           </div>
 
-          {isRevealMode ? (
+          {isRevealMode && round ? (
             <div
               aria-label={`Current step: ${isGuessStep ? "guess" : "reveal a clue"}`}
               className="grid grid-cols-2 overflow-hidden rounded-xl border border-border bg-card text-xs font-semibold uppercase tracking-wider"
@@ -281,7 +337,7 @@ export function GamePlayView({
               <table className="w-full border-collapse text-left text-sm text-primary">
                 <thead>
                   <tr className="bg-surface text-xs uppercase tracking-wider text-secondary ">
-                    <th className="w-[38%] border-b border-r border-border px-4 py-3 font-semibold">
+                    <th className="w-2/5 border-b border-r border-border px-3 py-3 font-semibold">
                       Field
                     </th>
                     <th className="border-b border-border px-4 py-3 font-semibold">
@@ -299,10 +355,10 @@ export function GamePlayView({
 
                     return (
                       <tr
-                        className={`${index % 2 === 0 ? "bg-surface " : "bg-muted "} ${isLocked ? "opacity-60" : ""}`}
+                        className={index % 2 === 0 ? "bg-surface" : "bg-muted"}
                         key={clue.key}
                       >
-                        <th className="border-r border-t border-border px-4 py-3 align-top font-semibold text-primary">
+                        <th className="border-r border-t border-border px-3 py-3 align-middle font-semibold text-primary">
                           <span className="inline-flex items-center gap-2">
                             <ClueIcon
                               aria-hidden="true"
@@ -312,7 +368,7 @@ export function GamePlayView({
                             <span>{clue.label}</span>
                           </span>
                         </th>
-                        <td className="border-t border-border px-4 py-3 align-top">
+                        <td className="border-t border-border px-3 py-2 align-middle">
                           {clue.isRevealed ? (
                             <div className="w-full">
                               <span className="block min-w-0 text-base leading-7 text-primary">
@@ -321,54 +377,26 @@ export function GamePlayView({
                             </div>
                           ) : round ? (
                             isLocked ? (
-                              <div className="flex w-full items-start justify-between gap-3">
-                                <span className="min-w-0">
-                                  {renderHiddenCluePlaceholder(clue, true)}
-                                </span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs font-semibold uppercase tracking-wider text-secondary ">
-                                  <Lock
-                                    aria-hidden="true"
-                                    className="size-3"
-                                    strokeWidth={2.2}
-                                  />
-                                  {unlockRoundsRemaining}{" "}
-                                  {unlockRoundsRemaining === 1
-                                    ? "round"
-                                    : "rounds"}{" "}
-                                  later
-                                </span>
-                              </div>
+                              <Text type="supporting">
+                                Reveal {unlockRoundsRemaining} more{" "}
+                                {unlockRoundsRemaining === 1 ? "clue" : "clues"}{" "}
+                                to unlock
+                              </Text>
                             ) : isRevealStep ? (
-                              <div className="flex w-full items-start justify-between gap-3">
-                                <button
-                                  aria-label={`Reveal ${clue.label}`}
-                                  className="group flex w-full items-center justify-between gap-3 rounded-lg border border-transparent bg-transparent px-2 py-1 text-left transition duration-150 hover:border-accent-bg hover:bg-accent-muted focus:border-accent-bg focus:bg-accent-muted focus:outline-none focus:ring-2 focus:ring-accent-muted"
-                                  disabled={isBusy}
-                                  onClick={() => revealClue(clue.key)}
-                                  type="button"
-                                >
-                                  <span className="min-w-0">
-                                    {renderHiddenCluePlaceholder(clue, false)}
-                                  </span>
-                                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent-muted px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-accent transition group-hover:bg-accent-bg group-hover:text-on-accent">
-                                    <Eye
-                                      aria-hidden="true"
-                                      className="size-3"
-                                      strokeWidth={2.2}
-                                    />
-                                    Reveal
-                                  </span>
-                                </button>
-                              </div>
+                              <Button
+                                label={`Reveal ${clue.label}`}
+                                icon={<Eye aria-hidden="true" />}
+                                variant="secondary"
+                                size="sm"
+                                className="min-h-11"
+                                width="100%"
+                                isDisabled={isBusy}
+                                onClick={() => revealClue(clue.key)}
+                              >
+                                Reveal
+                              </Button>
                             ) : (
-                              <div className="flex w-full items-center justify-between gap-3 px-2 py-1 text-secondary">
-                                <span className="min-w-0">
-                                  {renderHiddenCluePlaceholder(clue, false)}
-                                </span>
-                                <span className="inline-flex shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-semibold uppercase tracking-wider">
-                                  Guess first
-                                </span>
-                              </div>
+                              <Text type="supporting">Guess first</Text>
                             )
                           ) : (
                             <span className="text-base leading-7 text-primary">
@@ -441,31 +469,10 @@ export function GamePlayView({
           {boardAction}
         </Card>
 
-        <aside className="grid content-start gap-4">
-          {isCountryRound &&
-          (view === "round" || result?.showDialog === false) ? (
-            <WorldMapDialog
-              countryOptions={availableCountryOptions}
-              drawerState={mapDrawerState}
-              guessedCountries={guessedCountries}
-              isActive={isGuessStep}
-              isExpanded={mapDrawerState === "expanded"}
-              onDrawerStateChange={setMapDrawerState}
-              onExpandedChange={(isExpanded) =>
-                setMapDrawerState(isExpanded ? "expanded" : "medium")
-              }
-              onCountryGuess={
-                round?.canGuess && !isBusy ? handleMapGuess : undefined
-              }
-              solutionCountry={
-                solutionCountry ?? result?.solutionCountry ?? null
-              }
-            />
-          ) : null}
-
+        <VStack as="aside" gap={4}>
           {round ? (
             <Card
-              className={`grid gap-4 p-4 ${isCountryListOpen ? "relative z-[90]" : ""} ${isGuessStep ? "outline-2 outline-offset-2 outline-accent-bg" : ""}`}
+              className={`grid gap-4 p-4 ${isGuessStep ? "outline-2 outline-offset-2 outline-accent-bg" : ""}`}
               elevation="low"
               padding={0}
             >
@@ -492,76 +499,136 @@ export function GamePlayView({
                     icon={<Ban aria-hidden="true" />}
                     isDisabled={isBusy}
                     label="Give up"
-                    onClick={giveUpRound}
-                    variant="secondary"
+                    onClick={() => requestExit("give-up")}
+                    variant="ghost"
                     width="100%"
                   />
                 </div>
               ) : (
                 <form className="grid gap-3" onSubmit={handleGuessSubmit}>
-                  <div className="relative">
-                    <Search
-                      aria-hidden="true"
-                      className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-secondary"
-                      strokeWidth={2.2}
-                    />
-                    <input
-                      aria-autocomplete={isCountryRound ? "list" : undefined}
-                      aria-controls={
-                        isCountryRound ? "country-guess-options" : undefined
-                      }
-                      aria-describedby={
-                        validationMessage
-                          ? "guess-validation-message"
-                          : undefined
-                      }
-                      aria-expanded={
-                        isCountryRound ? isCountryListOpen : undefined
-                      }
-                      aria-invalid={validationMessage ? true : undefined}
-                      aria-label="Submit your entity guess"
-                      autoComplete="off"
-                      className="w-full rounded-lg border border-border bg-card px-12 py-4 text-primary outline-none transition focus:border-accent-bg focus:ring-2 focus:ring-accent-muted   dark:focus:ring-accent-muted"
-                      disabled={isBusy}
-                      onBlur={() => setIsCountryListOpen(false)}
-                      onChange={(event) => {
-                        setGuess(event.target.value);
-                        setIsCountryListOpen(true);
-                      }}
-                      onFocus={() => setIsCountryListOpen(true)}
-                      placeholder={
-                        isCountryRound ? "Search country" : "Type answer"
-                      }
-                      type="text"
-                      value={guess}
-                    />
+                  <VStack gap={2}>
+                    <HStack className="relative">
+                      <Search
+                        aria-hidden="true"
+                        className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-secondary"
+                        strokeWidth={2.2}
+                      />
+                      <input
+                        aria-autocomplete={isCountryRound ? "list" : undefined}
+                        aria-controls={
+                          isCountryRound ? "country-guess-options" : undefined
+                        }
+                        aria-describedby={
+                          validationMessage
+                            ? "guess-validation-message"
+                            : undefined
+                        }
+                        aria-expanded={
+                          isCountryRound ? isCountryListOpen : undefined
+                        }
+                        aria-invalid={validationMessage ? true : undefined}
+                        aria-label={
+                          isCountryRound ? "Search country" : "Type answer"
+                        }
+                        role={isCountryRound ? "combobox" : undefined}
+                        ref={inputRef}
+                        aria-activedescendant={
+                          isCountryRound &&
+                          isCountryListOpen &&
+                          activeOption >= 0
+                            ? `country-option-${activeOption}`
+                            : undefined
+                        }
+                        onKeyDown={(event) => {
+                          if (!isCountryRound || event.nativeEvent.isComposing)
+                            return;
+                          if (
+                            event.key === "ArrowDown" ||
+                            event.key === "ArrowUp"
+                          ) {
+                            event.preventDefault();
+                            setIsCountryListOpen(true);
+                            const count = matchingCountryOptions.length;
+                            const next = count
+                              ? event.key === "ArrowDown"
+                                ? (activeOption + 1) % count
+                                : activeOption <= 0
+                                  ? count - 1
+                                  : activeOption - 1
+                              : -1;
+                            setActiveOption(next);
+                            requestAnimationFrame(() =>
+                              document
+                                .getElementById(`country-option-${next}`)
+                                ?.scrollIntoView({ block: "nearest" }),
+                            );
+                          } else if (event.key === "Escape") {
+                            event.preventDefault();
+                            setIsCountryListOpen(false);
+                            setActiveOption(-1);
+                          } else if (
+                            event.key === "Enter" &&
+                            isCountryListOpen &&
+                            activeOption >= 0 &&
+                            matchingCountryOptions[activeOption]
+                          ) {
+                            event.preventDefault();
+                            selectCountry(matchingCountryOptions[activeOption]);
+                          } else if (event.key === "Enter") {
+                            setIsCountryListOpen(false);
+                          }
+                        }}
+                        autoComplete="off"
+                        className="w-full rounded-lg border border-border bg-card px-12 py-4 text-primary outline-none transition focus:border-accent-bg focus:ring-2 focus:ring-accent-muted   dark:focus:ring-accent-muted"
+                        disabled={isBusy}
+                        onBlur={() => {
+                          setIsCountryListOpen(false);
+                          setActiveOption(-1);
+                        }}
+                        onChange={(event) => {
+                          setGuess(event.target.value);
+                          setActiveOption(-1);
+                          setIsCountryListOpen(true);
+                        }}
+                        onFocus={() => setIsCountryListOpen(true)}
+                        placeholder={
+                          isCountryRound ? "Search country" : "Type answer"
+                        }
+                        type="text"
+                        value={guess}
+                      />
+                    </HStack>
                     {isCountryRound &&
                     isCountryListOpen &&
                     matchingCountryOptions.length > 0 ? (
-                      <div
+                      <VStack
                         aria-label="Country suggestions"
-                        className="absolute left-0 right-0 top-[calc(100%+0.4rem)] z-50 max-h-[min(16rem,40dvh)] touch-pan-y overflow-y-auto overscroll-contain rounded-lg border border-border bg-surface p-1.5 shadow-md "
+                        className="max-h-48 touch-pan-y overflow-y-auto overscroll-contain rounded-lg border border-border bg-surface p-1.5"
                         id="country-guess-options"
                         role="listbox"
                       >
-                        {matchingCountryOptions.map((option) => (
+                        {matchingCountryOptions.map((option, index) => (
                           <button
-                            className="block w-full rounded-2xl px-3 py-3 text-left text-sm font-medium text-primary hover:bg-accent-bg/8 focus:bg-accent-bg/8 focus:outline-none dark:hover:bg-surface/8 dark:focus:bg-surface/8"
+                            className="block w-full rounded-2xl px-3 py-3 text-left text-sm font-medium text-primary hover:bg-accent-muted aria-selected:bg-accent-muted focus:outline-none"
+                            id={`country-option-${index}`}
+                            aria-selected={activeOption === index}
+                            tabIndex={-1}
                             key={option}
                             onMouseDown={(event) => event.preventDefault()}
-                            onClick={() => {
-                              setGuess(option);
-                              setIsCountryListOpen(false);
-                            }}
+                            onClick={() => selectCountry(option)}
                             role="option"
                             type="button"
                           >
                             {option}
                           </button>
                         ))}
-                      </div>
+                      </VStack>
+                    ) : isCountryRound && isCountryListOpen && guess.trim() ? (
+                      <Text color="secondary">
+                        No matching countries. Try another name.
+                      </Text>
                     ) : null}
-                  </div>
+                  </VStack>
 
                   {validationMessage ? (
                     <div
@@ -602,6 +669,7 @@ export function GamePlayView({
                     isDisabled={!canSubmitGuess}
                     isLoading={isBusy}
                     label={isRevealMode ? "Submit guess" : guessButtonLabel}
+                    onMouseDown={(event) => event.preventDefault()}
                     type="submit"
                     variant="primary"
                     width="100%"
@@ -610,8 +678,8 @@ export function GamePlayView({
                     icon={<Ban aria-hidden="true" />}
                     isDisabled={isBusy}
                     label="Give up"
-                    onClick={giveUpRound}
-                    variant="secondary"
+                    onClick={() => requestExit("give-up")}
+                    variant="ghost"
                     width="100%"
                   />
                 </form>
@@ -631,7 +699,7 @@ export function GamePlayView({
 
                       return (
                         <li
-                          className="flex items-center justify-between gap-3 rounded-lg border border-error bg-error-muted text-error"
+                          className="flex items-center justify-between gap-3 border-b border-border px-2 py-2 text-primary"
                           key={attempt.name}
                         >
                           <span>{attempt.name}</span>
@@ -657,18 +725,47 @@ export function GamePlayView({
             </Card>
           ) : null}
 
+          {isCountryRound &&
+          (view === "round" || result?.showDialog === false) ? (
+            <WorldMapDialog
+              countryOptions={availableCountryOptions}
+              drawerState={mapDrawerState}
+              guessedCountries={guessedCountries}
+              isActive={isGuessStep}
+              isExpanded={mapDrawerState === "expanded"}
+              onDrawerStateChange={setMapDrawerState}
+              onExpandedChange={(isExpanded) =>
+                setMapDrawerState(isExpanded ? "expanded" : "medium")
+              }
+              onCountryGuess={
+                round?.canGuess && !isBusy
+                  ? (country) => {
+                      setMapDrawerState(
+                        window.matchMedia("(min-width: 1024px)").matches
+                          ? "medium"
+                          : "hidden",
+                      );
+                      setPendingMapGuess(country);
+                    }
+                  : undefined
+              }
+              solutionCountry={
+                solutionCountry ?? result?.solutionCountry ?? null
+              }
+            />
+          ) : null}
+
           {sideFooter}
 
           {showRestartButton || showHomeButton ? (
-            <Card className="grid gap-3" elevation="low" padding={4}>
+            <HStack gap={2} wrap="wrap" justify="center">
               {showRestartButton ? (
                 <Button
                   icon={<RotateCcw aria-hidden="true" />}
                   isDisabled={isBusy}
                   label={restartButtonLabel}
-                  onClick={startRound}
-                  variant="secondary"
-                  width="100%"
+                  onClick={() => requestExit("restart")}
+                  variant="ghost"
                 />
               ) : null}
               {showHomeButton ? (
@@ -676,15 +773,90 @@ export function GamePlayView({
                   icon={<House aria-hidden="true" />}
                   isDisabled={isBusy}
                   label={homeButtonLabel}
-                  onClick={clearForCategoryChoice}
-                  variant="secondary"
-                  width="100%"
+                  onClick={() => requestExit("home")}
+                  variant="ghost"
                 />
               ) : null}
-            </Card>
+            </HStack>
           ) : null}
-        </aside>
-      </div>
-    </div>
+        </VStack>
+      </Grid>
+      {pendingExit ? (
+        <Dialog isOpen onOpenChange={() => setPendingExit(null)} padding={5}>
+          <DialogHeader
+            title={
+              pendingExit === "give-up"
+                ? "Give up this round?"
+                : "Leave this round?"
+            }
+            onOpenChange={() => setPendingExit(null)}
+          />
+          <VStack gap={4}>
+            <Text>
+              {pendingExit === "give-up"
+                ? "The answer will be revealed and this round will score 0 points."
+                : "Your progress in this round will be lost."}
+            </Text>
+            <Button
+              label="Keep playing"
+              variant="primary"
+              onClick={() => setPendingExit(null)}
+            />
+            <Button
+              label={
+                pendingExit === "give-up"
+                  ? "Reveal answer"
+                  : pendingExit === "restart"
+                    ? "Start new round"
+                    : "Leave round"
+              }
+              variant="secondary"
+              onClick={() => {
+                const action = pendingExit;
+                setPendingExit(null);
+                if (action === "give-up") giveUpRound();
+                else if (action === "restart") startRound();
+                else clearForCategoryChoice();
+              }}
+            />
+          </VStack>
+        </Dialog>
+      ) : null}
+      {pendingMapGuess ? (
+        <Dialog
+          isOpen
+          onOpenChange={() => setPendingMapGuess(null)}
+          padding={5}
+        >
+          <DialogHeader
+            title={`Guess ${pendingMapGuess}?`}
+            onOpenChange={() => setPendingMapGuess(null)}
+          />
+          <VStack gap={4}>
+            <Text>
+              A correct map guess earns {Math.floor(potentialScore / 2)} points
+              — half the {potentialScore} points for a typed answer.
+            </Text>
+            <Button
+              label={`Confirm ${pendingMapGuess}`}
+              variant="primary"
+              isDisabled={isBusy}
+              onClick={() => {
+                const country = pendingMapGuess;
+                setPendingMapGuess(null);
+                if (!window.matchMedia("(min-width: 1024px)").matches)
+                  setMapDrawerState("hidden");
+                handleMapGuess(country);
+              }}
+            />
+            <Button
+              label="Cancel"
+              variant="ghost"
+              onClick={() => setPendingMapGuess(null)}
+            />
+          </VStack>
+        </Dialog>
+      ) : null}
+    </VStack>
   );
 }

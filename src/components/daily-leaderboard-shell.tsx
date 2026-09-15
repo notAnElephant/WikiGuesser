@@ -139,7 +139,7 @@ export function DailyLeaderboardShell({
           </SegmentedControl>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+        <div className="py-2">
           <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-secondary">
             {selectedModeMeta.label}
           </div>
@@ -156,7 +156,7 @@ export function DailyLeaderboardShell({
               <span className="text-right">Score</span>
             </div>
           ) : null}
-          <div className="grid gap-2">
+          <div className="grid divide-y divide-border">
             {entries.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-secondary">
                 No scores yet.
@@ -164,11 +164,11 @@ export function DailyLeaderboardShell({
             ) : (
               entries.map((entry, index) => (
                 <div
-                  className={`items-center gap-2 rounded-lg border px-4 py-3 ${
+                  className={`items-center gap-2 px-2 py-3 ${
                     period === "total"
                       ? "grid grid-cols-[minmax(0,1fr)_4rem_4rem] sm:grid-cols-[minmax(0,1fr)_5rem_5rem]"
                       : "flex justify-between"
-                  } border-border bg-card`}
+                  }`}
                   key={`${entry.playerKey}-${index}`}
                 >
                   <div className="min-w-0">

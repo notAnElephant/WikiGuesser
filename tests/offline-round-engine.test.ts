@@ -73,7 +73,7 @@ describe("offline round engine", () => {
     });
     expect(round.canGuess).toBe(false);
     expect(() => revealOfflineClue(pack, round.state, "capital")).toThrow(
-      /unlocks in/,
+      /Reveal 5 more clues/,
     );
 
     const revealed = revealOfflineClue(pack, round.state, "continent");

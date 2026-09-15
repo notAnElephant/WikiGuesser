@@ -321,7 +321,7 @@ describe("round service", () => {
         { token: round.token, clueKey: "flag-colors" },
         "user_flag_lock",
       ),
-    ).rejects.toThrow("That field unlocks in 3 rounds.");
+    ).rejects.toThrow("Reveal 3 more clues to unlock this field.");
 
     let currentRound = round;
     const earlyClueKeys = currentRound.clues

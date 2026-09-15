@@ -1,3 +1,5 @@
+import { HStack } from "@astryxdesign/core/HStack";
+import { MobileTools } from "@/src/components/mobile-tools";
 import { AccountUserButton } from "@/src/components/account-user-button";
 import { AdminDailyAnswersProfilePage } from "@/src/components/admin-daily-answers-profile-page";
 import { AppToaster } from "@/src/components/app-toaster";
@@ -18,7 +20,7 @@ import { Card } from "@astryxdesign/core/Card";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { ChartNoAxesCombined, LogIn, Trophy, UserPlus } from "lucide-react";
+import { ChartNoAxesCombined, Trophy } from "lucide-react";
 import type { Metadata } from "next";
 import {
   Albert_Sans,
@@ -92,7 +94,7 @@ export default async function RootLayout({
                 <PostHogIdentity />
                 <header className="fixed inset-x-0 top-0 z-40 bg-body/90 p-3 backdrop-blur-md sm:p-4">
                   <Card
-                    className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3"
+                    className="mx-auto flex w-full max-w-6xl items-center justify-between gap-1 sm:gap-3"
                     elevation="low"
                     padding={2}
                   >
@@ -105,8 +107,10 @@ export default async function RootLayout({
                       <span className="hidden sm:inline">WikiGuesser</span>
                     </Link>
 
-                    <div className="flex items-center gap-2">
-                      <PwaInstallButton />
+                    <HStack gap={1} className="min-w-0 sm:gap-2">
+                      <HStack className="hidden sm:flex">
+                        <PwaInstallButton />
+                      </HStack>
                       <IconButton
                         href="/leaderboard"
                         icon={
@@ -120,26 +124,19 @@ export default async function RootLayout({
                         tooltip="Leaderboard"
                         variant="ghost"
                       />
-                      <ThemeToggle />
-                      <FeedbackButton />
+                      <HStack className="hidden sm:flex" gap={2}>
+                        <ThemeToggle />
+                        <FeedbackButton />
+                      </HStack>
+                      <MobileTools />
                       <Show when="signed-out">
                         <Button
                           href="/sign-in"
-                          icon={
-                            <LogIn
-                              aria-hidden="true"
-                              className="size-4"
-                              strokeWidth={2.2}
-                            />
-                          }
                           label="Log in"
                           variant="ghost"
                         />
                         <Button
                           href="/sign-up"
-                          icon={
-                            <UserPlus aria-hidden="true" className="size-4" />
-                          }
                           label="Sign up"
                           variant="primary"
                         />
@@ -167,7 +164,7 @@ export default async function RootLayout({
                           isAdmin={isAdmin}
                         />
                       </Show>
-                    </div>
+                    </HStack>
                   </Card>
                 </header>
                 {children}

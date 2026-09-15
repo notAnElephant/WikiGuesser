@@ -257,7 +257,7 @@ describe("duel service", () => {
         { clueKey: "flag-colors", version: 7 },
         "clerk",
       ),
-    ).rejects.toThrow("unlocks in 3 rounds");
+    ).rejects.toThrow("Reveal 3 more clues");
   });
 
   it("passes the optimistic version when guessing", async () => {
