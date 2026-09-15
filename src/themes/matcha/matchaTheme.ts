@@ -6,34 +6,15 @@
  * Uses Playwrite US Trad for headings and DM Sans for body text.
  */
 
-import {defineTheme, defineSyntaxTheme} from '@astryxdesign/core/theme';
+import {defineTheme} from '@astryxdesign/core/theme';
+import {chocolateTheme, chocolateSyntax} from '../chocolate/chocolateTheme';
 import {matchaIconRegistry} from './icons';
-
-/** Matcha syntax palette — earthy greens and warm tones. */
-const matchaSyntax = defineSyntaxTheme({
-  name: 'xds-matcha',
-  tokens: {
-    keyword: ['#5a6b2a', '#a8bf6a'],
-    string: ['#2e6b4a', '#7bc49e'],
-    comment: ['#707E46', '#707E46'],
-    number: ['#8c6b30', '#d4b870'],
-    function: ['#3a5e8c', '#7ba8d4'],
-    type: ['#6b4a8c', '#b08ed4'],
-    variable: ['#3E481D', '#C0CBA9'],
-    operator: ['#707E46', '#94a468'],
-    constant: ['#8c6b30', '#d4b870'],
-    tag: ['#8c3a3a', '#d47a7a'],
-    attribute: ['#7c5e3a', '#c4a882'],
-    property: ['#3a7c6b', '#70c4b0'],
-    // #707E46/#5a6440 failed WCAG AA against the syntax background: 3.83:1
-    // light, 2.73:1 dark. #5386.
-    punctuation: ['#566a39', '#92af6a'], // 5.19:1 / 7.02:1
-    background: ['#F0F0E0', '#1a1c14'],
-  },
-});
 
 export const matchaTheme = defineTheme({
   name: 'matcha',
+  // Matcha retains its type and shape identity while sharing Chocolate's
+  // semantic and syntax palette, so theme switching never changes colors.
+  extends: chocolateTheme,
 
   typography: {
     // base 16 / ratio 1.25 — aligned with the other themes' geometric scale.
@@ -55,127 +36,10 @@ export const matchaTheme = defineTheme({
 
   motion: {fast: 125, medium: 300, slow: 700, ratio: 0.75},
 
-  syntax: matchaSyntax,
+  syntax: chocolateSyntax,
 
   tokens: {
-    // =========================================================================
-    // Colors — earthy matcha palette
-    // Core: #3E481D, #707E46, #C0CBA9, #F0F0E0, #FFFFFF
-    // =========================================================================
-
-    // Core semantic
-    '--color-accent': ['#3E481D', '#C0CBA9'],
-    '--color-accent-muted': ['#3E481D14', '#C0CBA920'],
-    '--color-neutral': ['#3E481D0F', '#C0CBA91A'],
-    '--color-background-surface': ['#FFFFFF', '#1a1c14'],
-    '--color-background-body': ['#F0F0E0', '#12140e'],
-    '--color-overlay': ['#3E481D80', '#3E481DCC'],
-    '--color-overlay-hover': ['#3E481D0D', '#C0CBA90D'],
-    '--color-overlay-pressed': ['#3E481D1A', '#C0CBA91A'],
-    '--color-background-muted': ['#F0F0E0', '#3E481D'],
-
-    // Text
-    '--color-text-primary': ['#3E481D', '#C0CBA9'],
-    '--color-text-secondary': ['#707E46', '#94a468'],
-    '--color-text-disabled': ['#C0CBA9', '#5a6440'],
-    '--color-text-accent': ['#3E481D', '#C0CBA9'],
-    '--color-on-dark': '#FFFFFF',
-    '--color-on-light': '#3E481D',
-    '--color-on-accent': ['#FFFFFF', '#3E481D'],
-    '--color-on-success': ['#FFFFFF', '#3E481D'],
-    '--color-on-error': ['#FFFFFF', '#3E481D'],
-    '--color-on-warning': ['#3E481D', '#3E481D'],
-
-    // Icon
-    '--color-icon-accent': ['#3E481D', '#C0CBA9'],
-    '--color-icon-primary': ['#3E481D', '#C0CBA9'],
-    '--color-icon-secondary': ['#707E46', '#94a468'],
-    '--color-icon-disabled': ['#C0CBA9', '#5a6440'],
-
-    // Surface variants
-    '--color-background-card': ['#FFFFFF', '#1e2016'],
-    '--color-background-popover': ['#FFFFFF', '#3E481D'],
-    '--color-background-inverted': ['#3E481D', '#C0CBA9'],
-
-    // Game feedback — shared meaning across every WikiGuesser theme.
-    // Calm light fills support learning; bright dark values keep results
-    // immediately readable during a fast competitive round.
-    '--color-success': ['#256B4A', '#7ED6A3'],
-    '--color-success-muted': ['#DCEFE3', '#173B2C'],
-    '--color-error': ['#B43B4A', '#FF9DA7'],
-    '--color-error-muted': ['#F8E3E6', '#41252C'],
-    '--color-warning': ['#8A5B10', '#FFD27A'],
-    '--color-warning-muted': ['#FAEECB', '#413116'],
-
-    // Border
-    // Softer sage borders (default + emphasized/card) in light mode.
-    '--color-border': ['#DCE3CE', '#C0CBA91A'],
-    '--color-border-emphasized': ['#B7C29E', '#5a6440'],
-
-    // Effects
-    '--color-skeleton': ['#C0CBA9', '#5a6440'],
-    '--color-shadow': ['#3E481D1A', '#0000004D'],
-    '--color-tint-hover': ['black', 'white'],
-
-    // Categorical — Blue
-    '--color-background-blue': ['#3a5e8c33', '#3a5e8c33'],
-    '--color-border-blue': ['#3a5e8c', '#7ba8d4'],
-    '--color-icon-blue': ['#3a5e8c', '#7ba8d4'],
-    '--color-text-blue': ['#2e4a6e', '#8dbce0'],
-
-    // Categorical — Cyan
-    '--color-background-cyan': ['#3a7c7c33', '#3a7c7c33'],
-    '--color-border-cyan': ['#3a7c7c', '#70c4c4'],
-    '--color-icon-cyan': ['#3a7c7c', '#70c4c4'],
-    '--color-text-cyan': ['#2e6060', '#82d4d4'],
-
-    // Categorical — Gray
-    '--color-background-gray': ['#707E4633', '#5a644033'],
-    '--color-border-gray': ['#707E46', '#707E46'],
-    '--color-icon-gray': ['#707E46', '#94a468'],
-    '--color-text-gray': ['#3E481D', '#C0CBA9'],
-
-    // Categorical — Green
-    '--color-background-green': ['#DCEFE3', '#173B2C'],
-    '--color-border-green': ['#256B4A', '#7ED6A3'],
-    '--color-icon-green': ['#256B4A', '#7ED6A3'],
-    '--color-text-green': ['#256B4A', '#7ED6A3'],
-
-    // Categorical — Orange
-    '--color-background-orange': ['#c4762033', '#d4903a33'],
-    '--color-border-orange': ['#c47620', '#d4903a'],
-    '--color-icon-orange': ['#c47620', '#d4903a'],
-    '--color-text-orange': ['#a06018', '#e0a04a'],
-
-    // Categorical — Pink
-    '--color-background-pink': ['#c44a7033', '#e07a9a33'],
-    '--color-border-pink': ['#c44a70', '#e07a9a'],
-    '--color-icon-pink': ['#c44a70', '#e07a9a'],
-    '--color-text-pink': ['#a03a5a', '#f08aaa'],
-
-    // Categorical — Purple
-    '--color-background-purple': ['#6b4a8c33', '#b08ed433'],
-    '--color-border-purple': ['#6b4a8c', '#b08ed4'],
-    '--color-icon-purple': ['#6b4a8c', '#b08ed4'],
-    '--color-text-purple': ['#553a70', '#c0a0e0'],
-
-    // Categorical — Red
-    '--color-background-red': ['#F8E3E6', '#41252C'],
-    '--color-border-red': ['#B43B4A', '#FF9DA7'],
-    '--color-icon-red': ['#B43B4A', '#FF9DA7'],
-    '--color-text-red': ['#B43B4A', '#FF9DA7'],
-
-    // Categorical — Teal
-    '--color-background-teal': ['#2e6b5a33', '#5ab89833'],
-    '--color-border-teal': ['#2e6b5a', '#5ab898'],
-    '--color-icon-teal': ['#2e6b5a', '#5ab898'],
-    '--color-text-teal': ['#245546', '#6ccaaa'],
-
-    // Categorical — Yellow
-    '--color-background-yellow': ['#FAEECB', '#413116'],
-    '--color-border-yellow': ['#8A5B10', '#FFD27A'],
-    '--color-icon-yellow': ['#8A5B10', '#FFD27A'],
-    '--color-text-yellow': ['#8A5B10', '#FFD27A'],
+    // Color and syntax tokens inherit directly from chocolateTheme.
 
     // =========================================================================
     // Spacing
@@ -216,14 +80,6 @@ export const matchaTheme = defineTheme({
     // =========================================================================
     // Shadows
     // =========================================================================
-    '--shadow-low': '0 2px 4px #3E481D0D, 0 4px 8px #3E481D1A',
-    '--shadow-med': '0 2px 4px #3E481D0D, 0 4px 12px #3E481D1A',
-    '--shadow-high': '0 4px 6px #3E481D1A, 0 12px 24px #3E481D26',
-    '--shadow-inset-hover': 'inset 0px 0px 0px 2px #3E481D30',
-    '--shadow-inset-selected': 'inset 0px 0px 0px 2px #3E481D50',
-    '--shadow-inset-success': 'inset 0px 0px 0px 2px #4D990050',
-    '--shadow-inset-warning': 'inset 0px 0px 0px 2px #FFB60050',
-    '--shadow-inset-error': 'inset 0px 0px 0px 2px #FD000050',
   },
 
   components: {

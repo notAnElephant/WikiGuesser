@@ -10,7 +10,7 @@ import {defineTheme, defineSyntaxTheme} from '@astryxdesign/core/theme';
 import {chocolateIconRegistry} from './icons';
 
 /** Syntax colors share the UI's accessible light/dark color roles. */
-const chocolateSyntax = defineSyntaxTheme({
+export const chocolateSyntax = defineSyntaxTheme({
   name: 'xds-chocolate',
   tokens: {
     keyword: ['#006e64', '#25d4c2'],
