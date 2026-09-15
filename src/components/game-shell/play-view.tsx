@@ -388,7 +388,7 @@ export function GamePlayView({
                                 icon={<Eye aria-hidden="true" />}
                                 variant="secondary"
                                 size="sm"
-                                className="min-h-11"
+                                className="min-h-11 sm:min-h-0"
                                 width="100%"
                                 isDisabled={isBusy}
                                 onClick={() => revealClue(clue.key)}
@@ -496,6 +496,7 @@ export function GamePlayView({
                     soon as you reveal it.
                   </div>
                   <Button
+                    className="min-h-11 sm:min-h-0"
                     icon={<Ban aria-hidden="true" />}
                     isDisabled={isBusy}
                     label="Give up"
@@ -665,6 +666,7 @@ export function GamePlayView({
                   ) : null}
 
                   <Button
+                    className="min-h-11 sm:min-h-0"
                     icon={<ArrowRight aria-hidden="true" />}
                     isDisabled={!canSubmitGuess}
                     isLoading={isBusy}
@@ -675,6 +677,7 @@ export function GamePlayView({
                     width="100%"
                   />
                   <Button
+                    className="min-h-11 sm:min-h-0"
                     icon={<Ban aria-hidden="true" />}
                     isDisabled={isBusy}
                     label="Give up"
@@ -761,6 +764,7 @@ export function GamePlayView({
             <HStack gap={2} wrap="wrap" justify="center">
               {showRestartButton ? (
                 <Button
+                  className="min-h-11 sm:min-h-0"
                   icon={<RotateCcw aria-hidden="true" />}
                   isDisabled={isBusy}
                   label={restartButtonLabel}
@@ -770,6 +774,7 @@ export function GamePlayView({
               ) : null}
               {showHomeButton ? (
                 <Button
+                  className="min-h-11 sm:min-h-0"
                   icon={<House aria-hidden="true" />}
                   isDisabled={isBusy}
                   label={homeButtonLabel}

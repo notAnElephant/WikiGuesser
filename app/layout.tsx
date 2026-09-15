@@ -99,7 +99,7 @@ export default async function RootLayout({
                     padding={2}
                   >
                     <Link
-                      className="inline-flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-muted"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-muted sm:min-h-0"
                       aria-label="WikiGuesser"
                       href="/"
                     >
@@ -112,6 +112,7 @@ export default async function RootLayout({
                         <PwaInstallButton />
                       </HStack>
                       <IconButton
+                        className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
                         href="/leaderboard"
                         icon={
                           <Trophy
@@ -131,11 +132,13 @@ export default async function RootLayout({
                       <MobileTools />
                       <Show when="signed-out">
                         <Button
+                          className="min-h-11 sm:min-h-0"
                           href="/sign-in"
                           label="Log in"
                           variant="ghost"
                         />
                         <Button
+                          className="min-h-11 sm:min-h-0"
                           href="/sign-up"
                           label="Sign up"
                           variant="primary"
@@ -143,6 +146,7 @@ export default async function RootLayout({
                       </Show>
                       <Show when="signed-in">
                         <IconButton
+                          className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
                           href="/stats"
                           icon={
                             <ChartNoAxesCombined

@@ -102,6 +102,7 @@ export function PwaInstallButton() {
 
   return (
     <IconButton
+      className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
       icon={<Download aria-hidden="true" />}
       label="Install WikiGuesser"
       onClick={() => void install()}

@@ -763,6 +763,7 @@ export function WorldMapDialog({
     return (
       <HStack justify="center">
         <Button
+          className="min-h-11 sm:min-h-0"
           elevation="med"
           icon={<ChevronUp aria-hidden="true" />}
           aria-label="Show world map"
@@ -828,7 +829,7 @@ export function WorldMapDialog({
                 aria-label={
                   isMapExpanded ? "Collapse world map" : "Expand world map"
                 }
-                className="absolute left-1/2 top-2 z-10 flex h-9 w-28 -translate-x-1/2 touch-none items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-accent-muted lg:hidden"
+                className="absolute left-1/2 top-2 z-10 flex h-11 w-28 -translate-x-1/2 touch-none items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-accent-muted lg:hidden"
                 onClick={() => {
                   if (didDrawerDragRef.current) {
                     didDrawerDragRef.current = false;
@@ -850,7 +851,7 @@ export function WorldMapDialog({
                 </span>
               </button>
               <IconButton
-                className="absolute right-3 top-2 z-10 lg:hidden"
+                className="absolute right-3 top-2 z-10 min-h-11 min-w-11 lg:hidden"
                 elevation="high"
                 icon={<X aria-hidden="true" />}
                 label="Hide world map"

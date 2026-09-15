@@ -13,6 +13,7 @@ export function FeedbackButton() {
   return (
     <>
       <IconButton
+        className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
         icon={
           <MessageSquare
             aria-hidden="true"

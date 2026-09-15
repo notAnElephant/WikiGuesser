@@ -69,6 +69,7 @@ export function ThemeToggle() {
       placement="below"
     >
       <IconButton
+        className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
         icon={<Palette aria-hidden="true" className="size-4" strokeWidth={2} />}
         label="Choose style"
         variant="ghost"

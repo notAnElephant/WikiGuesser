@@ -25,6 +25,7 @@ export function MobileTools() {
   return (
     <HStack className="sm:hidden">
       <IconButton
+        className="min-h-11 min-w-11"
         label="More options"
         tooltip="More options"
         icon={<Menu aria-hidden="true" />}
