@@ -176,6 +176,7 @@ export function GamePlayView({
     "hidden" | "medium" | "expanded"
   >("hidden");
   const normalizedSearch = normalizeGuess(guess);
+  const hasCountrySearch = normalizedSearch.length > 0;
   const [activeOption, setActiveOption] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const [pendingExit, setPendingExit] = useState<
@@ -548,6 +549,7 @@ export function GamePlayView({
                             event.key === "ArrowUp"
                           ) {
                             event.preventDefault();
+                            if (!hasCountrySearch) return;
                             setIsCountryListOpen(true);
                             const count = matchingCountryOptions.length;
                             const next = count
@@ -587,11 +589,14 @@ export function GamePlayView({
                           setActiveOption(-1);
                         }}
                         onChange={(event) => {
-                          setGuess(event.target.value);
+                          const value = event.target.value;
+                          setGuess(value);
                           setActiveOption(-1);
-                          setIsCountryListOpen(true);
+                          setIsCountryListOpen(
+                            normalizeGuess(value).length > 0,
+                          );
                         }}
-                        onFocus={() => setIsCountryListOpen(true)}
+                        onFocus={() => setIsCountryListOpen(hasCountrySearch)}
                         placeholder={
                           isCountryRound ? "Search country" : "Type answer"
                         }
@@ -601,6 +606,7 @@ export function GamePlayView({
                     </HStack>
                     {isCountryRound &&
                     isCountryListOpen &&
+                    hasCountrySearch &&
                     matchingCountryOptions.length > 0 ? (
                       <VStack
                         aria-label="Country suggestions"
@@ -624,7 +630,9 @@ export function GamePlayView({
                           </button>
                         ))}
                       </VStack>
-                    ) : isCountryRound && isCountryListOpen && guess.trim() ? (
+                    ) : isCountryRound &&
+                      isCountryListOpen &&
+                      hasCountrySearch ? (
                       <Text color="secondary">
                         No matching countries. Try another name.
                       </Text>
