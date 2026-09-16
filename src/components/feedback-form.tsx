@@ -72,8 +72,12 @@ export function FeedbackForm({ context, onSubmitted }: FeedbackFormProps) {
         source: context.source,
       });
       setMessage("");
-      toast.success("Thanks — your feedback was sent.");
       onSubmitted?.();
+      requestAnimationFrame(() => {
+        toast.success("Thanks — your feedback was sent.", {
+          id: "feedback-submitted",
+        });
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to send feedback.");
     } finally {
