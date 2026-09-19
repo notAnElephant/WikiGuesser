@@ -449,6 +449,9 @@ describe("round service", () => {
 
     expect(result.isCorrect).toBe(true);
     expect(result.score).toBe(50);
+    expect(result.guessedCountry).toBeNull();
+    expect(result.direction).toBeNull();
+    expect(result.solutionCountry?.name).toBe(actualEntity!.canonicalAnswer);
   });
 
   it("rejects guesses for a different authenticated user", async () => {

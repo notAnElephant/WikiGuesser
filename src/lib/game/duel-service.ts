@@ -581,9 +581,10 @@ export async function guessDuelRound(
   const guesses = asGuesses(attempt.guesses);
   const snapshot =
     mapGuessSnapshot ?? (isCorrect ? null : await getLatestSnapshot());
-  const mapData = snapshot
-    ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
-    : null;
+  const mapData =
+    !isCorrect && snapshot
+      ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
+      : null;
   const nextGuesses = [
     ...guesses,
     { name: mapData?.name ?? input.guess.trim(), mapData },

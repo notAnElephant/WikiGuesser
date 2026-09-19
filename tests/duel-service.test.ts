@@ -308,7 +308,10 @@ describe("duel service", () => {
       "challenger-attempt",
       "challenger",
       7,
-      expect.objectContaining({ score: 50 }),
+      expect.objectContaining({
+        guesses: [{ name: "France", mapData: null }],
+        score: 50,
+      }),
     );
   });
 });

@@ -55,7 +55,6 @@ function pickEntity(
   return entities[index]!;
 }
 
-
 function buildTokenizedRoundResult(
   entity: NormalizedEntity,
   roundState: RoundState,
@@ -194,11 +193,7 @@ export async function startRound(
   const seed = input.seed ?? randomUUID();
   const entity = pickEntity(availableEntities, seed);
   const mode = input.mode ?? DEFAULT_GAME_MODE;
-  const effectiveClues = getEffectiveRoundClues(
-    entity,
-    mode,
-    input.continent,
-  );
+  const effectiveClues = getEffectiveRoundClues(entity, mode, input.continent);
   const revealedClueKeys =
     mode === "classic" && effectiveClues[0] ? [effectiveClues[0].key] : [];
   const roundState = createRoundState({
@@ -295,9 +290,10 @@ export async function submitGuess(
   const isCorrect = matchesEntityGuess(entity, input.guess);
   const snapshot =
     mapGuessSnapshot ?? (isCorrect ? null : await getLatestSnapshot());
-  const guessedCountry = snapshot
-    ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
-    : null;
+  const guessedCountry =
+    !isCorrect && snapshot
+      ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
+      : null;
   const direction = guessedCountry?.direction ?? null;
   const solutionCountry = getSolutionCountryMapData(entity);
 
