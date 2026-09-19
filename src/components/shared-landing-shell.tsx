@@ -51,6 +51,10 @@ import {
   findOtherAvailableDaily,
   getDailyComboKey,
 } from "@/src/lib/game/daily";
+import {
+  getGameModeHref,
+  type GameRouteTarget,
+} from "@/src/lib/game/game-routes";
 import type {
   CategorySummary,
   ContinentId,
@@ -69,6 +73,7 @@ interface SharedLandingShellProps {
   countryOptions: string[];
   dailyData: DailyLandingData;
   hasPendingClaim: boolean;
+  initialGame?: GameRouteTarget;
   isSignedIn: boolean;
 }
 
@@ -108,6 +113,8 @@ interface GameLauncherProps {
   dailyOptions: DailyChallengeOption[];
   isBusy: boolean;
   isClaimingPending: boolean;
+  initialFreePlayMode?: GameMode;
+  onChooseFreePlay: (mode: GameMode) => void;
   onStartDaily: (option: DailyChallengeOption) => void;
   onStartFreePlay: (mode: GameMode, continent: ContinentId | null) => void;
   resetCountdown: string;
@@ -121,6 +128,8 @@ export function GameLauncher({
   dailyOptions,
   isBusy,
   isClaimingPending,
+  initialFreePlayMode,
+  onChooseFreePlay,
   onStartDaily,
   onStartFreePlay,
   resetCountdown,
@@ -128,7 +137,11 @@ export function GameLauncher({
   totalCountryCount,
 }: GameLauncherProps) {
   const [pendingFreePlayMode, setPendingFreePlayMode] =
-    useState<GameMode | null>(null);
+    useState<GameMode | null>(initialFreePlayMode ?? null);
+
+  useEffect(() => {
+    setPendingFreePlayMode(initialFreePlayMode ?? null);
+  }, [initialFreePlayMode]);
 
   function startFilteredFreePlay(continent: ContinentId | null) {
     if (!pendingFreePlayMode) {
@@ -238,7 +251,10 @@ export function GameLauncher({
               disabled={isBusy}
               icon={mode.icon}
               key={mode.id}
-              onClick={() => setPendingFreePlayMode(mode.id)}
+              onClick={() => {
+                setPendingFreePlayMode(mode.id);
+                onChooseFreePlay(mode.id);
+              }}
               title={launcherModeCopy[mode.id].freeTitle}
               variant="secondary"
             />
@@ -490,6 +506,7 @@ export function SharedLandingShell({
   countryOptions,
   dailyData,
   hasPendingClaim,
+  initialGame,
   isSignedIn,
 }: SharedLandingShellProps) {
   const router = useRouter();
@@ -524,10 +541,15 @@ export function SharedLandingShell({
   const [playedOverrides, setPlayedOverrides] = useState<
     Record<string, PlayedOverride>
   >({});
+  const autoStartedRouteRef = useRef<string | null>(null);
 
   function setMessage(nextMessage: string) {
     setMessageState(nextMessage);
     setMessageRevision((current) => current + 1);
+  }
+
+  function pushGameUrl(kind: "daily" | "play", mode: GameMode) {
+    window.history.pushState(null, "", getGameModeHref(kind, mode));
   }
   const [isPending, startTransition] = useTransition();
 
@@ -685,7 +707,7 @@ export function SharedLandingShell({
     };
   }, [hasPendingClaim, isSignedIn, router]);
 
-  function clearToHome(options?: { refresh?: boolean }) {
+  function clearToHome() {
     setRound(null);
     setResult(null);
     setGuess("");
@@ -693,9 +715,7 @@ export function SharedLandingShell({
     setScore(null);
     setIsSyncingReveal(false);
 
-    if (options?.refresh) {
-      router.refresh();
-    }
+    router.push("/");
   }
 
   function startFreePlay(
@@ -833,6 +853,28 @@ export function SharedLandingShell({
       );
     });
   }
+
+  useEffect(() => {
+    if (!initialGame || initialGame.kind !== "daily") {
+      autoStartedRouteRef.current = null;
+      return;
+    }
+
+    const routeKey = `${initialGame.kind}:${initialGame.mode}`;
+
+    if (autoStartedRouteRef.current === routeKey) {
+      return;
+    }
+
+    autoStartedRouteRef.current = routeKey;
+    const option = dailyOptions.find(
+      (candidate) =>
+        candidate.category === dailyData.defaultCategory &&
+        candidate.mode === initialGame.mode,
+    );
+
+    void startDaily(option ?? null);
+  }, [dailyData.defaultCategory, dailyOptions, initialGame]);
 
   function startSelectedFlow() {
     if (selectedPlayType === "daily") {
@@ -1200,7 +1242,14 @@ export function SharedLandingShell({
           )}
           isBusy={isBusy}
           isClaimingPending={isClaimingPending}
-          onStartDaily={(option) => void startDaily(option)}
+          initialFreePlayMode={
+            initialGame?.kind === "play" ? initialGame.mode : undefined
+          }
+          onChooseFreePlay={(mode) => pushGameUrl("play", mode)}
+          onStartDaily={(option) => {
+            pushGameUrl("daily", option.mode);
+            void startDaily(option);
+          }}
           onStartFreePlay={(mode, continent) =>
             void startFreePlay(mode, continent)
           }
@@ -1310,6 +1359,7 @@ export function SharedLandingShell({
                 }
 
                 if (otherAvailableDailyOption) {
+                  pushGameUrl("daily", otherAvailableDailyOption.mode);
                   void startDaily(otherAvailableDailyOption);
                   return;
                 }
@@ -1319,7 +1369,7 @@ export function SharedLandingShell({
                   return;
                 }
 
-                clearToHome({ refresh: true });
+                clearToHome();
               }}
               onSecondaryAction={() => {
                 if (
@@ -1331,9 +1381,7 @@ export function SharedLandingShell({
                   return;
                 }
 
-                result.kind === "daily"
-                  ? clearToHome({ refresh: true })
-                  : clearToHome();
+                result.kind === "daily" ? clearToHome() : clearToHome();
               }}
               onTertiaryAction={
                 result.kind === "daily" && !isSignedIn
