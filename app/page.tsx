@@ -37,7 +37,7 @@ export default async function HomePage() {
   );
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-3 pb-4 pt-24 sm:px-4 sm:pb-5 sm:pt-28">
+    <section className="mx-auto w-full max-w-6xl px-3 pb-4 pt-4 sm:px-4 sm:pb-5 sm:pt-5">
       <SharedLandingShell
         categories={categories}
         continentOptions={continentOptions}
@@ -46,6 +46,6 @@ export default async function HomePage() {
         hasPendingClaim={hasPendingClaim}
         isSignedIn={Boolean(userId)}
       />
-    </main>
+    </section>
   );
 }

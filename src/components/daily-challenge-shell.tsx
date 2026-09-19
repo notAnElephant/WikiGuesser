@@ -2,7 +2,9 @@
 
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
+import { Icon } from "@astryxdesign/core/Icon";
 import { SelectableCard } from "@astryxdesign/core/SelectableCard";
+import { Token } from "@astryxdesign/core/Token";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
 import type {
@@ -682,22 +684,8 @@ export function DailyChallengeShell({
     <section className="grid gap-4">
       <Card className="overflow-hidden p-5 sm:p-7" elevation="low" padding={0}>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full border border-accent-bg bg-accent-bg/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent">
-            <Sparkles
-              aria-hidden="true"
-              className="size-3.5"
-              strokeWidth={2.2}
-            />
-            Daily challenge
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-secondary">
-            <CalendarDays
-              aria-hidden="true"
-              className="size-3.5"
-              strokeWidth={2.2}
-            />
-            Resets in {resetCountdown}
-          </span>
+          <Token color="purple" icon={<Icon icon={Sparkles} size="sm" />} label="Daily challenge" size="sm" />
+          <Token color="gray" icon={<Icon icon={CalendarDays} size="sm" />} label={`Resets in ${resetCountdown}`} size="sm" />
         </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)] lg:items-end">

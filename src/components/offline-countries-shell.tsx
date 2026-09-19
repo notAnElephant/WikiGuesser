@@ -481,7 +481,7 @@ function OfflineFrame({
   isGame?: boolean;
 }) {
   return (
-    <main className="fixed inset-0 z-50 overflow-y-auto bg-body">
+    <section className="fixed inset-0 z-50 overflow-y-auto bg-body">
       <header className="sticky top-0 z-40 border-b border-border bg-body/95 px-3 py-3 backdrop-blur-md sm:px-4">
         <nav className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3">
           <a
@@ -503,6 +503,6 @@ function OfflineFrame({
       >
         {children}
       </section>
-    </main>
+    </section>
   );
 }

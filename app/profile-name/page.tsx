@@ -13,7 +13,7 @@ export default async function ProfileNamePage() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center px-4 py-24">
+    <section className="grid min-h-full place-items-center px-4 py-10">
       <Card className="w-full max-w-md p-6 sm:p-8" elevation="low" padding={0}>
         <p className="m-0 text-xs font-semibold uppercase tracking-wider text-accent">
           One last step
@@ -28,6 +28,6 @@ export default async function ProfileNamePage() {
 
         <ProfileNameForm defaultName={deriveDisplayName(user)} />
       </Card>
-    </main>
+    </section>
   );
 }

@@ -3,6 +3,9 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack } from "@astryxdesign/core/HStack";
+import { List, ListItem } from "@astryxdesign/core/List";
+import { StatusDot } from "@astryxdesign/core/StatusDot";
+import { Text } from "@astryxdesign/core/Text";
 import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
@@ -317,7 +320,7 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
   if (!duel) return null;
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-3 pb-10 pt-24 sm:px-4 sm:pb-12 sm:pt-28">
+    <section className="mx-auto w-full max-w-6xl px-3 pb-10 pt-4 sm:px-4 sm:pb-12 sm:pt-5">
       <div className="mb-5 flex items-center justify-between gap-3 px-1 sm:mb-7">
         <div className="flex items-center gap-2 text-sm font-semibold text-secondary">
           <span className="inline-flex size-9 items-center justify-center rounded-full bg-accent-bg/10 text-accent">
@@ -415,13 +418,13 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
           countryOptions={countryOptions}
         />
       ) : null}
-    </main>
+    </section>
   );
 }
 
 function LoadingState() {
   return (
-    <main className="grid min-h-screen place-items-center px-4 pt-20">
+    <section className="grid min-h-full place-items-center px-4 py-10">
       <Card
         className="flex items-center gap-3 text-sm text-secondary"
         elevation="low"
@@ -430,7 +433,7 @@ function LoadingState() {
         <LoaderCircle className="size-4 animate-spin text-accent" /> Loading
         duel…
       </Card>
-    </main>
+    </section>
   );
 }
 
@@ -442,7 +445,7 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <main className="mx-auto grid min-h-screen max-w-xl place-items-center px-4 pt-20">
+    <section className="mx-auto grid min-h-full max-w-xl place-items-center px-4 py-10">
       <Card
         className="w-full p-7 text-center sm:p-10"
         elevation="low"
@@ -460,7 +463,7 @@ function ErrorState({
           variant="primary"
         />
       </Card>
-    </main>
+    </section>
   );
 }
 
@@ -1120,24 +1123,29 @@ function PlayerRoundResult({
         {resultLabel} · {guesses.length}{" "}
         {guesses.length === 1 ? "guess" : "guesses"}
       </p>
-      <ol className="mt-3 grid gap-2">
+      <List density="compact" hasDividers>
         {guesses.length > 0 ? (
           guesses.map((guess, index) => (
-            <li
-              className="flex items-center gap-2 text-sm"
+            <ListItem
+              endContent={
+                <HStack gap={1}>
+                  <StatusDot
+                    label={`${tone === "challenger" ? "Challenger" : "Opponent"} guess`}
+                    variant={tone === "challenger" ? "accent" : "warning"}
+                  />
+                  <Text color="secondary" type="supporting">
+                    {tone === "challenger" ? "You" : "Opponent"}
+                  </Text>
+                </HStack>
+              }
               key={`${guess.name}-${index}`}
-            >
-              <span
-                aria-hidden="true"
-                className={`size-2 shrink-0 rounded-full ${tone === "challenger" ? "duel-player-dot--challenger" : "duel-player-dot--opponent"}`}
-              />
-              <span className="truncate">{guess.name}</span>
-            </li>
+              label={guess.name}
+            />
           ))
         ) : (
-          <li className="text-sm text-secondary">No guesses</li>
+          <ListItem label="No guesses" />
         )}
-      </ol>
+      </List>
     </section>
   );
 }

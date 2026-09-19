@@ -16,11 +16,12 @@ import { isAdminUser } from "@/src/lib/auth/admin";
 import { ClerkProvider, Show } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { Button } from "@astryxdesign/core/Button";
-import { Card } from "@astryxdesign/core/Card";
+import { AppShell } from "@astryxdesign/core/AppShell";
 import { IconButton } from "@astryxdesign/core/IconButton";
+import { TopNav, TopNavHeading } from "@astryxdesign/core/TopNav";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { ChartNoAxesCombined, Trophy } from "lucide-react";
+import { ChartNoAxesCombined, LogIn, Trophy, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 import {
   Albert_Sans,
@@ -29,7 +30,6 @@ import {
   Outfit,
   Sarina,
 } from "next/font/google";
-import Link from "next/link";
 
 import "./layers.css";
 import "./globals.css";
@@ -92,21 +92,20 @@ export default async function RootLayout({
             <ThemeProvider>
               <ClerkProvider signUpForceRedirectUrl="/profile-name">
                 <PostHogIdentity />
-                <header className="fixed inset-x-0 top-0 z-40 bg-body/90 p-3 backdrop-blur-md sm:p-4">
-                  <Card
-                    className="mx-auto flex w-full max-w-6xl items-center justify-between gap-1 sm:gap-3"
-                    elevation="low"
-                    padding={2}
-                  >
-                    <Link
-                      className="inline-flex min-h-11 items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-muted sm:min-h-0"
-                      aria-label="WikiGuesser"
-                      href="/"
-                    >
-                      <WikiGuesserLogo className="size-9 shrink-0" />
-                      <span className="hidden sm:inline">WikiGuesser</span>
-                    </Link>
-
+                <AppShell
+                  contentPadding={0}
+                  height="auto"
+                  topNav={
+                  <TopNav
+                    heading={
+                      <TopNavHeading
+                        heading="WikiGuesser"
+                        headingHref="/"
+                        logo={<WikiGuesserLogo className="size-9 shrink-0" />}
+                      />
+                    }
+                    label="WikiGuesser navigation"
+                    endContent={
                     <HStack gap={1} className="min-w-0 sm:gap-2">
                       <HStack className="hidden sm:flex">
                         <PwaInstallButton />
@@ -132,14 +131,28 @@ export default async function RootLayout({
                       <MobileTools />
                       <Show when="signed-out">
                         <Button
-                          className="min-h-11 sm:min-h-0"
+                          className="min-h-11 w-28 sm:min-h-0"
                           href="/sign-in"
+                          icon={
+                            <LogIn
+                              aria-hidden="true"
+                              className="size-4"
+                              strokeWidth={2.2}
+                            />
+                          }
                           label="Log in"
                           variant="ghost"
                         />
                         <Button
-                          className="min-h-11 sm:min-h-0"
+                          className="min-h-11 w-28 sm:min-h-0"
                           href="/sign-up"
+                          icon={
+                            <UserPlus
+                              aria-hidden="true"
+                              className="size-4"
+                              strokeWidth={2.2}
+                            />
+                          }
                           label="Sign up"
                           variant="primary"
                         />
@@ -169,9 +182,13 @@ export default async function RootLayout({
                         />
                       </Show>
                     </HStack>
-                  </Card>
-                </header>
-                {children}
+                    }
+                  />
+                  }
+                  variant="surface"
+                >
+                  {children}
+                </AppShell>
                 <AppToaster />
               </ClerkProvider>
             </ThemeProvider>

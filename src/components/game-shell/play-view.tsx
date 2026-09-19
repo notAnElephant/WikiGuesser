@@ -4,6 +4,8 @@ import { Button } from "@astryxdesign/core/Button";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { Grid } from "@astryxdesign/core/Grid";
 import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { List, ListItem } from "@astryxdesign/core/List";
 import { VStack } from "@astryxdesign/core/VStack";
 import { Text } from "@astryxdesign/core/Text";
 import { getScoreForGuess } from "@/src/lib/game/round-rules";
@@ -697,11 +699,11 @@ export function GamePlayView({
               )}
 
               {guessedEntities.length > 0 ? (
-                <div className="grid gap-2">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-secondary">
+                <VStack gap={2}>
+                  <Text color="secondary" type="supporting" weight="semibold">
                     Tried
-                  </div>
-                  <ol className="grid gap-2">
+                  </Text>
+                  <List density="compact" hasDividers>
                     {guessedEntities.map((attempt) => {
                       const directionMeta = attempt.direction
                         ? DIRECTION_META[attempt.direction]
@@ -709,29 +711,28 @@ export function GamePlayView({
                       const DirectionIcon = directionMeta?.icon;
 
                       return (
-                        <li
-                          className="flex items-center justify-between gap-3 border-b border-border px-2 py-2 text-primary"
+                        <ListItem
+                          endContent={
+                            DirectionIcon && directionMeta ? (
+                              <HStack gap={1}>
+                                <Icon
+                                  color="error"
+                                  icon={DirectionIcon}
+                                  size="sm"
+                                />
+                                <Text color="secondary" type="supporting">
+                                  {directionMeta.label}
+                                </Text>
+                              </HStack>
+                            ) : null
+                          }
                           key={attempt.name}
-                        >
-                          <span>{attempt.name}</span>
-                          {DirectionIcon && directionMeta ? (
-                            <span
-                              aria-label={`The goal country is ${directionMeta.label} of ${attempt.name}`}
-                              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-error shadow-sm "
-                              title={`Goal is ${directionMeta.label}`}
-                            >
-                              <DirectionIcon
-                                aria-hidden="true"
-                                className="size-4.5"
-                                strokeWidth={2.5}
-                              />
-                            </span>
-                          ) : null}
-                        </li>
+                          label={attempt.name}
+                        />
                       );
                     })}
-                  </ol>
-                </div>
+                  </List>
+                </VStack>
               ) : null}
             </Card>
           ) : null}

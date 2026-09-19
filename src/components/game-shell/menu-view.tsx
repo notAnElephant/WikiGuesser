@@ -1,6 +1,8 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
+import { Icon } from "@astryxdesign/core/Icon";
 import { SelectableCard } from "@astryxdesign/core/SelectableCard";
+import { Token } from "@astryxdesign/core/Token";
 import {
   CATEGORY_META,
   GAME_MODE_OPTIONS,
@@ -54,22 +56,8 @@ export function GameMenuView({
     <div className="grid min-h-[calc(100dvh-1rem)] gap-4 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
       <Card className="overflow-hidden p-5 sm:p-7" elevation="low" padding={0}>
         <div className="flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full border border-accent-bg bg-accent-bg/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent">
-            <Sparkles
-              aria-hidden="true"
-              className="size-3.5"
-              strokeWidth={2.2}
-            />
-            Free play
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-secondary">
-            <Shuffle
-              aria-hidden="true"
-              className="size-3.5"
-              strokeWidth={2.2}
-            />
-            {totalEntityCount} answers live
-          </span>
+          <Token color="purple" icon={<Icon icon={Sparkles} size="sm" />} label="Free play" size="sm" />
+          <Token color="gray" icon={<Icon icon={Shuffle} size="sm" />} label={`${totalEntityCount} answers live`} size="sm" />
         </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] lg:items-end">

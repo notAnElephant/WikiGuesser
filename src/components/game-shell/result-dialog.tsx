@@ -1,6 +1,10 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { Grid } from "@astryxdesign/core/Grid";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
+import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { FeedbackForm } from "@/src/components/feedback-form";
 import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
@@ -126,34 +130,26 @@ export function GameResultDialog({
           />
         ) : null}
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <Card className="flex items-center gap-3" padding={4}>
-            <Trophy
-              aria-hidden="true"
-              className="size-5 text-accent"
-              strokeWidth={2.1}
-            />
-            <div>
-              <span className="block text-xs uppercase tracking-wider text-secondary">
-                Score
-              </span>
-              <strong className="text-primary">{result.score} pts</strong>
-            </div>
+        <Grid className="mt-5" columns={{ minWidth: 220, max: 2 }} gap={3}>
+          <Card padding={4}>
+            <HStack gap={3}>
+              <Icon color="accent" icon={Trophy} />
+              <VStack gap={0}>
+                <Text color="secondary" type="supporting">Score</Text>
+                <Text weight="semibold">{result.score} pts</Text>
+              </VStack>
+            </HStack>
           </Card>
-          <Card className="flex items-center gap-3" padding={4}>
-            <CurrentCategoryIcon
-              aria-hidden="true"
-              className="size-5 text-accent"
-              strokeWidth={2.1}
-            />
-            <div>
-              <span className="block text-xs uppercase tracking-wider text-secondary">
-                Category
-              </span>
-              <strong className="text-primary">{currentCategoryLabel}</strong>
-            </div>
+          <Card padding={4}>
+            <HStack gap={3}>
+              <Icon color="accent" icon={CurrentCategoryIcon} />
+              <VStack gap={0}>
+                <Text color="secondary" type="supporting">Category</Text>
+                <Text weight="semibold">{currentCategoryLabel}</Text>
+              </VStack>
+            </HStack>
           </Card>
-        </div>
+        </Grid>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Button

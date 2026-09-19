@@ -2,10 +2,14 @@
 
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
+import { HStack } from "@astryxdesign/core/HStack";
+import { List, ListItem } from "@astryxdesign/core/List";
 import {
   SegmentedControl,
   SegmentedControlItem,
 } from "@astryxdesign/core/SegmentedControl";
+import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft, CalendarDays, Gauge, Trophy } from "lucide-react";
@@ -139,75 +143,59 @@ export function DailyLeaderboardShell({
           </SegmentedControl>
         </div>
 
-        <div className="py-2">
-          <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-secondary">
+        <VStack gap={3} paddingBlock={2}>
+          <Text color="secondary" type="supporting" weight="semibold">
             {selectedModeMeta.label}
-          </div>
+          </Text>
           {period === "total" ? (
-            <p className="m-0 mb-3 text-sm text-secondary">
+            <Text color="secondary">
               A win is a round where the player gets any points by guessing the
               correct answer.
-            </p>
+            </Text>
           ) : null}
           {period === "total" ? (
-            <div className="mb-2 grid grid-cols-[minmax(0,1fr)_4rem_4rem] gap-2 px-4 text-xs font-semibold uppercase tracking-wide text-secondary sm:grid-cols-[minmax(0,1fr)_5rem_5rem]">
-              <span>Player</span>
-              <span className="text-center">Games</span>
-              <span className="text-right">Score</span>
-            </div>
+            <Text color="secondary" type="supporting" weight="semibold">
+              Games · Score
+            </Text>
           ) : null}
-          <div className="grid divide-y divide-border">
+          <List density="balanced" hasDividers>
             {entries.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-secondary">
-                No scores yet.
-              </div>
+              <ListItem label="No scores yet." />
             ) : (
               entries.map((entry, index) => (
-                <div
-                  className={`items-center gap-2 px-2 py-3 ${
-                    period === "total"
-                      ? "grid grid-cols-[minmax(0,1fr)_4rem_4rem] sm:grid-cols-[minmax(0,1fr)_5rem_5rem]"
-                      : "flex justify-between"
-                  }`}
+                <ListItem
+                  description={
+                    entry.completedAt ? (
+                      <LocalCompletionTime completedAt={entry.completedAt} />
+                    ) : period === "today" ? (
+                      "Today"
+                    ) : (
+                      `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`
+                    )
+                  }
+                  endContent={
+                    <HStack gap={2}>
+                      {period === "total" ? (
+                        <Text
+                          aria-label={`${entry.roundsPlayed ?? 0} ${(entry.roundsPlayed ?? 0) === 1 ? "game" : "games"} played`}
+                          color="secondary"
+                          type="supporting"
+                        >
+                          {entry.roundsPlayed ?? 0} games
+                        </Text>
+                      ) : null}
+                      <Text color="accent" weight="semibold">
+                        {entry.score}
+                      </Text>
+                    </HStack>
+                  }
                   key={`${entry.playerKey}-${index}`}
-                >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-primary">
-                      {PODIUM_RANKS[index] ? (
-                        <span aria-label={`Rank ${index + 1}`}>
-                          {PODIUM_RANKS[index].medal}
-                        </span>
-                      ) : (
-                        `${index + 1}.`
-                      )}{" "}
-                      {entry.displayName}
-                    </div>
-                    <div className="text-xs text-secondary">
-                      {entry.completedAt ? (
-                        <LocalCompletionTime completedAt={entry.completedAt} />
-                      ) : period === "today" ? (
-                        "Today"
-                      ) : (
-                        `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`
-                      )}
-                    </div>
-                  </div>
-                  {period === "total" ? (
-                    <span
-                      aria-label={`${entry.roundsPlayed ?? 0} ${(entry.roundsPlayed ?? 0) === 1 ? "game" : "games"} played`}
-                      className="text-center text-sm font-semibold tabular-nums text-secondary"
-                    >
-                      {entry.roundsPlayed ?? 0}
-                    </span>
-                  ) : null}
-                  <strong className="text-right tabular-nums text-accent">
-                    {entry.score}
-                  </strong>
-                </div>
+                  label={`${PODIUM_RANKS[index]?.medal ?? `${index + 1}.`} ${entry.displayName}`}
+                />
               ))
             )}
-          </div>
-        </div>
+          </List>
+        </VStack>
 
         <Button
           href="/"

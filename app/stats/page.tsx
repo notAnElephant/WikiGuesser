@@ -16,8 +16,8 @@ export default async function StatsPage() {
   const data = await getPlayerStatsPageData(userId);
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-4xl px-3 pb-4 pt-24 sm:px-4 sm:pb-5 sm:pt-28">
+    <section className="mx-auto w-full max-w-4xl px-3 pb-4 pt-4 sm:px-4 sm:pb-5 sm:pt-5">
       <PlayerStatsShell data={data} />
-    </main>
+    </section>
   );
 }
