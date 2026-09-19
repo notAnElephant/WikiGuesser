@@ -202,6 +202,7 @@ export function WorldMapDialog({
       : "medium";
   const isMapExpanded = effectiveDrawerState === "expanded";
   const isMapHidden = effectiveDrawerState === "hidden";
+  const canInteractWithMap = presentation === "result" || Boolean(onCountryGuess);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -315,7 +316,12 @@ export function WorldMapDialog({
   useEffect(() => {
     const svg = svgRef.current;
 
-    if (!svg || mapSize.width <= 0 || mapSize.height <= 0) {
+    if (
+      !svg ||
+      !canInteractWithMap ||
+      mapSize.width <= 0 ||
+      mapSize.height <= 0
+    ) {
       return;
     }
 
@@ -352,7 +358,7 @@ export function WorldMapDialog({
       selection.on(".zoom", null);
       zoomBehaviorRef.current = null;
     };
-  }, [mapSize]);
+  }, [canInteractWithMap, mapSize]);
 
   useEffect(() => {
     const previousMapSize = previousMapSizeRef.current;
@@ -884,7 +890,7 @@ export function WorldMapDialog({
           ) : null}
           <svg
             aria-hidden="true"
-            className={`size-full touch-none select-none ${onCountryGuess ? "map-world-guessing" : ""}`}
+            className={`size-full touch-none select-none ${canInteractWithMap ? "" : "pointer-events-none"} ${onCountryGuess ? "map-world-guessing" : ""}`}
             ref={svgRef}
             viewBox={`0 0 ${mapSize.width || 1} ${mapSize.height || 1}`}
           >

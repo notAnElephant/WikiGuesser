@@ -275,5 +275,7 @@ describe("game world map drawer", () => {
 
     expect(markup).toContain('aria-label="Expand world map"');
     expect(markup).toContain('aria-label="Hide world map"');
+    expect(markup).toContain("pointer-events-none");
+    expect(markup).not.toContain("map-world-guessing");
   });
 });
