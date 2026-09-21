@@ -1,6 +1,5 @@
 import { HStack } from "@astryxdesign/core/HStack";
-import { MobileMenu } from "@/src/components/mobile-menu";
-import { AccountUserButton } from "@/src/components/account-user-button";
+import { HeaderAuthControls } from "@/src/components/header-auth-controls";
 import { AdminDailyAnswersProfilePage } from "@/src/components/admin-daily-answers-profile-page";
 import { AppBrand } from "@/src/components/app-brand";
 import { AppToaster } from "@/src/components/app-toaster";
@@ -13,15 +12,14 @@ import { ThemeToggle } from "@/src/components/theme-toggle";
 import { WikiGuesserSerwistProvider } from "@/app/serwist-provider";
 
 import { isAdminUser } from "@/src/lib/auth/admin";
-import { ClerkProvider, Show } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import { Button } from "@astryxdesign/core/Button";
 import { AppShell } from "@astryxdesign/core/AppShell";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { TopNav } from "@astryxdesign/core/TopNav";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { ChartNoAxesCombined, LogIn, Trophy, UserPlus } from "lucide-react";
+import { Trophy } from "lucide-react";
 import type { Metadata } from "next";
 import {
   Albert_Sans,
@@ -90,7 +88,7 @@ export default async function RootLayout({
         <WikiGuesserSerwistProvider>
           <OfflinePackProvider>
             <ThemeProvider>
-              <ClerkProvider signUpForceRedirectUrl="/profile-name">
+              <ClerkProvider dynamic signUpForceRedirectUrl="/profile-name">
                 <PostHogIdentity />
                 <AppShell
                   contentPadding={0}
@@ -120,60 +118,12 @@ export default async function RootLayout({
                         <ThemeToggle />
                         <FeedbackButton />
                       </HStack>
-                      <Show when="signed-out">
-                        <Button
-                          className="hidden sm:inline-flex"
-                          href="/sign-in"
-                          icon={
-                            <LogIn
-                              aria-hidden="true"
-                              className="size-4"
-                              strokeWidth={2.2}
-                            />
-                          }
-                          label="Log in"
-                          size="sm"
-                          variant="ghost"
-                        />
-                        <Button
-                          href="/sign-up"
-                          icon={
-                            <UserPlus
-                              aria-hidden="true"
-                              className="size-4"
-                              strokeWidth={2.2}
-                            />
-                          }
-                          label="Sign up"
-                          size="sm"
-                          variant="primary"
-                        />
-                      </Show>
-                      <Show when="signed-in">
-                        <IconButton
-                          className="hidden min-h-11 min-w-11 sm:inline-flex sm:min-h-0 sm:min-w-0"
-                          href="/stats"
-                          icon={
-                            <ChartNoAxesCombined
-                              aria-hidden="true"
-                              className="size-4"
-                              strokeWidth={2.2}
-                            />
-                          }
-                          label="My stats"
-                          tooltip="My stats"
-                          variant="ghost"
-                        />
-                        <AccountUserButton
-                          adminDailyAnswersPage={
-                            isAdmin ? (
-                              <AdminDailyAnswersProfilePage />
-                            ) : undefined
-                          }
-                          isAdmin={isAdmin}
-                        />
-                      </Show>
-                      <MobileMenu isSignedIn={Boolean(userId)} />
+                      <HeaderAuthControls
+                        adminDailyAnswersPage={
+                          isAdmin ? <AdminDailyAnswersProfilePage /> : undefined
+                        }
+                        isAdmin={isAdmin}
+                      />
                     </HStack>
                     }
                   />
