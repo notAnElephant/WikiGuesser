@@ -27,7 +27,7 @@ Fast Wikipedia-inspired guessing game built with Next.js, Prisma, Clerk, and a W
 1. Install dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
 2. Configure environment variables:
@@ -41,27 +41,27 @@ npm install
 3. Start the app:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ## Useful Commands
 
 ```bash
-npm run typecheck
-npm test
-npm run prisma:generate
-npm run prisma:migrate:deploy
-npm run ingest:discover
-npm run ingest:discover:countries
-npm run ingest:discover:cities
-npm run ingest:discover:people
-npm run ingest:hydrate
-npm run ingest:hydrate:countries
-npm run ingest:hydrate:cities
-npm run ingest:hydrate:people
-npm run ingest:build-snapshot
-npm run ingest:build-snapshot:active
-npm run report:properties:cities
+pnpm typecheck
+pnpm test
+pnpm prisma:generate
+pnpm prisma:migrate:deploy
+pnpm ingest:discover
+pnpm ingest:discover:countries
+pnpm ingest:discover:cities
+pnpm ingest:discover:people
+pnpm ingest:hydrate
+pnpm ingest:hydrate:countries
+pnpm ingest:hydrate:cities
+pnpm ingest:hydrate:people
+pnpm ingest:build-snapshot
+pnpm ingest:build-snapshot:active
+pnpm report:properties:cities
 ```
 
 ## Database backups
@@ -70,8 +70,8 @@ A daily, encrypted PostgreSQL backup can be stored in Cloudflare R2's free tier.
 
 Safe snapshot workflow:
 
-- Re-hydrate only the categories you changed, for example `npm run ingest:hydrate:cities`
-- Then rebuild the combined live snapshot with `npm run ingest:build-snapshot:active`
+- Re-hydrate only the categories you changed, for example `pnpm ingest:hydrate:cities`
+- Then rebuild the combined live snapshot with `pnpm ingest:build-snapshot:active`
 
 ## Data Flow
 
