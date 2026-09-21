@@ -2,6 +2,7 @@
 
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { IconButton } from "@astryxdesign/core/IconButton";
+import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
 import { MessageSquare } from "lucide-react";
 import { useState } from "react";
 
@@ -34,14 +35,22 @@ export function FeedbackButton() {
         purpose="form"
         width="32rem"
       >
-        <DialogHeader
-          onOpenChange={setIsOpen}
-          subtitle="WikiGuesser is in beta. Your thoughts shape what we build next."
-          title="Send feedback"
-        />
-        <FeedbackForm
-          context={{ source: "global" }}
-          onSubmitted={() => setIsOpen(false)}
+        <Layout
+          content={
+            <LayoutContent>
+              <FeedbackForm
+                context={{ source: "global" }}
+                onSubmitted={() => setIsOpen(false)}
+              />
+            </LayoutContent>
+          }
+          header={
+            <DialogHeader
+              onOpenChange={setIsOpen}
+              subtitle="WikiGuesser is in beta. Your thoughts shape what we build next."
+              title="Send feedback"
+            />
+          }
         />
       </Dialog>
     </>
