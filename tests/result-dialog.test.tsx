@@ -102,7 +102,7 @@ describe("daily result dialog actions", () => {
     expect(markup).toContain('alt="Flag of Netherlands"');
     expect(markup).toContain("Flag%20of%20the%20Netherlands.svg");
     expect(markup).toContain(
-      'class="inline-flex h-10 w-16 shrink-0 items-center justify-center rounded-sm border border-border bg-muted',
+      'class="inline-flex h-10 w-16 shrink-0 items-center justify-center focus-visible:outline-2',
     );
     expect(markup).toContain(
       'class="h-auto max-h-10 w-auto max-w-16 object-contain"',

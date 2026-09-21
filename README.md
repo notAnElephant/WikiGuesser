@@ -34,6 +34,7 @@ npm install
 
 - `DATABASE_URL`
 - `ROUND_TOKEN_SECRET` (optional in local development; falls back to a local default)
+- `RESEND_API_KEY`, `FEEDBACK_NOTIFICATION_FROM`, and `FEEDBACK_NOTIFICATION_TO` (optional; together, they send an email for every submitted feedback item)
 - `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` and `NEXT_PUBLIC_POSTHOG_HOST` (optional; analytics stays disabled when the token is absent)
 - `NEXT_PUBLIC_POSTHOG_SESSION_REPLAY=true` (optional; replay is off by default and inputs are masked)
 

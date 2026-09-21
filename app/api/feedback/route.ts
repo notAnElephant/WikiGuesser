@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createFeedbackSchema } from "@/src/lib/api-schemas";
 import { getOptionalActorId } from "@/src/lib/auth/actor";
+import { sendFeedbackNotification } from "@/src/lib/feedback-notification";
 import { getPrismaClient } from "@/src/lib/repository/prisma";
 
 const feedbackKindMap = {
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
       }
     }
 
-    await getPrismaClient().feedback.create({
+    const feedback = await getPrismaClient().feedback.create({
       data: {
         actorId,
         context: input.context,
@@ -37,6 +38,13 @@ export async function POST(request: Request) {
         path,
       },
     });
+
+    try {
+      await sendFeedbackNotification(feedback);
+    } catch (error) {
+      // Retain the feedback even when the optional delivery channel is unavailable.
+      console.error("[feedback] failed to send notification", error);
+    }
 
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
