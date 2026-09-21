@@ -1,6 +1,7 @@
 "use client";
 
 import { HStack } from "@astryxdesign/core/HStack";
+import { VStack } from "@astryxdesign/core/VStack";
 import { Button } from "@astryxdesign/core/Button";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
@@ -1051,25 +1052,28 @@ export function WorldMapDialog({
             : null}
 
           {presentation === "game" ? (
-            <div className="absolute bottom-3 left-3 z-10 grid gap-1.5 sm:bottom-4 sm:left-4 sm:gap-2">
-              <div className="grid w-9 overflow-hidden rounded-xl border border-border bg-body shadow-lg backdrop-blur  sm:w-11 sm:rounded-2xl">
-                <IconButton
-                  icon={<Plus aria-hidden="true" />}
-                  label="Zoom in"
-                  onClick={() => changeZoom(1.45)}
-                  size="lg"
-                  tooltip="Zoom in"
-                  variant="ghost"
-                />
-                <IconButton
-                  icon={<Minus aria-hidden="true" />}
-                  label="Zoom out"
-                  onClick={() => changeZoom(1 / 1.45)}
-                  size="lg"
-                  tooltip="Zoom out"
-                  variant="ghost"
-                />
-              </div>
+            <VStack
+              className="absolute bottom-3 left-3 z-10 sm:bottom-4 sm:left-4"
+              gap={2}
+            >
+              <IconButton
+                elevation="high"
+                icon={<Plus aria-hidden="true" />}
+                label="Zoom in"
+                onClick={() => changeZoom(1.45)}
+                size="lg"
+                tooltip="Zoom in"
+                variant="secondary"
+              />
+              <IconButton
+                elevation="high"
+                icon={<Minus aria-hidden="true" />}
+                label="Zoom out"
+                onClick={() => changeZoom(1 / 1.45)}
+                size="lg"
+                tooltip="Zoom out"
+                variant="secondary"
+              />
               <IconButton
                 elevation="high"
                 icon={<Focus aria-hidden="true" />}
@@ -1089,7 +1093,7 @@ export function WorldMapDialog({
                 tooltip="Reset map zoom"
                 variant="secondary"
               />
-            </div>
+            </VStack>
           ) : null}
 
           <span className="pointer-events-none absolute bottom-3 right-3 z-10 rounded-full bg-card px-2 py-1 text-xs font-medium text-secondary backdrop-blur  ">
