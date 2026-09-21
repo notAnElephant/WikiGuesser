@@ -24,7 +24,7 @@ export function CountryFlagPreview({
       >
         <img
           alt={`Flag of ${countryName}`}
-          className="h-11 w-16 rounded-sm border border-border object-cover"
+          className="h-7 w-11 rounded-sm border border-border object-cover"
           height={44}
           src={src}
           width={64}

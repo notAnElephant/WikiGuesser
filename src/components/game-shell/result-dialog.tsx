@@ -4,6 +4,7 @@ import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { Grid } from "@astryxdesign/core/Grid";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Icon } from "@astryxdesign/core/Icon";
+import { StackItem } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { FeedbackForm } from "@/src/components/feedback-form";
@@ -92,7 +93,7 @@ export function GameResultDialog({
       onOpenChange={(isOpen) => {
         if (!isOpen) onClose();
       }}
-      padding={6}
+      padding={4}
       width="48rem"
     >
       <DialogHeader
@@ -115,119 +116,131 @@ export function GameResultDialog({
         title={result.canonicalAnswer}
       />
 
-      <VStack
-        gap={0}
-        height={isFeedbackOpen ? "100%" : "auto"}
-        isScrollable={isFeedbackOpen}
-      >
-        {result.solutionCountry ? (
-          <WorldMapDialog
-            guessedCountries={guessedCountries}
-            isExpanded={false}
-            onExpandedChange={() => undefined}
-            presentation="result"
-            solutionCountry={result.solutionCountry}
-          />
-        ) : null}
+      <StackItem size="fill" isScrollable>
+        <VStack gap={0}>
+          {result.solutionCountry ? (
+            <WorldMapDialog
+              guessedCountries={guessedCountries}
+              isExpanded={false}
+              onExpandedChange={() => undefined}
+              presentation="result"
+              solutionCountry={result.solutionCountry}
+            />
+          ) : null}
 
-        <Grid className="mt-5" columns={{ minWidth: 220, max: 2 }} gap={3}>
-          <Card padding={4}>
-            <HStack gap={3}>
-              <Icon color="accent" icon={Trophy} />
-              <VStack gap={0}>
-                <Text color="secondary" type="supporting">Score</Text>
-                <Text weight="semibold">{result.score} pts</Text>
-              </VStack>
-            </HStack>
-          </Card>
-          <Card padding={4}>
-            <HStack gap={3}>
-              <Icon color="accent" icon={CurrentCategoryIcon} />
-              <VStack gap={0}>
-                <Text color="secondary" type="supporting">Category</Text>
-                <Text weight="semibold">{currentCategoryLabel}</Text>
-              </VStack>
-            </HStack>
-          </Card>
-        </Grid>
+          <Grid className="mt-3" columns={{ minWidth: 220, max: 2 }} gap={2}>
+            <Card className="rounded-lg" padding={2}>
+              <HStack align="center" gap={2}>
+                <Icon color="accent" icon={Trophy} size="sm" />
+                <VStack gap={0}>
+                  <Text
+                    className="uppercase tracking-wider"
+                    color="secondary"
+                    type="supporting"
+                  >
+                    Score
+                  </Text>
+                  <Text weight="semibold">{result.score} pts</Text>
+                </VStack>
+              </HStack>
+            </Card>
+            <Card className="rounded-lg" padding={2}>
+              <HStack align="center" gap={2}>
+                <Icon color="accent" icon={CurrentCategoryIcon} size="sm" />
+                <VStack gap={0}>
+                  <Text
+                    className="uppercase tracking-wider"
+                    color="secondary"
+                    type="supporting"
+                  >
+                    Category
+                  </Text>
+                  <Text weight="semibold">{currentCategoryLabel}</Text>
+                </VStack>
+              </HStack>
+            </Card>
+          </Grid>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Button
-            className="flex-1"
-            icon={<PrimaryActionIcon aria-hidden="true" />}
-            isDisabled={isBusy}
-            label={primaryActionLabel}
-            onClick={handlePrimaryAction}
-            variant="primary"
-            width="100%"
-          />
-          {secondaryActionLabel ? (
+          <Grid
+            className="mt-4"
+            columns={{ minWidth: 220, max: 2, repeat: "fit" }}
+            gap={2}
+          >
             <Button
-              className="flex-1"
-              icon={
-                usesCreateAccountSecondaryAction ? (
-                  <UserPlus aria-hidden="true" />
-                ) : (
-                  <House aria-hidden="true" />
-                )
-              }
+              icon={<PrimaryActionIcon aria-hidden="true" />}
               isDisabled={isBusy}
-              label={secondaryActionLabel}
-              onClick={handleSecondaryAction}
+              label={primaryActionLabel}
+              onClick={handlePrimaryAction}
+              variant="primary"
+              width="100%"
+            />
+            {secondaryActionLabel ? (
+              <Button
+                icon={
+                  usesCreateAccountSecondaryAction ? (
+                    <UserPlus aria-hidden="true" />
+                  ) : (
+                    <House aria-hidden="true" />
+                  )
+                }
+                isDisabled={isBusy}
+                label={secondaryActionLabel}
+                onClick={handleSecondaryAction}
+                variant="secondary"
+                width="100%"
+              />
+            ) : null}
+          </Grid>
+          {tertiaryActionLabel && onTertiaryAction ? (
+            <Button
+              className="mt-3"
+              icon={<LogIn aria-hidden="true" />}
+              isDisabled={isBusy}
+              label={tertiaryActionLabel}
+              onClick={onTertiaryAction}
               variant="secondary"
               width="100%"
             />
           ) : null}
-        </div>
-        {tertiaryActionLabel && onTertiaryAction ? (
-          <Button
-            className="mt-3"
-            icon={<LogIn aria-hidden="true" />}
-            isDisabled={isBusy}
-            label={tertiaryActionLabel}
-            onClick={onTertiaryAction}
-            variant="secondary"
-            width="100%"
-          />
-        ) : null}
-        {statsHref ? (
-          <Button
-            className="mt-3"
-            icon={<Trophy aria-hidden="true" />}
-            label="View my stats"
-            href={statsHref}
-            variant="secondary"
-            width="100%"
-          />
-        ) : null}
-        {isFeedbackOpen ? (
-          <VStack gap={3} paddingBlockStart={6}>
-            <strong className="text-primary">How was that round?</strong>
-            <FeedbackForm
-              context={{
-                category: result.category,
-                cluesRevealed: result.clues.filter((clue) => clue.isRevealed)
-                  .length,
-                gameType: result.kind === "daily" ? "daily" : "free_play",
-                mode: result.mode,
-                outcome: result.status,
-                score: result.score,
-                source: "round-result",
-              }}
-              onSubmitted={() => setIsFeedbackOpen(false)}
+          {statsHref ? (
+            <Button
+              className="mt-3"
+              icon={<Trophy aria-hidden="true" />}
+              label="View my stats"
+              href={statsHref}
+              variant="secondary"
+              width="100%"
             />
-          </VStack>
-        ) : (
-          <Button
-            className="mt-4"
-            icon={<MessageSquare aria-hidden="true" />}
-            label="Give feedback"
-            onClick={() => setIsFeedbackOpen(true)}
-            variant="ghost"
-            width="100%"
-          />
-        )}
-      </VStack>
+          ) : null}
+          {isFeedbackOpen ? (
+            <VStack gap={3} paddingBlockStart={6}>
+              <Text weight="semibold">How was that round?</Text>
+              <FeedbackForm
+                context={{
+                  category: result.category,
+                  cluesRevealed: result.clues.filter((clue) => clue.isRevealed)
+                    .length,
+                  gameType: result.kind === "daily" ? "daily" : "free_play",
+                  mode: result.mode,
+                  outcome: result.status,
+                  score: result.score,
+                  source: "round-result",
+                }}
+                onSubmitted={() => setIsFeedbackOpen(false)}
+              />
+            </VStack>
+          ) : (
+            <Button
+              className="mt-4"
+              icon={<MessageSquare aria-hidden="true" />}
+              label="Give feedback"
+              onClick={() => setIsFeedbackOpen(true)}
+              variant="ghost"
+              width="100%"
+            />
+          )}
+        </VStack>
+      </StackItem>
     </Dialog>
   );
 }
