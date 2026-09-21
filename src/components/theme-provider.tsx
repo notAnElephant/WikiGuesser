@@ -10,10 +10,6 @@ import {
   useState,
 } from "react";
 import { Theme, type DefinedTheme } from "@astryxdesign/core/theme";
-import {
-  ThemeProvider as ColorModeProvider,
-  useTheme as useColorMode,
-} from "next-themes";
 
 import { chocolateTheme } from "@/src/themes/chocolate/chocolate";
 import { matchaTheme } from "@/src/themes/matcha/matcha";
@@ -66,35 +62,55 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  return (
-    <ColorModeProvider
-      attribute={["class", "data-theme"]}
-      defaultTheme="system"
-      disableTransitionOnChange
-      enableSystem
-      storageKey={COLOR_MODE_STORAGE_KEY}
-    >
-      <AstryxThemeProvider>{children}</AstryxThemeProvider>
-    </ColorModeProvider>
-  );
-}
-
-function AstryxThemeProvider({ children }: ThemeProviderProps) {
   const [themeName, setThemeName] = useState<AstryxThemeName>("chocolate");
-  const { resolvedTheme, setTheme, theme } = useColorMode();
+  const [colorMode, setColorMode] = useState<ColorMode>("system");
+  const [resolvedColorMode, setResolvedColorMode] = useState<"light" | "dark">(
+    "light",
+  );
   const [mounted, setMounted] = useState(false);
-  const colorMode = mounted && isColorMode(theme) ? theme : "system";
-  const resolvedColorMode: "light" | "dark" =
-    resolvedTheme === "dark" ? "dark" : "light";
 
   useEffect(() => {
     setMounted(true);
     const savedTheme = window.localStorage.getItem(ASTRYX_THEME_STORAGE_KEY);
+    const savedColorMode =
+      window.localStorage.getItem(COLOR_MODE_STORAGE_KEY) ?? undefined;
 
     if (astryxThemeOptions.some(({ id }) => id === savedTheme)) {
       setThemeName(savedTheme as AstryxThemeName);
     }
+
+    if (isColorMode(savedColorMode)) {
+      setColorMode(savedColorMode);
+    }
   }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const updateResolvedColorMode = () => {
+      setResolvedColorMode(
+        colorMode === "dark" || (colorMode === "system" && mediaQuery.matches)
+          ? "dark"
+          : "light",
+      );
+    };
+
+    updateResolvedColorMode();
+    mediaQuery.addEventListener("change", updateResolvedColorMode);
+
+    return () => mediaQuery.removeEventListener("change", updateResolvedColorMode);
+  }, [colorMode]);
+
+  useEffect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(resolvedColorMode);
+    root.dataset.theme = resolvedColorMode;
+    root.style.colorScheme = resolvedColorMode;
+  }, [mounted, resolvedColorMode]);
 
   const selectTheme = useCallback((nextTheme: AstryxThemeName) => {
     window.localStorage.setItem(ASTRYX_THEME_STORAGE_KEY, nextTheme);
@@ -102,8 +118,11 @@ function AstryxThemeProvider({ children }: ThemeProviderProps) {
   }, []);
 
   const selectColorMode = useCallback(
-    (nextMode: ColorMode) => setTheme(nextMode),
-    [setTheme],
+    (nextMode: ColorMode) => {
+      window.localStorage.setItem(COLOR_MODE_STORAGE_KEY, nextMode);
+      setColorMode(nextMode);
+    },
+    [],
   );
 
   const contextValue = useMemo(
@@ -120,7 +139,7 @@ function AstryxThemeProvider({ children }: ThemeProviderProps) {
   return (
     <AstryxThemeContext value={contextValue}>
       <Theme
-        mode={mounted && resolvedTheme ? resolvedColorMode : "system"}
+        mode={mounted ? resolvedColorMode : "system"}
         theme={astryxThemes[themeName]}
       >
         {children}
