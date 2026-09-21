@@ -1,7 +1,8 @@
 import { HStack } from "@astryxdesign/core/HStack";
-import { MobileTools } from "@/src/components/mobile-tools";
+import { MobileMenu } from "@/src/components/mobile-menu";
 import { AccountUserButton } from "@/src/components/account-user-button";
 import { AdminDailyAnswersProfilePage } from "@/src/components/admin-daily-answers-profile-page";
+import { AppBrand } from "@/src/components/app-brand";
 import { AppToaster } from "@/src/components/app-toaster";
 import { FeedbackButton } from "@/src/components/feedback-button";
 import { PostHogIdentity } from "@/src/components/posthog-identity";
@@ -9,7 +10,6 @@ import { PwaInstallButton } from "@/src/components/pwa-install-button";
 import { OfflinePackProvider } from "@/src/components/offline-pack-provider";
 import { ThemeProvider } from "@/src/components/theme-provider";
 import { ThemeToggle } from "@/src/components/theme-toggle";
-import { WikiGuesserLogo } from "@/src/components/wikiguesser-logo";
 import { WikiGuesserSerwistProvider } from "@/app/serwist-provider";
 
 import { isAdminUser } from "@/src/lib/auth/admin";
@@ -18,7 +18,7 @@ import { auth } from "@clerk/nextjs/server";
 import { Button } from "@astryxdesign/core/Button";
 import { AppShell } from "@astryxdesign/core/AppShell";
 import { IconButton } from "@astryxdesign/core/IconButton";
-import { TopNav, TopNavHeading } from "@astryxdesign/core/TopNav";
+import { TopNav } from "@astryxdesign/core/TopNav";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ChartNoAxesCombined, LogIn, Trophy, UserPlus } from "lucide-react";
@@ -97,41 +97,32 @@ export default async function RootLayout({
                   height="auto"
                   topNav={
                   <TopNav
-                    heading={
-                      <TopNavHeading
-                        heading="WikiGuesser"
-                        headingHref="/"
-                        logo={<WikiGuesserLogo className="size-9 shrink-0" />}
-                      />
-                    }
+                    heading={<AppBrand />}
                     label="WikiGuesser navigation"
                     endContent={
-                    <HStack gap={1} className="min-w-0 sm:gap-2">
-                      <HStack className="hidden sm:flex">
+                    <HStack align="center" gap={1} className="min-w-0 sm:gap-2">
+                      <HStack className="hidden sm:flex" gap={1}>
                         <PwaInstallButton />
-                      </HStack>
-                      <IconButton
-                        className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
-                        href="/leaderboard"
-                        icon={
-                          <Trophy
-                            aria-hidden="true"
-                            className="size-4"
-                            strokeWidth={2.2}
-                          />
-                        }
-                        label="Leaderboard"
-                        tooltip="Leaderboard"
-                        variant="ghost"
-                      />
-                      <HStack className="hidden sm:flex" gap={2}>
+                        <IconButton
+                          className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
+                          href="/leaderboard"
+                          icon={
+                            <Trophy
+                              aria-hidden="true"
+                              className="size-4"
+                              strokeWidth={2.2}
+                            />
+                          }
+                          label="Leaderboard"
+                          tooltip="Leaderboard"
+                          variant="ghost"
+                        />
                         <ThemeToggle />
                         <FeedbackButton />
                       </HStack>
-                      <MobileTools />
                       <Show when="signed-out">
                         <Button
-                          className="min-h-11 w-28 sm:min-h-0"
+                          className="hidden sm:inline-flex"
                           href="/sign-in"
                           icon={
                             <LogIn
@@ -141,10 +132,10 @@ export default async function RootLayout({
                             />
                           }
                           label="Log in"
+                          size="sm"
                           variant="ghost"
                         />
                         <Button
-                          className="min-h-11 w-28 sm:min-h-0"
                           href="/sign-up"
                           icon={
                             <UserPlus
@@ -154,12 +145,13 @@ export default async function RootLayout({
                             />
                           }
                           label="Sign up"
+                          size="sm"
                           variant="primary"
                         />
                       </Show>
                       <Show when="signed-in">
                         <IconButton
-                          className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
+                          className="hidden min-h-11 min-w-11 sm:inline-flex sm:min-h-0 sm:min-w-0"
                           href="/stats"
                           icon={
                             <ChartNoAxesCombined
@@ -181,6 +173,7 @@ export default async function RootLayout({
                           isAdmin={isAdmin}
                         />
                       </Show>
+                      <MobileMenu isSignedIn={Boolean(userId)} />
                     </HStack>
                     }
                   />

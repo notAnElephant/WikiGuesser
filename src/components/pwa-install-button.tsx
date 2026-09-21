@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@astryxdesign/core/Button";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -39,7 +40,11 @@ function getManualInstallInstructions(): ManualInstallInstructions | null {
   return null;
 }
 
-export function PwaInstallButton() {
+export function PwaInstallButton({
+  variant = "icon",
+}: {
+  variant?: "icon" | "menu";
+}) {
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [manualInstructions, setManualInstructions] =
@@ -100,7 +105,15 @@ export function PwaInstallButton() {
     });
   }
 
-  return (
+  return variant === "menu" ? (
+    <Button
+      icon={<Download aria-hidden="true" />}
+      label="Install app"
+      onClick={() => void install()}
+      variant="secondary"
+      width="100%"
+    />
+  ) : (
     <IconButton
       className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
       icon={<Download aria-hidden="true" />}

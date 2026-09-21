@@ -24,21 +24,23 @@ const colorModeIcons = {
   system: <Monitor aria-hidden="true" className="size-4" strokeWidth={2} />,
 } satisfies Record<ColorMode, ReactNode>;
 
-export function ThemeSettings() {
+export function ThemeSettings({ showStyle = true }: { showStyle?: boolean }) {
   const { colorMode, setColorMode, themeName, setThemeName } = useAstryxTheme();
   return (
     <fieldset className="flex min-w-0 flex-col gap-4">
       <legend className="sr-only">Style settings</legend>
-      <Selector
-        label="Style"
-        onChange={(nextTheme) => setThemeName(nextTheme as AstryxThemeName)}
-        options={astryxThemeOptions.map(({ id, label }) => ({
-          label,
-          value: id,
-        }))}
-        value={themeName}
-        width="100%"
-      />
+      {showStyle ? (
+        <Selector
+          label="Style"
+          onChange={(nextTheme) => setThemeName(nextTheme as AstryxThemeName)}
+          options={astryxThemeOptions.map(({ id, label }) => ({
+            label,
+            value: id,
+          }))}
+          value={themeName}
+          width="100%"
+        />
+      ) : null}
       <SegmentedControl
         label="Color mode"
         layout="fill"
