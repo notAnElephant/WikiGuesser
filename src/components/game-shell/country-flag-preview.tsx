@@ -18,13 +18,13 @@ export function CountryFlagPreview({
     <>
       <button
         aria-label={`Enlarge flag of ${countryName}`}
-        className="shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bg"
+        className="inline-flex h-10 w-16 shrink-0 items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bg"
         onClick={() => setIsOpen(true)}
         type="button"
       >
         <img
           alt={`Flag of ${countryName}`}
-          className="h-7 w-11 rounded-sm border border-border object-cover"
+          className="h-auto max-h-10 w-auto max-w-16 object-contain"
           height={44}
           src={src}
           width={64}

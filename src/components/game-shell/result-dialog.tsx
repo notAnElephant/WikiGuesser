@@ -131,7 +131,7 @@ export function GameResultDialog({
           <Grid className="mt-3" columns={{ minWidth: 220, max: 2 }} gap={2}>
             <Card className="rounded-lg" padding={2}>
               <HStack align="center" gap={2}>
-                <Icon color="accent" icon={Trophy} size="sm" />
+                <Icon color="accent" icon={Trophy} size="md" />
                 <VStack gap={0}>
                   <Text
                     className="uppercase tracking-wider"
@@ -146,7 +146,7 @@ export function GameResultDialog({
             </Card>
             <Card className="rounded-lg" padding={2}>
               <HStack align="center" gap={2}>
-                <Icon color="accent" icon={CurrentCategoryIcon} size="sm" />
+                <Icon color="accent" icon={CurrentCategoryIcon} size="md" />
                 <VStack gap={0}>
                   <Text
                     className="uppercase tracking-wider"
