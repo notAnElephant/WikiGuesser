@@ -110,7 +110,7 @@ export function MobileMenu() {
             <Divider />
 
             <SideNavSection title="Appearance">
-              <ThemeSettings showStyle={false} />
+              <ThemeSettings />
             </SideNavSection>
 
             <Divider />
