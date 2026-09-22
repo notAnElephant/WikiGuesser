@@ -11,10 +11,12 @@ import {
 } from "react";
 import { Theme, type DefinedTheme } from "@astryxdesign/core/theme";
 
+import { captureAnalyticsEvent } from "@/src/lib/analytics";
+
 import { chocolateTheme } from "@/src/themes/chocolate/chocolate";
 import { matchaTheme } from "@/src/themes/matcha/matcha";
 
-const ASTRYX_THEME_STORAGE_KEY = "wikiguesser-astryx-theme";
+const THEME_EXPERIMENT_STORAGE_KEY = "wikiguesser-theme-experiment";
 const COLOR_MODE_STORAGE_KEY = "wikiguesser-color-mode";
 
 export const astryxThemeOptions = [
@@ -47,8 +49,12 @@ interface AstryxThemeContextValue {
 
 const AstryxThemeContext = createContext<AstryxThemeContextValue | null>(null);
 
+export function useOptionalAstryxTheme() {
+  return useContext(AstryxThemeContext);
+}
+
 export function useAstryxTheme() {
-  const context = useContext(AstryxThemeContext);
+  const context = useOptionalAstryxTheme();
 
   if (context === null) {
     throw new Error("useAstryxTheme must be used within ThemeProvider.");
@@ -71,12 +77,20 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = window.localStorage.getItem(ASTRYX_THEME_STORAGE_KEY);
+    const assignedTheme = window.localStorage.getItem(
+      THEME_EXPERIMENT_STORAGE_KEY,
+    );
     const savedColorMode =
       window.localStorage.getItem(COLOR_MODE_STORAGE_KEY) ?? undefined;
 
-    if (astryxThemeOptions.some(({ id }) => id === savedTheme)) {
-      setThemeName(savedTheme as AstryxThemeName);
+    if (astryxThemeOptions.some(({ id }) => id === assignedTheme)) {
+      setThemeName(assignedTheme as AstryxThemeName);
+    } else {
+      const nextTheme: AstryxThemeName =
+        Math.random() < 0.5 ? "chocolate" : "matcha";
+      window.localStorage.setItem(THEME_EXPERIMENT_STORAGE_KEY, nextTheme);
+      setThemeName(nextTheme);
+      captureAnalyticsEvent("theme_experiment_assigned", { theme: nextTheme });
     }
 
     if (isColorMode(savedColorMode)) {
@@ -113,7 +127,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   }, [mounted, resolvedColorMode]);
 
   const selectTheme = useCallback((nextTheme: AstryxThemeName) => {
-    window.localStorage.setItem(ASTRYX_THEME_STORAGE_KEY, nextTheme);
+    window.localStorage.setItem(THEME_EXPERIMENT_STORAGE_KEY, nextTheme);
     setThemeName(nextTheme);
   }, []);
 

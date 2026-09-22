@@ -36,6 +36,7 @@ function hasRequiredDelegates(
     duel?: unknown;
     duelRound?: unknown;
     duelAttempt?: unknown;
+    themeRating?: unknown;
   };
 
   return Boolean(
@@ -44,7 +45,8 @@ function hasRequiredDelegates(
     candidate.userDailyCategoryModeStats &&
     candidate.duel &&
     candidate.duelRound &&
-    candidate.duelAttempt,
+    candidate.duelAttempt &&
+    candidate.themeRating,
   );
 }
 

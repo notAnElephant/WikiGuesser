@@ -3,6 +3,7 @@ import { Play } from "lucide-react";
 import { describe, expect, it } from "vitest";
 
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
+import { ThemeProvider } from "@/src/components/theme-provider";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
 
 const dailyResult: RoundOutcome = {
@@ -118,5 +119,18 @@ describe("daily result dialog actions", () => {
 
     expect(markup).toContain('href="/stats"');
     expect(markup).toContain("View my stats");
+  });
+
+  it("asks every player to rate the design separately from written feedback", () => {
+    const markup = renderToStaticMarkup(
+      <ThemeProvider>
+        <GameResultDialog {...sharedProps} />
+      </ThemeProvider>,
+    );
+
+    expect(markup).toContain("How does this design feel?");
+    expect(markup).toContain("Rate this design 1 out of 5 stars");
+    expect(markup).toContain("Rate this design 5 out of 5 stars");
+    expect(markup).toContain("Skip for now");
   });
 });

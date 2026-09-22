@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createFeedbackSchema } from "@/src/lib/api-schemas";
+import { createFeedbackSchema, createThemeRatingSchema } from "@/src/lib/api-schemas";
 import { createFeedbackNotification } from "@/src/lib/feedback-notification";
 
 describe("feedback schema", () => {
@@ -47,5 +47,27 @@ describe("feedback schema", () => {
       subject: "[WikiGuesser] New content issue feedback",
       text: expect.stringContaining("The capital is incorrect."),
     });
+  });
+});
+
+describe("theme rating schema", () => {
+  it("keeps theme, device, and a one-to-five score separate", () => {
+    expect(
+      createThemeRatingSchema.parse({
+        device: "mobile",
+        score: 5,
+        theme: "matcha",
+      }),
+    ).toEqual({ device: "mobile", score: 5, theme: "matcha" });
+  });
+
+  it("rejects scores outside the rating scale", () => {
+    expect(() =>
+      createThemeRatingSchema.parse({
+        device: "desktop",
+        score: 6,
+        theme: "chocolate",
+      }),
+    ).toThrow();
   });
 });

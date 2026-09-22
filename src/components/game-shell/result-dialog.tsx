@@ -8,6 +8,7 @@ import { StackItem } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { FeedbackForm } from "@/src/components/feedback-form";
+import { ThemeRatingPrompt } from "@/src/components/theme-rating-prompt";
 import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import { getCategoryMeta } from "@/src/components/game-shell/utils";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
@@ -212,6 +213,7 @@ export function GameResultDialog({
               width="100%"
             />
           ) : null}
+          <ThemeRatingPrompt />
           {isFeedbackOpen ? (
             <VStack gap={3} paddingBlockStart={6}>
               <Text weight="semibold">How was that round?</Text>

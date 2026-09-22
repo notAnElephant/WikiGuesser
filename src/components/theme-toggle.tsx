@@ -24,7 +24,7 @@ const colorModeIcons = {
   system: <Monitor aria-hidden="true" className="size-4" strokeWidth={2} />,
 } satisfies Record<ColorMode, ReactNode>;
 
-export function ThemeSettings({ showStyle = true }: { showStyle?: boolean }) {
+export function ThemeSettings({ showStyle = false }: { showStyle?: boolean }) {
   const { colorMode, setColorMode, themeName, setThemeName } = useAstryxTheme();
   return (
     <fieldset className="flex min-w-0 flex-col gap-4">
@@ -67,13 +67,13 @@ export function ThemeToggle() {
       alignment="end"
       content={<ThemeSettings />}
       width="18rem"
-      label="Choose style"
+      label="Appearance settings"
       placement="below"
     >
       <IconButton
         className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
         icon={<Palette aria-hidden="true" className="size-4" strokeWidth={2} />}
-        label="Choose style"
+        label="Appearance settings"
         variant="ghost"
       />
     </Popover>

@@ -78,3 +78,11 @@ export const createFeedbackSchema = z
     context: feedbackContextSchema.optional(),
   })
   .strict();
+
+export const createThemeRatingSchema = z
+  .object({
+    device: z.enum(["mobile", "desktop"]),
+    score: z.number().int().min(1).max(5),
+    theme: z.enum(["chocolate", "matcha"]),
+  })
+  .strict();

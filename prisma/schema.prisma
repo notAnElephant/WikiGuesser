@@ -240,3 +240,20 @@ model Feedback {
   @@index([kind, createdAt])
   @@index([actorId, createdAt])
 }
+
+enum ThemeRatingDevice {
+  MOBILE
+  DESKTOP
+}
+
+model ThemeRating {
+  id        String            @id @default(cuid())
+  theme     String
+  device    ThemeRatingDevice
+  score     Int
+  actorId   String?
+  createdAt DateTime          @default(now())
+
+  @@index([theme, device, createdAt])
+  @@index([actorId, createdAt])
+}

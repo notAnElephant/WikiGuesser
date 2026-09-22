@@ -33,6 +33,18 @@ type AnalyticsEvents = {
     guesses: number;
   };
   game_started: GameContext;
+  theme_experiment_assigned: {
+    theme: "chocolate" | "matcha";
+  };
+  theme_rating_prompt_shown: {
+    device: "mobile" | "desktop";
+    theme: "chocolate" | "matcha";
+  };
+  theme_rating_submitted: {
+    device: "mobile" | "desktop";
+    score: number;
+    theme: "chocolate" | "matcha";
+  };
   feedback_submitted: {
     feedback_kind: "positive" | "bug" | "content_issue" | "confusing" | "feature_idea" | "other";
     source: "global" | "round-result" | "clue";
