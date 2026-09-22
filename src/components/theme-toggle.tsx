@@ -61,11 +61,11 @@ export function ThemeSettings({ showStyle = false }: { showStyle?: boolean }) {
   );
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ isAdmin = false }: { isAdmin?: boolean }) {
   return (
     <Popover
       alignment="end"
-      content={<ThemeSettings />}
+      content={<ThemeSettings showStyle={isAdmin} />}
       width="18rem"
       label="Appearance settings"
       placement="below"

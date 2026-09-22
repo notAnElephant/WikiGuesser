@@ -28,7 +28,7 @@ import { ThemeSettings } from "@/src/components/theme-toggle";
  * a server prop, so the drawer updates instantly on sign-in/sign-out instead
  * of waiting for a `router.refresh()` round trip.
  */
-export function MobileMenu() {
+export function MobileMenu({ isAdmin = false }: { isAdmin?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"menu" | "feedback">("menu");
 
@@ -110,7 +110,7 @@ export function MobileMenu() {
             <Divider />
 
             <SideNavSection title="Appearance">
-              <ThemeSettings />
+              <ThemeSettings showStyle={isAdmin} />
             </SideNavSection>
 
             <Divider />

@@ -115,7 +115,7 @@ export default async function RootLayout({
                           tooltip="Leaderboard"
                           variant="ghost"
                         />
-                        <ThemeToggle />
+                        <ThemeToggle isAdmin={isAdmin} />
                         <FeedbackButton />
                       </HStack>
                       <HeaderAuthControls

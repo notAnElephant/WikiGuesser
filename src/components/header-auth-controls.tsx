@@ -71,7 +71,7 @@ export function HeaderAuthControls({
           isAdmin={isAdmin}
         />
       </Show>
-      <MobileMenu />
+      <MobileMenu isAdmin={isAdmin} />
     </>
   );
 }
