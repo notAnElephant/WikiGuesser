@@ -45,7 +45,7 @@ function LocalCompletionTime({ completedAt }: { completedAt: string }) {
     );
   }, [completedAt]);
 
-  return <time dateTime={completedAt}>{formattedTime ?? "—"}</time>;
+  return <time dateTime={completedAt}>{formattedTime ?? "-"}</time>;
 }
 
 export function DailyLeaderboardShell({

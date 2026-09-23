@@ -74,7 +74,7 @@ export function FeedbackForm({ context, onSubmitted }: FeedbackFormProps) {
       setMessage("");
       onSubmitted?.();
       requestAnimationFrame(() => {
-        toast.success("Thanks — your feedback was sent.", {
+        toast.success("Thanks, your feedback was sent.", {
           id: "feedback-submitted",
         });
       });

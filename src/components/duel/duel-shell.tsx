@@ -223,7 +223,7 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
           if (completedRound?.status === "completed") {
             const score = completedRound.score ?? 0;
             toast.success(
-              `Round ${position} solved — ${score} ${score === 1 ? "point" : "points"}.`,
+              `Round ${position} solved: ${score} ${score === 1 ? "point" : "points"}.`,
               { id: "duel-round-result" },
             );
           }
@@ -871,7 +871,7 @@ function Scoreboard({
           : winner === "you"
             ? "You take the duel."
             : "That was a close one.";
-  const resultText = `${title} Final score: ${youScore}–${theirScore}.`;
+  const resultText = `${title} Final score: ${youScore}-${theirScore}.`;
 
   async function shareResult() {
     const url = duel.shareUrl ?? window.location.href;

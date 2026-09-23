@@ -848,8 +848,8 @@ export function GamePlayView({
           />
           <VStack gap={4}>
             <Text>
-              A correct map guess earns {Math.floor(potentialScore / 2)} points
-              — half the {potentialScore} points for a typed answer.
+              A correct map guess earns {Math.floor(potentialScore / 2)} points,
+              while a typed answer earns {potentialScore} points.
             </Text>
             <Button
               label={`Confirm ${pendingMapGuess}`}

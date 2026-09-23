@@ -75,7 +75,7 @@ describe("DailyLeaderboardShell", () => {
 
     expect(markup).toContain('dateTime="2026-08-25T09:45:00.000Z"');
     expect(markup).toContain(
-      '<time dateTime="2026-08-25T09:45:00.000Z">—</time>',
+      '<time dateTime="2026-08-25T09:45:00.000Z">-</time>',
     );
   });
 });

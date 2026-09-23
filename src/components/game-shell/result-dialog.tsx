@@ -73,6 +73,7 @@ export function GameResultDialog({
   tertiaryActionLabel,
 }: GameResultDialogProps) {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isRatingPromptVisible, setIsRatingPromptVisible] = useState(true);
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const flagUrl = result.clues.find(
     (clue) => clue.key === "flag-colors",
@@ -213,7 +214,11 @@ export function GameResultDialog({
               width="100%"
             />
           ) : null}
-          <ThemeRatingPrompt />
+          {isRatingPromptVisible ? (
+            <ThemeRatingPrompt
+              onDismiss={() => setIsRatingPromptVisible(false)}
+            />
+          ) : null}
           {isFeedbackOpen ? (
             <VStack gap={3} paddingBlockStart={6}>
               <Text weight="semibold">How was that round?</Text>

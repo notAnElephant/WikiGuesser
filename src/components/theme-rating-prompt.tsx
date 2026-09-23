@@ -20,12 +20,15 @@ function getRatingDevice(): RatingDevice {
     : "mobile";
 }
 
-export function ThemeRatingPrompt() {
+interface ThemeRatingPromptProps {
+  onDismiss: () => void;
+}
+
+export function ThemeRatingPrompt({ onDismiss }: ThemeRatingPromptProps) {
   const theme = useOptionalAstryxTheme();
   const themeName = theme?.themeName ?? "chocolate";
   const [device, setDevice] = useState<RatingDevice | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const nextDevice = getRatingDevice();
@@ -59,17 +62,17 @@ export function ThemeRatingPrompt() {
         score,
         theme: themeName,
       });
-      setIsVisible(false);
-      toast.success("Thanks — your design rating was saved.");
+      onDismiss();
+      requestAnimationFrame(() => {
+        toast.success("Thanks, your feedback was sent.", {
+          id: "theme-rating-submitted",
+        });
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to save rating.");
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (!isVisible) {
-    return null;
   }
 
   return (
@@ -97,7 +100,7 @@ export function ThemeRatingPrompt() {
       <Button
         isDisabled={isSubmitting}
         label="Skip for now"
-        onClick={() => setIsVisible(false)}
+        onClick={onDismiss}
         variant="ghost"
       />
     </VStack>
