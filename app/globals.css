@@ -25,6 +25,16 @@
   }
 }
 
+[popover="manual"][aria-label="Notifications"] {
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  align-items: center;
+  flex-direction: column;
+  transform: translate(-50%, -50%);
+}
+
 @layer utilities {
   .clue-redaction {
     background: var(--color-neutral);
