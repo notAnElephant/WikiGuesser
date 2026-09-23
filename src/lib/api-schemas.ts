@@ -11,6 +11,11 @@ export const startRoundSchema = z.object({
   seed: z.string().min(1).optional(),
 });
 
+export const startAdminTestRoundSchema = z.object({
+  country: z.string().trim().min(1),
+  mode: z.enum(GAME_MODES),
+});
+
 export const startDailyRoundSchema = z.object({
   category: z.enum(DAILY_CATEGORY_OPTIONS),
   mode: z.enum(GAME_MODES),

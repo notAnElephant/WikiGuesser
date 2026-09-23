@@ -2,11 +2,17 @@
 
 import { GoogleOneTap } from "@clerk/nextjs";
 import { VStack } from "@astryxdesign/core/VStack";
+import { HStack } from "@astryxdesign/core/HStack";
 import { Text } from "@astryxdesign/core/Text";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { SelectableCard } from "@astryxdesign/core/SelectableCard";
+import {
+  createStaticSource,
+  Typeahead,
+  type SearchableItem,
+} from "@astryxdesign/core/Typeahead";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti";
 import {
@@ -23,6 +29,7 @@ import {
   Globe2,
   LoaderCircle,
   Play,
+  ShieldCheck,
   X,
 } from "lucide-react";
 
@@ -74,6 +81,7 @@ interface SharedLandingShellProps {
   dailyData: DailyLandingData;
   hasPendingClaim: boolean;
   initialGame?: GameRouteTarget;
+  isAdmin: boolean;
   isSignedIn: boolean;
 }
 
@@ -110,11 +118,14 @@ const launcherModeCopy: Record<
 interface GameLauncherProps {
   claimBanner: string | null;
   continentOptions: ContinentOption[];
+  countryOptions: string[];
   dailyOptions: DailyChallengeOption[];
   isBusy: boolean;
   isClaimingPending: boolean;
   initialFreePlayMode?: GameMode;
+  isAdmin: boolean;
   onChooseFreePlay: (mode: GameMode) => void;
+  onStartAdminTest: (country: string, mode: GameMode) => void;
   onStartDaily: (option: DailyChallengeOption) => void;
   onStartFreePlay: (mode: GameMode, continent: ContinentId | null) => void;
   resetCountdown: string;
@@ -125,11 +136,14 @@ interface GameLauncherProps {
 export function GameLauncher({
   claimBanner,
   continentOptions,
+  countryOptions,
   dailyOptions,
   isBusy,
   isClaimingPending,
   initialFreePlayMode,
+  isAdmin,
   onChooseFreePlay,
+  onStartAdminTest,
   onStartDaily,
   onStartFreePlay,
   resetCountdown,
@@ -138,6 +152,7 @@ export function GameLauncher({
 }: GameLauncherProps) {
   const [pendingFreePlayMode, setPendingFreePlayMode] =
     useState<GameMode | null>(initialFreePlayMode ?? null);
+  const [isAdminTestOpen, setIsAdminTestOpen] = useState(false);
 
   useEffect(() => {
     setPendingFreePlayMode(initialFreePlayMode ?? null);
@@ -260,6 +275,23 @@ export function GameLauncher({
             />
           ))}
         </LauncherBand>
+
+        {isAdmin ? (
+          <LauncherBand
+            description="Start a chosen country in either game mode. Visible only to admins."
+            title="Admin test"
+          >
+            <LauncherRow
+              actionLabel="Choose country"
+              description="Reproduce a country-specific issue."
+              disabled={isBusy}
+              icon={ShieldCheck}
+              onClick={() => setIsAdminTestOpen(true)}
+              title="Test a country"
+              variant="secondary"
+            />
+          </LauncherBand>
+        ) : null}
       </div>
 
       {pendingFreePlayMode ? (
@@ -272,7 +304,107 @@ export function GameLauncher({
           totalCountryCount={totalCountryCount}
         />
       ) : null}
+      {isAdminTestOpen ? (
+        <AdminTestRoundDialog
+          countryOptions={countryOptions}
+          isBusy={isBusy}
+          onClose={() => setIsAdminTestOpen(false)}
+          onStart={(country, mode) => {
+            setIsAdminTestOpen(false);
+            onStartAdminTest(country, mode);
+          }}
+        />
+      ) : null}
     </section>
+  );
+}
+
+interface AdminTestRoundDialogProps {
+  countryOptions: string[];
+  isBusy: boolean;
+  onClose: () => void;
+  onStart: (country: string, mode: GameMode) => void;
+}
+
+function AdminTestRoundDialog({
+  countryOptions,
+  isBusy,
+  onClose,
+  onStart,
+}: AdminTestRoundDialogProps) {
+  const [country, setCountry] = useState<SearchableItem | null>(null);
+  const [mode, setMode] = useState<GameMode>("classic");
+  const countrySource = useMemo(
+    () =>
+      createStaticSource(
+        countryOptions.map((option) => ({ id: option, label: option })),
+      ),
+    [countryOptions],
+  );
+
+  return (
+    <Dialog
+      isOpen
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+      padding={6}
+      purpose="form"
+      width="32rem"
+    >
+      <DialogHeader
+        onOpenChange={(isOpen) => {
+          if (!isOpen) onClose();
+        }}
+        startContent={
+          <ShieldCheck aria-hidden="true" className="text-accent" />
+        }
+        subtitle="This bypasses normal random country selection."
+        title="Start an admin test round"
+      />
+      <VStack gap={4} paddingBlock={4}>
+        <Typeahead
+          hasAutoFocus
+          hasEntriesOnFocus
+          label="Country"
+          maxMenuItems={12}
+          onChange={setCountry}
+          placeholder="Search countries"
+          searchSource={countrySource}
+          value={country}
+          width="100%"
+        />
+        <VStack gap={2}>
+          <Text weight="semibold">Game mode</Text>
+          <HStack gap={2} wrap="wrap">
+            {GAME_MODE_OPTIONS.map((option) => (
+              <Button
+                key={option.id}
+                label={`Select ${launcherModeCopy[option.id].freeTitle} mode`}
+                onClick={() => setMode(option.id)}
+                variant={mode === option.id ? "primary" : "secondary"}
+              >
+                {launcherModeCopy[option.id].freeTitle}
+              </Button>
+            ))}
+          </HStack>
+        </VStack>
+        <HStack gap={2} justify="end">
+          <Button label="Cancel admin test" onClick={onClose} variant="secondary">
+            Cancel
+          </Button>
+          <Button
+            isDisabled={!country || isBusy}
+            label="Start admin test"
+            onClick={() => {
+              if (country) onStart(country.label, mode);
+            }}
+          >
+            Start test
+          </Button>
+        </HStack>
+      </VStack>
+    </Dialog>
   );
 }
 
@@ -507,6 +639,7 @@ export function SharedLandingShell({
   dailyData,
   hasPendingClaim,
   initialGame,
+  isAdmin,
   isSignedIn,
 }: SharedLandingShellProps) {
   const router = useRouter();
@@ -522,6 +655,7 @@ export function SharedLandingShell({
   );
   const [selectedContinent, setSelectedContinent] =
     useState<ContinentId | null>(null);
+  const [isAdminTestRound, setIsAdminTestRound] = useState(false);
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
@@ -714,6 +848,7 @@ export function SharedLandingShell({
     setGuessedEntities([]);
     setScore(null);
     setIsSyncingReveal(false);
+    setIsAdminTestRound(false);
 
     router.push("/");
   }
@@ -736,6 +871,7 @@ export function SharedLandingShell({
     setScore(null);
     setResult(null);
     setIsSyncingReveal(false);
+    setIsAdminTestRound(false);
 
     startTransition(async () => {
       try {
@@ -789,6 +925,46 @@ export function SharedLandingShell({
     });
   }
 
+  function startAdminTestRound(country: string, mode: GameMode) {
+    setSelectedPlayType("free-play");
+    setSelectedCategory("countries");
+    setSelectedMode(mode);
+    setSelectedContinent(null);
+    setGuess("");
+    setGuessedEntities([]);
+    setScore(null);
+    setResult(null);
+    setIsSyncingReveal(false);
+    setIsAdminTestRound(true);
+
+    startTransition(async () => {
+      try {
+        const response = await fetch("/api/admin/rounds/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ country, mode }),
+        });
+        const payload = (await response.json()) as StartRoundResult & {
+          error?: string;
+        };
+
+        if (!response.ok) {
+          setMessage(payload.error ?? "Test round failed. Retry.");
+          return;
+        }
+
+        setRound({ ...payload, playOrigin: "server" });
+        setMessage(
+          payload.mode === "blurred-lines"
+            ? "Admin test live. Tap a row."
+            : "Admin test live.",
+        );
+      } catch {
+        setMessage("Test round failed. Retry.");
+      }
+    });
+  }
+
   function startDaily(
     option: DailyChallengeOption | null = selectedDailyOption,
   ) {
@@ -810,6 +986,7 @@ export function SharedLandingShell({
     setScore(null);
     setResult(null);
     setIsSyncingReveal(false);
+    setIsAdminTestRound(false);
 
     startTransition(async () => {
       let response: Response;
@@ -1237,6 +1414,7 @@ export function SharedLandingShell({
         <GameLauncher
           claimBanner={claimBanner}
           continentOptions={continentOptions}
+          countryOptions={countryOptions}
           dailyOptions={dailyOptions.filter(
             (option) => option.category === dailyData.defaultCategory,
           )}
@@ -1245,7 +1423,11 @@ export function SharedLandingShell({
           initialFreePlayMode={
             initialGame?.kind === "play" ? initialGame.mode : undefined
           }
+          isAdmin={isAdmin}
           onChooseFreePlay={(mode) => pushGameUrl("play", mode)}
+          onStartAdminTest={(country, mode) =>
+            void startAdminTestRound(country, mode)
+          }
           onStartDaily={(option) => {
             pushGameUrl("daily", option.mode);
             void startDaily(option);
@@ -1282,7 +1464,9 @@ export function SharedLandingShell({
           displayScore={displayScore}
           giveUpRound={giveUpRound}
           flowLabel={
-            isDailyFlow
+            isAdminTestRound
+              ? "Admin test"
+              : isDailyFlow
               ? "Daily"
               : selectedContinent
                 ? `${CONTINENT_LABELS[selectedContinent]} free play`

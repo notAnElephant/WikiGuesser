@@ -4,6 +4,7 @@ import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
 import { parseRoundState } from "@/src/lib/game/round-token";
 import {
   revealClue,
+  startAdminTestRound,
   startDailyRound,
   startRound,
   submitGuess,
@@ -59,6 +60,22 @@ vi.mock("@/src/lib/repository/daily-repository", () => {
 const mockedDailyRepository = vi.mocked(dailyRepository);
 
 describe("round service", () => {
+  it("starts a selected country in either game mode for admin testing", async () => {
+    const round = await startAdminTestRound(
+      { country: "France", mode: "blurred-lines" },
+      "user_admin",
+    );
+
+    expect(parseRoundState(round.token)).toMatchObject({
+      entityId: "countries-france",
+      mode: "blurred-lines",
+      kind: "standard",
+      isTest: true,
+    });
+    expect(round.canGuess).toBe(false);
+    expect(round.revealedClues).toHaveLength(0);
+  });
+
   it("starts a daily round from the stored challenge payload", async () => {
     const round = await startDailyRound(
       { category: "countries", mode: "classic" },

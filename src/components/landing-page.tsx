@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { SharedLandingShell } from "@/src/components/shared-landing-shell";
 import { getOptionalActorId } from "@/src/lib/auth/actor";
+import { isAdminUser } from "@/src/lib/auth/admin";
 import { buildContinentOptions } from "@/src/lib/content/continents";
 import { PENDING_DAILY_CLAIMS_COOKIE } from "@/src/lib/game/daily-claim-cookie";
 import type { GameRouteTarget } from "@/src/lib/game/game-routes";
@@ -48,6 +49,7 @@ export async function LandingPage({ initialGame }: LandingPageProps) {
         dailyData={dailyLandingData}
         hasPendingClaim={hasPendingClaim}
         initialGame={initialGame}
+        isAdmin={isAdminUser(userId)}
         isSignedIn={Boolean(userId)}
       />
     </section>

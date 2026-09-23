@@ -115,7 +115,7 @@ async function persistCompletedRoundIfNeeded(params: {
   result: GuessRoundResult;
   dailyChallengeId: string | null;
 }) {
-  if (!params.result.isComplete) {
+  if (!params.result.isComplete || params.roundState.isTest) {
     return;
   }
 
@@ -206,6 +206,46 @@ export async function startRound(
     seed,
     revealedClueKeys,
     canGuess: mode === "classic",
+    totalClues: effectiveClues.length,
+  });
+
+  return buildTokenizedRoundResult(entity, roundState);
+}
+
+export async function startAdminTestRound(
+  input: { country: string; mode: GameMode },
+  userId: string,
+): Promise<StartRoundResult> {
+  const snapshot = await getLatestSnapshot();
+  const entity = snapshot.entities.find(
+    (candidate) =>
+      candidate.category === "countries" &&
+      matchesEntityGuess(candidate, input.country),
+  );
+
+  if (!entity) {
+    throw new Error("That country is not available in the active snapshot.");
+  }
+
+  const effectiveClues = getEffectiveRoundClues(entity, input.mode);
+
+  if (effectiveClues.length === 0) {
+    throw new Error("That country has no playable clues for this mode.");
+  }
+
+  const roundState = createRoundState({
+    userId,
+    entityId: entity.id,
+    category: entity.category,
+    mode: input.mode,
+    kind: "standard",
+    isTest: true,
+    seed: `admin-test:${entity.id}:${randomUUID()}`,
+    revealedClueKeys:
+      input.mode === "classic" && effectiveClues[0]
+        ? [effectiveClues[0].key]
+        : [],
+    canGuess: input.mode === "classic",
     totalClues: effectiveClues.length,
   });
 

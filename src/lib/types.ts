@@ -172,6 +172,7 @@ export interface RoundState {
   continent?: ContinentId;
   mode: GameMode;
   kind: RoundKind;
+  isTest?: boolean;
   dailyChallengeId?: string;
   dayKey?: string;
   seed: string;
