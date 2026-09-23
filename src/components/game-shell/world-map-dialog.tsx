@@ -934,6 +934,46 @@ export function WorldMapDialog({
                     ) : null;
                   })
                 : null}
+              {/*
+                Render highlighted countries a second time, after the base map.
+                SVG paints later paths on top of earlier ones; without this
+                overlay, a later-rendered neighbour can cover a highlighted
+                country's shared border with its default stroke.
+              */}
+              {path
+                ? COUNTRY_DATA.features.map((country, index) => {
+                    const name = country.properties.normalizedName;
+                    const countryPath = path(country);
+                    const guessedCountry = guessedCountryByName.get(name);
+                    const isSolution = solutionNames.has(name);
+
+                    if (!countryPath || (!guessedCountry && !isSolution)) {
+                      return null;
+                    }
+
+                    return (
+                      <path
+                        className={
+                          isSolution
+                            ? duelResult
+                              ? "map-country map-country--solution-duel"
+                              : "map-country map-country--solution"
+                            : guessedCountry!.markerTone
+                              ? `map-country map-country--guessed-${guessedCountry!.markerTone}`
+                              : "map-country map-country--guessed"
+                        }
+                        d={countryPath}
+                        key={`highlight-${country.id ?? name}-${index}`}
+                        onClick={
+                          guessedCountry
+                            ? () => focusCountry(guessedCountry)
+                            : undefined
+                        }
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    );
+                  })
+                : null}
             </g>
             <defs>
               <pattern
