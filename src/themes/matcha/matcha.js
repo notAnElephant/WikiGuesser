@@ -305,6 +305,9 @@ export const matchaTheme = {
       }
     },
     "toast": {
+      "type:info": {
+        "backgroundColor": "var(--color-accent)"
+      },
       "type:success": {
         "backgroundColor": "var(--color-success)"
       },

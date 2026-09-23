@@ -444,6 +444,10 @@
     line-height: var(--text-display-3-leading);
   }
 
+  .astryx-toast.info {
+    background-color: var(--color-accent);
+  }
+
   .astryx-toast.success {
     background-color: var(--color-success);
   }
