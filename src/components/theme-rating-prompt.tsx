@@ -52,10 +52,14 @@ export function ThemeRatingPrompt({ onDismiss }: ThemeRatingPromptProps) {
         headers: { "content-type": "application/json" },
         method: "POST",
       });
-      const payload = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Unable to save rating.");
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(
+          payload?.error ?? "Rating service is unavailable. Please try again.",
+        );
       }
 
       captureAnalyticsEvent("theme_rating_submitted", {
