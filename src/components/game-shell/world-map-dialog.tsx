@@ -1,7 +1,6 @@
 "use client";
 
 import { HStack } from "@astryxdesign/core/HStack";
-import { VStack } from "@astryxdesign/core/VStack";
 import { Button } from "@astryxdesign/core/Button";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
@@ -1092,8 +1091,8 @@ export function WorldMapDialog({
             : null}
 
           {presentation === "game" ? (
-            <VStack
-              className="absolute bottom-3 left-3 z-10 sm:bottom-4 sm:left-4"
+            <HStack
+              className="absolute bottom-3 left-3 z-10 flex-nowrap lg:bottom-4 lg:left-4 lg:flex-col"
               gap={2}
             >
               <IconButton
@@ -1133,10 +1132,10 @@ export function WorldMapDialog({
                 tooltip="Reset map zoom"
                 variant="secondary"
               />
-            </VStack>
+            </HStack>
           ) : null}
 
-          <span className="pointer-events-none absolute bottom-3 right-3 z-10 rounded-full bg-card px-2 py-1 text-xs font-medium text-secondary backdrop-blur  ">
+          <span className="pointer-events-none absolute bottom-3 right-3 z-10 hidden rounded-full bg-card px-2 py-1 text-xs font-medium text-secondary backdrop-blur sm:inline-flex">
             Map data: Natural Earth
           </span>
         </div>

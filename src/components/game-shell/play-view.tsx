@@ -247,7 +247,14 @@ export function GamePlayView({
   }
 
   return (
-    <VStack gap={4}>
+    <VStack
+      className={
+        isCountryRound && mapDrawerState === "medium"
+          ? "pb-72 lg:pb-0"
+          : undefined
+      }
+      gap={4}
+    >
       <HStack gap={3} wrap="wrap" justify="between" className="text-sm">
         <Text weight="semibold">
           {flowLabel} · {currentModeMeta.label} · {currentCategoryLabel}
