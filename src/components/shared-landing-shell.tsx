@@ -122,7 +122,6 @@ interface GameLauncherProps {
   dailyOptions: DailyChallengeOption[];
   isBusy: boolean;
   isClaimingPending: boolean;
-  initialFreePlayMode?: GameMode;
   isAdmin: boolean;
   onChooseFreePlay: (mode: GameMode) => void;
   onStartAdminTest: (country: string, mode: GameMode) => void;
@@ -140,7 +139,6 @@ export function GameLauncher({
   dailyOptions,
   isBusy,
   isClaimingPending,
-  initialFreePlayMode,
   isAdmin,
   onChooseFreePlay,
   onStartAdminTest,
@@ -151,12 +149,8 @@ export function GameLauncher({
   totalCountryCount,
 }: GameLauncherProps) {
   const [pendingFreePlayMode, setPendingFreePlayMode] =
-    useState<GameMode | null>(initialFreePlayMode ?? null);
+    useState<GameMode | null>(null);
   const [isAdminTestOpen, setIsAdminTestOpen] = useState(false);
-
-  useEffect(() => {
-    setPendingFreePlayMode(initialFreePlayMode ?? null);
-  }, [initialFreePlayMode]);
 
   function startFilteredFreePlay(continent: ContinentId | null) {
     if (!pendingFreePlayMode) {
@@ -390,7 +384,11 @@ function AdminTestRoundDialog({
           </HStack>
         </VStack>
         <HStack gap={2} justify="end">
-          <Button label="Cancel admin test" onClick={onClose} variant="secondary">
+          <Button
+            label="Cancel admin test"
+            onClick={onClose}
+            variant="secondary"
+          >
             Cancel
           </Button>
           <Button
@@ -479,6 +477,31 @@ export function ContinentPickerDialog({
         {launcherModeCopy[mode].freeTitle} free play
       </p>
     </Dialog>
+  );
+}
+
+function FreePlaySetupView({ mode }: { mode: GameMode }) {
+  const modeMeta = getModeMeta(mode);
+
+  return (
+    <VStack as="main" gap={4}>
+      <HStack gap={3} justify="between" wrap="wrap">
+        <Text weight="semibold">Free play · {modeMeta.label} · Countries</Text>
+        <Text color="accent" weight="semibold">
+          Available score: 100 pts · 0/6 clues
+        </Text>
+      </HStack>
+      <Card elevation="low" padding={5}>
+        <VStack gap={2}>
+          <h1 className="m-0 font-heading text-2xl font-semibold leading-tight tracking-tighter text-primary sm:text-3xl">
+            {mode === "blurred-lines" ? "Choose a clue" : "Follow the clues"}
+          </h1>
+          <Text color="secondary">
+            Choose a continent to prepare your next round.
+          </Text>
+        </VStack>
+      </Card>
+    </VStack>
   );
 }
 
@@ -672,6 +695,8 @@ export function SharedLandingShell({
   );
   const [resetCountdown, setResetCountdown] = useState("00:00");
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isDirectFreePlayPickerOpen, setIsDirectFreePlayPickerOpen] =
+    useState(true);
   const [playedOverrides, setPlayedOverrides] = useState<
     Record<string, PlayedOverride>
   >({});
@@ -856,9 +881,11 @@ export function SharedLandingShell({
   function startFreePlay(
     mode: GameMode = selectedMode ?? "classic",
     continent: ContinentId | null = selectedContinent,
+    onFailure?: () => void,
   ) {
     if (!defaultFreePlayCategory) {
       setMessage("Free play unavailable.");
+      onFailure?.();
       return;
     }
 
@@ -892,6 +919,7 @@ export function SharedLandingShell({
             error?: string;
           } | null;
           setMessage(payload?.error ?? "Round failed. Retry.");
+          onFailure?.();
           return;
         }
 
@@ -921,6 +949,7 @@ export function SharedLandingShell({
         }
 
         setMessage("Round failed. Retry.");
+        onFailure?.();
       }
     });
   }
@@ -1408,6 +1437,32 @@ export function SharedLandingShell({
   }
 
   if (view === "menu") {
+    if (initialGame?.kind === "play") {
+      return (
+        <>
+          <FreePlaySetupView mode={initialGame.mode} />
+          {isDirectFreePlayPickerOpen ? (
+            <ContinentPickerDialog
+              continentOptions={continentOptions}
+              mode={initialGame.mode}
+              onClose={() => {
+                setIsDirectFreePlayPickerOpen(false);
+                clearToHome();
+              }}
+              onSelect={(continent) => {
+                setIsDirectFreePlayPickerOpen(false);
+                void startFreePlay(initialGame.mode, continent, () =>
+                  setIsDirectFreePlayPickerOpen(true),
+                );
+              }}
+              selectedContinent={selectedContinent}
+              totalCountryCount={countryOptions.length}
+            />
+          ) : null}
+        </>
+      );
+    }
+
     return (
       <div className="grid gap-6">
         <OfflinePackStatus />
@@ -1420,9 +1475,6 @@ export function SharedLandingShell({
           )}
           isBusy={isBusy}
           isClaimingPending={isClaimingPending}
-          initialFreePlayMode={
-            initialGame?.kind === "play" ? initialGame.mode : undefined
-          }
           isAdmin={isAdmin}
           onChooseFreePlay={(mode) => pushGameUrl("play", mode)}
           onStartAdminTest={(country, mode) =>
@@ -1467,10 +1519,10 @@ export function SharedLandingShell({
             isAdminTestRound
               ? "Admin test"
               : isDailyFlow
-              ? "Daily"
-              : selectedContinent
-                ? `${CONTINENT_LABELS[selectedContinent]} free play`
-                : "Free play"
+                ? "Daily"
+                : selectedContinent
+                  ? `${CONTINENT_LABELS[selectedContinent]} free play`
+                  : "Free play"
           }
           guess={guess}
           guessedEntities={guessedEntities}
