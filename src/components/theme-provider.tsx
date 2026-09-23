@@ -13,7 +13,7 @@ import { Theme, type DefinedTheme } from "@astryxdesign/core/theme";
 
 import { captureAnalyticsEvent } from "@/src/lib/analytics";
 
-import { chocolateTheme } from "@/src/themes/chocolate/chocolate";
+import { chocolateTheme } from "@/src/themes/chocolate/chocolateTheme";
 import { matchaTheme } from "@/src/themes/matcha/matcha";
 
 const THEME_EXPERIMENT_STORAGE_KEY = "wikiguesser-theme-experiment";

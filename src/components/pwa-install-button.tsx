@@ -4,7 +4,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useAppToast } from "@/src/components/app-toaster";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -45,6 +45,7 @@ export function PwaInstallButton({
 }: {
   variant?: "icon" | "menu";
 }) {
+  const toast = useAppToast();
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [manualInstructions, setManualInstructions] =
@@ -78,7 +79,7 @@ export function PwaInstallButton({
       );
       window.removeEventListener("appinstalled", handleInstalled);
     };
-  }, []);
+  }, [toast]);
 
   if (!installPrompt && !manualInstructions) {
     return null;

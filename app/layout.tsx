@@ -90,49 +90,56 @@ export default async function RootLayout({
             <ThemeProvider>
               <ClerkProvider dynamic signUpForceRedirectUrl="/profile-name">
                 <PostHogIdentity />
-                <AppShell
-                  contentPadding={0}
-                  height="auto"
-                  topNav={
-                  <TopNav
-                    heading={<AppBrand />}
-                    label="WikiGuesser navigation"
-                    endContent={
-                    <HStack align="center" gap={1} className="min-w-0 sm:gap-2">
-                      <HStack className="hidden sm:flex" gap={1}>
-                        <PwaInstallButton />
-                        <IconButton
-                          className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
-                          href="/leaderboard"
-                          icon={
-                            <Trophy
-                              aria-hidden="true"
-                              className="size-4"
-                              strokeWidth={2.2}
+                <AppToaster>
+                  <AppShell
+                    contentPadding={0}
+                    height="auto"
+                    topNav={
+                      <TopNav
+                        heading={<AppBrand />}
+                        label="WikiGuesser navigation"
+                        endContent={
+                          <HStack
+                            align="center"
+                            gap={1}
+                            className="min-w-0 sm:gap-2"
+                          >
+                            <HStack className="hidden sm:flex" gap={1}>
+                              <PwaInstallButton />
+                              <IconButton
+                                className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
+                                href="/leaderboard"
+                                icon={
+                                  <Trophy
+                                    aria-hidden="true"
+                                    className="size-4"
+                                    strokeWidth={2.2}
+                                  />
+                                }
+                                label="Leaderboard"
+                                tooltip="Leaderboard"
+                                variant="ghost"
+                              />
+                              <ThemeToggle isAdmin={isAdmin} />
+                              <FeedbackButton />
+                            </HStack>
+                            <HeaderAuthControls
+                              adminDailyAnswersPage={
+                                isAdmin ? (
+                                  <AdminDailyAnswersProfilePage />
+                                ) : undefined
+                              }
+                              isAdmin={isAdmin}
                             />
-                          }
-                          label="Leaderboard"
-                          tooltip="Leaderboard"
-                          variant="ghost"
-                        />
-                        <ThemeToggle isAdmin={isAdmin} />
-                        <FeedbackButton />
-                      </HStack>
-                      <HeaderAuthControls
-                        adminDailyAnswersPage={
-                          isAdmin ? <AdminDailyAnswersProfilePage /> : undefined
+                          </HStack>
                         }
-                        isAdmin={isAdmin}
                       />
-                    </HStack>
                     }
-                  />
-                  }
-                  variant="surface"
-                >
-                  {children}
-                </AppShell>
-                <AppToaster />
+                    variant="surface"
+                  >
+                    {children}
+                  </AppShell>
+                </AppToaster>
               </ClerkProvider>
             </ThemeProvider>
           </OfflinePackProvider>

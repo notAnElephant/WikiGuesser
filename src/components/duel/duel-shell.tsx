@@ -8,6 +8,7 @@ import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
 import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
+import { useAppToast } from "@/src/components/app-toaster";
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import { getMapCountryNames } from "@/src/lib/game/world-map-data";
 import type {
@@ -34,7 +35,6 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
 
 const WorldMapDialog = dynamic(
   () =>
@@ -145,6 +145,7 @@ function formatCategory(category: string) {
 }
 
 export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
+  const toast = useAppToast();
   const [duel, setDuel] = useState<DuelResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);

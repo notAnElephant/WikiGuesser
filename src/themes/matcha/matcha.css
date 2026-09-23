@@ -444,6 +444,14 @@
     line-height: var(--text-display-3-leading);
   }
 
+  .astryx-toast.success {
+    background-color: var(--color-success);
+  }
+
+  .astryx-toast.warning {
+    background-color: var(--color-warning);
+  }
+
   .astryx-button {
     border-radius: var(--radius-full);
     --_button-radius: var(--radius-full);

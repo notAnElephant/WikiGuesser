@@ -7,8 +7,8 @@ import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { Star } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
+import { useAppToast } from "@/src/components/app-toaster";
 import { useOptionalAstryxTheme } from "@/src/components/theme-provider";
 import { captureAnalyticsEvent } from "@/src/lib/analytics";
 
@@ -25,6 +25,7 @@ interface ThemeRatingPromptProps {
 }
 
 export function ThemeRatingPrompt({ onDismiss }: ThemeRatingPromptProps) {
+  const toast = useAppToast();
   const theme = useOptionalAstryxTheme();
   const themeName = theme?.themeName ?? "chocolate";
   const [device, setDevice] = useState<RatingDevice | null>(null);

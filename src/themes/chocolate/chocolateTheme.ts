@@ -168,6 +168,14 @@ export const chocolateTheme = defineTheme({
   },
 
   components: {
+    toast: {
+      "type:success": {
+        backgroundColor: "var(--color-success)",
+      },
+      "type:warning": {
+        backgroundColor: "var(--color-warning)",
+      },
+    },
     button: {
       base: {
         borderRadius: 'var(--radius-full)',

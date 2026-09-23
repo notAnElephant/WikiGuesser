@@ -304,6 +304,14 @@ export const matchaTheme = {
         "lineHeight": "var(--text-display-3-leading)"
       }
     },
+    "toast": {
+      "type:success": {
+        "backgroundColor": "var(--color-success)"
+      },
+      "type:warning": {
+        "backgroundColor": "var(--color-warning)"
+      }
+    },
     "button": {
       "base": {
         "borderRadius": "var(--radius-full)"

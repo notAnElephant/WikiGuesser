@@ -10,6 +10,7 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { Text } from "@astryxdesign/core/Text";
 import { getScoreForGuess } from "@/src/lib/game/round-rules";
 import { Card } from "@astryxdesign/core/Card";
+import { useAppToast } from "@/src/components/app-toaster";
 import type {
   ActiveRound,
   GuessAttempt,
@@ -60,7 +61,6 @@ import {
   useState,
 } from "react";
 import { preload } from "react-dom";
-import { toast } from "sonner";
 
 const WorldMapDialog = dynamic(
   () =>
@@ -163,6 +163,7 @@ export function GamePlayView({
   sideFooter,
   solutionCountry,
 }: GamePlayViewProps) {
+  const toast = useAppToast();
   const flagImageUrl = getFlagImageUrl(currentClues);
 
   if (flagImageUrl) {
@@ -204,7 +205,7 @@ export function GamePlayView({
     }
 
     toast[statusAppearance.tone](message, { id: "game-status" });
-  }, [message, messageRevision, statusAppearance.tone]);
+  }, [message, messageRevision, statusAppearance.tone, toast]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });

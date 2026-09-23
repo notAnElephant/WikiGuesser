@@ -5,8 +5,8 @@ import { RadioList, RadioListItem } from "@astryxdesign/core/RadioList";
 import { TextArea } from "@astryxdesign/core/TextArea";
 import { VStack } from "@astryxdesign/core/VStack";
 import { useState } from "react";
-import { toast } from "sonner";
 
+import { useAppToast } from "@/src/components/app-toaster";
 import { captureAnalyticsEvent } from "@/src/lib/analytics";
 
 export type FeedbackKind =
@@ -48,6 +48,7 @@ interface FeedbackFormProps {
 }
 
 export function FeedbackForm({ context, onSubmitted }: FeedbackFormProps) {
+  const toast = useAppToast();
   const [kind, setKind] = useState<FeedbackKind>("positive");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
