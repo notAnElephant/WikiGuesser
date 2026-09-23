@@ -34,6 +34,17 @@
   transform: translateX(-50%);
 }
 
+/* Keep desktop toasts centered, but let the core viewport span a phone's
+   available width so its message and dismiss control do not compete. */
+@media (width < 40rem) {
+  [popover="manual"][aria-label="Notifications"] {
+    right: 0;
+    left: 0;
+    align-items: stretch;
+    transform: none;
+  }
+}
+
 @layer utilities {
   .clue-redaction {
     background: var(--color-neutral);
