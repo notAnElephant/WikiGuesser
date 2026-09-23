@@ -26,13 +26,12 @@
 }
 
 [popover="manual"][aria-label="Notifications"] {
-  top: 50%;
+  top: 0;
   right: auto;
-  bottom: auto;
+  bottom: unset;
   left: 50%;
   align-items: center;
-  flex-direction: column;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
 }
 
 @layer utilities {
