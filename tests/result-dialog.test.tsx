@@ -131,6 +131,6 @@ describe("daily result dialog actions", () => {
     expect(markup).toContain("How does this design feel?");
     expect(markup).toContain("Rate this design 1 out of 5 stars");
     expect(markup).toContain("Rate this design 5 out of 5 stars");
-    expect(markup).toContain("Skip for now");
+    expect(markup).not.toContain("Skip for now");
   });
 });

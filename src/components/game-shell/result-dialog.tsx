@@ -1,3 +1,9 @@
+import { FeedbackForm } from "@/src/components/feedback-form";
+import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
+import type { RoundOutcome } from "@/src/components/game-shell/types";
+import { getCategoryMeta } from "@/src/components/game-shell/utils";
+import { ThemeRatingPrompt } from "@/src/components/theme-rating-prompt";
+import type { GuessedCountryMapData } from "@/src/lib/types";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
@@ -7,14 +13,7 @@ import { Icon } from "@astryxdesign/core/Icon";
 import { StackItem } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
-import { FeedbackForm } from "@/src/components/feedback-form";
-import { ThemeRatingPrompt } from "@/src/components/theme-rating-prompt";
-import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
-import { getCategoryMeta } from "@/src/components/game-shell/utils";
-import type { RoundOutcome } from "@/src/components/game-shell/types";
-import type { GuessedCountryMapData } from "@/src/lib/types";
 import type { LucideIcon } from "lucide-react";
-import { useState } from "react";
 import {
   Ban,
   House,
@@ -26,6 +25,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useState } from "react";
 
 const WorldMapDialog = dynamic(
   () =>
@@ -240,7 +240,7 @@ export function GameResultDialog({
             <Button
               className="mt-4"
               icon={<MessageSquare aria-hidden="true" />}
-              label="Give feedback"
+              label="Give additional feedback"
               onClick={() => setIsFeedbackOpen(true)}
               variant="ghost"
               width="100%"

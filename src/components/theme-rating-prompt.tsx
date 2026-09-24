@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@astryxdesign/core/Button";
 import { HStack } from "@astryxdesign/core/HStack";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Text } from "@astryxdesign/core/Text";
@@ -81,14 +80,14 @@ export function ThemeRatingPrompt({ onDismiss }: ThemeRatingPromptProps) {
   }
 
   return (
-    <VStack className="mt-4 border-t pt-4" gap={2}>
-      <VStack gap={0}>
+    <VStack className="mt-4 border-t pt-4" gap={2} hAlign="center">
+      <VStack gap={0} hAlign="center">
         <Text weight="semibold">How does this design feel?</Text>
         <Text color="secondary" type="supporting">
           Your rating helps us choose the best look. Optional.
         </Text>
       </VStack>
-      <HStack gap={1}>
+      <HStack gap={1} hAlign="center">
         {[1, 2, 3, 4, 5].map((score) => (
           <IconButton
             className="min-h-11 min-w-11"
@@ -102,12 +101,6 @@ export function ThemeRatingPrompt({ onDismiss }: ThemeRatingPromptProps) {
           />
         ))}
       </HStack>
-      <Button
-        isDisabled={isSubmitting}
-        label="Skip for now"
-        onClick={onDismiss}
-        variant="ghost"
-      />
     </VStack>
   );
 }
