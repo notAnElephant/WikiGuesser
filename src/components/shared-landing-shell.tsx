@@ -7,6 +7,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
 import { SelectableCard } from "@astryxdesign/core/SelectableCard";
 import {
   createStaticSource,
@@ -433,49 +434,57 @@ export function ContinentPickerDialog({
       padding={6}
       width="42rem"
     >
-      <DialogHeader
-        onOpenChange={(isOpen) => {
-          if (!isOpen) onClose();
-        }}
-        startContent={<Globe2 aria-hidden="true" className="text-accent" />}
-        subtitle="Pick the country pool for this round."
-        title="Choose a continent"
-      />
-      <div className="grid gap-3 pt-4 sm:grid-cols-2">
-        <SelectableCard
-          isSelected={selectedContinent === null}
-          label="All continents"
-          onChange={() => onSelect(null)}
-          padding={4}
-        >
-          <strong className="block font-heading text-xl text-primary">
-            All continents
-          </strong>
-          <span className="mt-1 block text-sm text-secondary">
-            {totalCountryCount} countries
-          </span>
-        </SelectableCard>
+      <Layout
+        header={
+          <DialogHeader
+            onOpenChange={(isOpen) => {
+              if (!isOpen) onClose();
+            }}
+            startContent={<Globe2 aria-hidden="true" className="text-accent" />}
+            subtitle="Pick the country pool for this round."
+            title="Choose a continent"
+          />
+        }
+        content={
+          <LayoutContent padding={6} label="Continent choices">
+            <div className="grid gap-3 pt-4 sm:grid-cols-2">
+              <SelectableCard
+                isSelected={selectedContinent === null}
+                label="All continents"
+                onChange={() => onSelect(null)}
+                padding={4}
+              >
+                <strong className="block font-heading text-xl text-primary">
+                  All continents
+                </strong>
+                <span className="mt-1 block text-sm text-secondary">
+                  {totalCountryCount} countries
+                </span>
+              </SelectableCard>
 
-        {continentOptions.map((option) => (
-          <SelectableCard
-            isSelected={selectedContinent === option.id}
-            key={option.id}
-            label={option.label}
-            onChange={() => onSelect(option.id)}
-            padding={4}
-          >
-            <strong className="block font-heading text-xl text-primary">
-              {option.label}
-            </strong>
-            <span className="mt-1 block text-sm text-secondary">
-              {option.entityCount} countries
-            </span>
-          </SelectableCard>
-        ))}
-      </div>
-      <p className="m-0 pt-4 text-xs text-secondary">
-        {launcherModeCopy[mode].freeTitle} free play
-      </p>
+              {continentOptions.map((option) => (
+                <SelectableCard
+                  isSelected={selectedContinent === option.id}
+                  key={option.id}
+                  label={option.label}
+                  onChange={() => onSelect(option.id)}
+                  padding={4}
+                >
+                  <strong className="block font-heading text-xl text-primary">
+                    {option.label}
+                  </strong>
+                  <span className="mt-1 block text-sm text-secondary">
+                    {option.entityCount} countries
+                  </span>
+                </SelectableCard>
+              ))}
+            </div>
+            <p className="m-0 pt-4 text-xs text-secondary">
+              {launcherModeCopy[mode].freeTitle} free play
+            </p>
+          </LayoutContent>
+        }
+      />
     </Dialog>
   );
 }

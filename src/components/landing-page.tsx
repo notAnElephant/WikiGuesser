@@ -41,7 +41,7 @@ export async function LandingPage({ initialGame }: LandingPageProps) {
   );
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-3 pb-4 pt-4 sm:px-4 sm:pb-5 sm:pt-5">
+    <section className="mx-auto w-full max-w-6xl px-3 pb-4 pt-4 sm:px-4 sm:pb-5 sm:pt-5 has-[[data-game-play]]:max-w-none">
       <SharedLandingShell
         categories={categories}
         continentOptions={continentOptions}

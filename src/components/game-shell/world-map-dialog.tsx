@@ -1,5 +1,6 @@
 "use client";
 
+import { VStack } from "@astryxdesign/core/VStack";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Button } from "@astryxdesign/core/Button";
 import { IconButton } from "@astryxdesign/core/IconButton";
@@ -31,7 +32,7 @@ import {
   Scan,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 export type DuelResultMarkerTone = "challenger" | "opponent" | "both";
 
@@ -40,6 +41,8 @@ export type DuelResultGuessedCountry = GuessedCountryMapData & {
 };
 
 interface WorldMapDialogProps {
+  /** Fill the play surface instead of using the legacy floating map drawer. */
+  embedded?: boolean;
   countryOptions?: readonly string[];
   drawerState?: "hidden" | "medium" | "expanded";
   duelResult?: boolean;
@@ -184,6 +187,7 @@ function DirectionArrow({ direction }: { direction: GuessDirection }) {
 }
 
 export function WorldMapDialog({
+  embedded = false,
   countryOptions = [],
   guessedCountries,
   isActive = false,
@@ -196,6 +200,7 @@ export function WorldMapDialog({
   presentation = "game",
   solutionCountry = null,
 }: WorldMapDialogProps) {
+  const helpId = useId();
   const effectiveDrawerState =
     presentation === "game"
       ? (drawerState ?? (isExpanded ? "expanded" : "medium"))
@@ -203,7 +208,7 @@ export function WorldMapDialog({
   const isMapExpanded = effectiveDrawerState === "expanded";
   const isMapHidden = effectiveDrawerState === "hidden";
   const canInteractWithMap =
-    presentation === "result" || Boolean(onCountryGuess);
+    embedded || presentation === "result" || Boolean(onCountryGuess);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -766,7 +771,7 @@ export function WorldMapDialog({
     }
   }
 
-  if (presentation === "game" && isMapHidden) {
+  if (presentation === "game" && !embedded && isMapHidden) {
     return (
       <HStack justify="center">
         <Button
@@ -785,13 +790,15 @@ export function WorldMapDialog({
   }
 
   return (
-    <div
+    <VStack
       className={
-        presentation === "result"
-          ? "relative w-full"
-          : isMapExpanded
-            ? "fixed inset-0 z-[80] grid place-items-center bg-overlay p-2 backdrop-blur-[3px] sm:p-5"
-            : "pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-2 sm:justify-end sm:px-5 lg:pointer-events-auto lg:static lg:z-auto lg:block lg:px-0"
+        embedded && !isMapExpanded
+          ? "relative min-h-0 flex-1 w-full"
+          : presentation === "result"
+            ? "relative w-full"
+            : isMapExpanded
+              ? "fixed inset-0 z-[80] grid place-items-center bg-overlay p-2 backdrop-blur-[3px] sm:p-5"
+              : "pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-2 sm:justify-end sm:px-5 lg:pointer-events-auto lg:static lg:z-auto lg:block lg:px-0"
       }
       onMouseDown={(event) => {
         if (isMapExpanded && event.target === event.currentTarget) {
@@ -799,16 +806,18 @@ export function WorldMapDialog({
         }
       }}
     >
-      <div
-        aria-describedby="world-map-help"
+      <VStack
+        aria-describedby={helpId}
         aria-label="World map"
         aria-modal={isMapExpanded ? true : undefined}
-        className={`pointer-events-auto grid w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden border border-border bg-body shadow-md transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:shadow-md ${
-          presentation === "result"
-            ? "h-44 rounded-xl sm:h-48"
-            : isMapExpanded
-              ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-xl sm:h-[min(760px,calc(100dvh-2.5rem))]"
-              : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-xl sm:border-b lg:mb-0 lg:h-[clamp(320px,42dvh,460px)] lg:max-w-none"
+        className={`pointer-events-auto w-full overflow-hidden bg-body ${embedded && !isMapExpanded ? "min-h-0 flex-1 lg:min-h-96 lg:rounded-xl lg:border lg:border-border" : "grid grid-rows-[minmax(0,1fr)_auto] border border-border shadow-md"} transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:shadow-md ${
+          embedded && !isMapExpanded
+            ? ""
+            : presentation === "result"
+              ? "h-44 rounded-xl sm:h-48"
+              : isMapExpanded
+                ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-xl sm:h-[min(760px,calc(100dvh-2.5rem))]"
+                : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-xl sm:border-b lg:mb-0 lg:h-[clamp(320px,42dvh,460px)] lg:max-w-none"
         } ${isActive ? "outline-2 outline-offset-2 outline-accent-bg" : "outline-none"}`}
         onKeyDown={handleDialogKeyDown}
         ref={dialogRef}
@@ -819,17 +828,17 @@ export function WorldMapDialog({
             : undefined
         }
       >
-        <div
+        <VStack
           aria-label={
             presentation === "result" && duelResult
               ? "Interactive duel result map. Each player's guesses use a different color, shared guesses are striped, and the correct answer is highlighted."
               : "Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
           }
-          className="map-world-canvas relative min-h-0 overflow-hidden"
+          className="map-world-canvas relative min-h-0 flex-1 overflow-hidden"
           ref={mapContainerRef}
           role="application"
         >
-          {presentation === "game" ? (
+          {presentation === "game" && !embedded ? (
             <>
               <button
                 aria-expanded={isMapExpanded}
@@ -883,6 +892,16 @@ export function WorldMapDialog({
                 variant="secondary"
               />
             </>
+          ) : null}
+          {presentation === "game" && embedded ? (
+            <Button
+              className="absolute right-3 top-3 z-10 hidden lg:inline-flex"
+              elevation="high"
+              label={isMapExpanded ? "Minimize" : "Expand"}
+              icon={isMapExpanded ? <ChevronDown /> : <ChevronUp />}
+              onClick={() => onExpandedChange(!isMapExpanded)}
+              variant="secondary"
+            />
           ) : null}
           {presentation === "game" && onCountryGuess ? (
             <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-accent-bg/20 bg-body px-3 py-1.5 text-xs font-semibold text-accent shadow-sm backdrop-blur  sm:left-4 sm:top-4">
@@ -1000,34 +1019,6 @@ export function WorldMapDialog({
             </defs>
           </svg>
 
-          {projection && solutionCountry
-            ? (() => {
-                const point = projection([
-                  solutionCountry.longitude,
-                  solutionCountry.latitude,
-                ]);
-
-                if (!point) {
-                  return null;
-                }
-
-                const [left, top] = mapTransform.apply(point);
-
-                return (
-                  <button
-                    aria-label={`Focus solution: ${solutionCountry.name}`}
-                    className={`map-solution-marker absolute z-5 ${duelResult ? "map-solution-marker--duel" : ""}`}
-                    onClick={() => focusLocation(solutionCountry)}
-                    style={{ left, top }}
-                    title={`Focus ${solutionCountry.name}`}
-                    type="button"
-                  >
-                    {solutionCountry.name}
-                  </button>
-                );
-              })()
-            : null}
-
           {presentation === "game" && projection
             ? guessedCountries.map((country) => {
                 const point = projection([country.longitude, country.latitude]);
@@ -1090,9 +1081,38 @@ export function WorldMapDialog({
               })
             : null}
 
+          {presentation === "result" && projection && solutionCountry
+            ? (() => {
+                const point = projection([
+                  solutionCountry.longitude,
+                  solutionCountry.latitude,
+                ]);
+
+                if (!point) {
+                  return null;
+                }
+
+                const [left, top] = mapTransform.apply(point);
+
+                return (
+                  <button
+                    aria-label={`Focus solution: ${solutionCountry.name}`}
+                    className={`map-solution-marker absolute z-5 ${duelResult ? "map-solution-marker--duel" : ""}`}
+                    onClick={() => focusLocation(solutionCountry)}
+                    style={{ left, top }}
+                    title={`Focus ${solutionCountry.name}`}
+                    type="button"
+                  >
+                    {solutionCountry.name}
+                  </button>
+                );
+              })()
+            : null}
+
           {presentation === "game" ? (
             <HStack
               className="absolute bottom-3 left-3 z-10 flex-nowrap lg:bottom-4 lg:left-4 lg:flex-col"
+              onPointerDown={(event) => event.preventDefault()}
               gap={2}
             >
               <IconButton
@@ -1138,17 +1158,17 @@ export function WorldMapDialog({
           <span className="pointer-events-none absolute bottom-3 right-3 z-10 hidden rounded-full bg-card px-2 py-1 text-xs font-medium text-secondary backdrop-blur sm:inline-flex">
             Map data: Natural Earth
           </span>
-        </div>
+        </VStack>
 
         <footer
           className={`border-t border-border bg-card text-center text-sm text-secondary  ${
             isMapExpanded && presentation === "game" ? "px-4 py-3" : "sr-only"
           }`}
-          id="world-map-help"
+          id={helpId}
         >
           Drag to explore · Scroll or pinch to zoom
         </footer>
-      </div>
-    </div>
+      </VStack>
+    </VStack>
   );
 }
