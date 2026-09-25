@@ -371,7 +371,7 @@ export function GamePlayView({
               </Text>
               {compactSheet && latestClue ? (
                 <Text className="min-w-0 truncate" color="secondary">
-                  {renderClueValue(latestClue)}
+                  {renderClueValue(latestClue, Boolean(result))}
                 </Text>
               ) : (
                 <Text color="secondary" type="supporting" textWrap="nowrap">
@@ -434,7 +434,7 @@ export function GamePlayView({
                           className="max-w-48 break-words text-right"
                           weight="medium"
                         >
-                          {renderClueValue(clue)}
+                          {renderClueValue(clue, Boolean(result))}
                         </Text>
                       ) : remaining > 0 ? (
                         <Text type="supporting" className="max-w-32 text-right">

@@ -32,6 +32,30 @@ describe("game shell clue rendering", () => {
     expect(markup).toContain('src="' + flagUrl.replaceAll("&", "&amp;") + '"');
   });
 
+  it("reveals the flag after the round while keeping it blurred during play", () => {
+    const clue = { key: "flag-colors", value: flagUrl };
+    const active = renderToStaticMarkup(renderClueValue(clue));
+    const complete = renderToStaticMarkup(renderClueValue(clue, true));
+
+    expect(active).toContain("blur-md");
+    expect(complete).not.toContain("blur-md");
+    expect(complete).not.toContain("blur-[clamp");
+    expect(complete).toContain("Country flag");
+  });
+
+  it("reveals the full currency after the round", () => {
+    const clue = {
+      key: "currency",
+      value: "Moldovan leu",
+      currencyRedactionTexts: ["Moldovan"],
+    };
+    const active = renderToStaticMarkup(renderClueValue(clue));
+    const complete = renderToStaticMarkup(renderClueValue(clue, true));
+
+    expect(active).toContain("country reference hidden");
+    expect(complete).toBe("Moldovan leu");
+  });
+
   it("does not render a flag placeholder before the clue is revealed", () => {
     const markup = renderToStaticMarkup(
       renderHiddenCluePlaceholder(

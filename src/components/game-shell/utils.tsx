@@ -74,16 +74,17 @@ export function getFlagImageUrl(
 
 export function renderClueValue(
   clue: Pick<RoundClue, "key" | "value" | "currencyRedactionTexts">,
+  isComplete = false,
 ): ReactNode {
   if (!clue.value) {
     return null;
   }
 
   if (clue.key === "flag-colors") {
-    return <FlagColorsClue src={clue.value} />;
+    return <FlagColorsClue src={clue.value} revealed={isComplete} />;
   }
 
-  if (clue.key !== "currency") {
+  if (clue.key !== "currency" || isComplete) {
     return clue.value;
   }
 

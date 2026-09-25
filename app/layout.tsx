@@ -1,5 +1,8 @@
 import { HStack } from "@astryxdesign/core/HStack";
-import { HeaderAuthControls } from "@/src/components/header-auth-controls";
+import {
+  HeaderAuthControls,
+  HeaderStatsButton,
+} from "@/src/components/header-auth-controls";
 import { AdminDailyAnswersProfilePage } from "@/src/components/admin-daily-answers-profile-page";
 import { AppBrand } from "@/src/components/app-brand";
 import { AppToaster } from "@/src/components/app-toaster";
@@ -102,10 +105,9 @@ export default async function RootLayout({
                           <HStack
                             align="center"
                             gap={1}
-                            className="min-w-0 sm:gap-2"
+                            className="min-w-0 sm:gap-4"
                           >
                             <HStack className="hidden sm:flex" gap={1}>
-                              <PwaInstallButton />
                               <IconButton
                                 className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
                                 href="/leaderboard"
@@ -120,7 +122,9 @@ export default async function RootLayout({
                                 tooltip="Leaderboard"
                                 variant="ghost"
                               />
+                              <HeaderStatsButton />
                               <ThemeToggle isAdmin={isAdmin} />
+                              <PwaInstallButton />
                               <FeedbackButton />
                             </HStack>
                             <HeaderAuthControls

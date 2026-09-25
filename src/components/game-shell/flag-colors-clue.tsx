@@ -7,25 +7,26 @@ import { useState } from "react";
 
 interface FlagColorsClueProps {
   src: string;
+  revealed?: boolean;
 }
 
 const blurredFlagClass =
-  "aspect-[3/2] w-full scale-105 object-cover blur-[12px] sm:scale-110 sm:blur-xl";
+  "aspect-[3/2] w-full scale-105 object-cover blur-md";
 
-export function FlagColorsClue({ src }: FlagColorsClueProps) {
+export function FlagColorsClue({ src, revealed = false }: FlagColorsClueProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <>
       <button
-        aria-label="Enlarge blurred country flag"
+        aria-label={revealed ? "Enlarge country flag" : "Enlarge blurred country flag"}
         className="group relative block w-full max-w-72 overflow-hidden rounded-2xl border border-border bg-surface p-0 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-bg"
         onClick={() => setIsExpanded(true)}
         type="button"
       >
         <img
-          alt="Blurred country flag"
-          className={blurredFlagClass}
+          alt={revealed ? "Country flag" : "Blurred country flag"}
+          className={revealed ? "aspect-[3/2] w-full object-cover" : blurredFlagClass}
           height={320}
           loading="lazy"
           src={src}
@@ -37,7 +38,7 @@ export function FlagColorsClue({ src }: FlagColorsClueProps) {
       </button>
 
       <Dialog
-        aria-label="Enlarged blurred country flag"
+        aria-label={revealed ? "Enlarged country flag" : "Enlarged blurred country flag"}
         isOpen={isExpanded}
         maxHeight="90dvh"
         onOpenChange={setIsExpanded}
@@ -55,8 +56,8 @@ export function FlagColorsClue({ src }: FlagColorsClueProps) {
         />
         <div className="w-full overflow-hidden rounded-lg border border-border bg-surface">
           <img
-            alt="Blurred country flag, enlarged"
-            className="aspect-[3/2] max-h-[80dvh] w-full scale-105 object-cover blur-[clamp(16px,3.2vw,32px)]"
+            alt={revealed ? "Country flag, enlarged" : "Blurred country flag, enlarged"}
+            className={revealed ? "aspect-[3/2] max-h-[80dvh] w-full object-cover" : "aspect-[3/2] max-h-[80dvh] w-full scale-105 object-cover blur-[clamp(16px,3.2vw,32px)]"}
             height={960}
             src={src}
             width={1440}
