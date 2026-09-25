@@ -442,6 +442,7 @@ export function useGameShellController({
         category: data.category,
         mode: data.mode,
         clues: data.clues,
+        solutionCountry: data.solutionCountry,
       });
       setGuess("");
       setMessage(`Answer: ${data.canonicalAnswer ?? "Unknown"}.`);
