@@ -30,6 +30,6 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     short_name: "WikiGuesser",
     start_url: "/?source=pwa",
-    theme_color: "#115e59",
+    theme_color: "#245E8A",
   };
 }
