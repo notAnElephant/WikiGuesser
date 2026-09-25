@@ -532,11 +532,16 @@ export function GamePlayView({
                   }}
                 >
                   <VStack gap={compactSheet ? 1 : 2} className="relative">
-                    <FieldLabel
-                      inputID={inputId}
-                      label="Your guess"
-                      isLabelHidden={compactSheet}
-                    />
+                    <HStack gap={2} align="center" justify="between">
+                      <FieldLabel
+                        inputID={inputId}
+                        label="Your guess"
+                        isLabelHidden={compactSheet}
+                      />
+                      <Text color="accent" type="supporting" weight="semibold">
+                        By name · double points
+                      </Text>
+                    </HStack>
                     <HStack gap={2} align="center">
                       <HStack
                         align="center"

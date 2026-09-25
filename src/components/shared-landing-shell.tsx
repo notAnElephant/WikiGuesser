@@ -198,9 +198,9 @@ export function GameLauncher({
               a miss, choose another clue.
             </Text>
             <Text>
-              A correct answer earns 100, 80, 60, 40, 20, or 10 points as more
-              clues are revealed. Map guesses earn half points. Giving up earns
-              0.
+              A correct map guess earns 50, 40, 30, 20, 10, or 5 points as
+              more clues are revealed. Guess by name for double points. Giving
+              up earns 0.
             </Text>
             <Text>
               Play each daily puzzle once, or practise with unlimited free play.

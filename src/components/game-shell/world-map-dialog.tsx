@@ -1,10 +1,5 @@
 "use client";
 
-import { VStack } from "@astryxdesign/core/VStack";
-import { HStack } from "@astryxdesign/core/HStack";
-import { Button } from "@astryxdesign/core/Button";
-import { IconButton } from "@astryxdesign/core/IconButton";
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import {
   COUNTRY_DATA,
   getMapCountryNames,
@@ -15,6 +10,10 @@ import type {
   GuessedCountryMapData,
   SolutionCountryMapData,
 } from "@/src/lib/types";
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { VStack } from "@astryxdesign/core/VStack";
 import { geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import { select } from "d3-selection";
 import {
@@ -905,7 +904,7 @@ export function WorldMapDialog({
           ) : null}
           {presentation === "game" && onCountryGuess ? (
             <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-accent-bg/20 bg-body px-3 py-1.5 text-xs font-semibold text-accent shadow-sm backdrop-blur  sm:left-4 sm:top-4">
-              Tap a country · half points
+              Tap a country
             </span>
           ) : null}
           <svg
