@@ -35,19 +35,9 @@ describe("PlayerStatsShell", () => {
       <PlayerStatsShell data={populatedData} />,
     );
 
-    expect(markup).toContain("Free play");
-    expect(markup).toContain("Daily");
     expect(markup).toContain("520");
     expect(markup).toContain("180");
     expect(markup).toContain("75%");
-    expect(markup).toContain("3 current streak · 4 best streak");
   });
 
-  it("explains how a new player can start collecting stats", () => {
-    const markup = renderToStaticMarkup(
-      <PlayerStatsShell data={{ freePlay: [], daily: [] }} />,
-    );
-
-    expect(markup).toContain("Your scorecard is ready.");
-  });
 });

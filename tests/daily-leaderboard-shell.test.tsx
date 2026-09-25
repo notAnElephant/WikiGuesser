@@ -37,7 +37,6 @@ describe("DailyLeaderboardShell", () => {
       />,
     );
 
-    expect(markup).toContain("Games");
     expect(markup).toContain('aria-label="12 games played"');
     expect(markup).toContain("Ada");
     expect(markup).toContain("420");

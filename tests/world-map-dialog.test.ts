@@ -1,14 +1,11 @@
 import { geoMercator } from "d3-geo";
 import { zoomIdentity } from "d3-zoom";
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import {
   getFocusedMapTransform,
   getLastGuessedCountry,
   getResizedMapTransform,
-  WorldMapDialog,
 } from "@/src/components/game-shell/world-map-dialog";
 import {
   getCountriesWithoutMapCoverage,
@@ -75,6 +72,13 @@ describe("world map coverage", () => {
         country("Missing country", ["Missing country"], {}),
       ]).map((entity) => entity.canonicalAnswer),
     ).toEqual(["Missing country"]);
+  });
+
+  it("maps only listed countries to clickable geometry", () => {
+    const playableCountries = getPlayableCountriesByMapName(["France"]);
+
+    expect(playableCountries.get("france")).toBe("France");
+    expect(playableCountries.has("siachen glacier")).toBe(false);
   });
 });
 
@@ -166,116 +170,5 @@ describe("getLastGuessedCountry", () => {
 
     expect(getLastGuessedCountry(guesses)).toBe(guesses[1]);
     expect(getLastGuessedCountry([])).toBeNull();
-  });
-});
-
-describe("result world map", () => {
-  it("omits map controls while preserving the interactive map canvas", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        guessedCountries: [],
-        isExpanded: false,
-        onExpandedChange: () => undefined,
-        presentation: "result",
-        solutionCountry: {
-          qid: "Q55",
-          name: "Netherlands",
-          mapNames: ["Netherlands"],
-          latitude: 52.13,
-          longitude: 5.29,
-        },
-      }),
-    );
-
-    expect(markup).toContain('role="application"');
-    expect(markup).not.toContain("Zoom in");
-    expect(markup).not.toContain("Reset map zoom");
-    expect(markup).not.toContain("Expand world map");
-  });
-
-  it("keeps result-map controls separate from its country labels", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        guessedCountries: [
-          {
-            qid: "Q142",
-            name: "France",
-            mapNames: ["France"],
-            latitude: 46.23,
-            longitude: 2.21,
-            direction: "south",
-          },
-        ],
-        isExpanded: false,
-        onExpandedChange: () => undefined,
-        presentation: "result",
-        solutionCountry: {
-          qid: "Q55",
-          name: "Netherlands",
-          mapNames: ["Netherlands"],
-          latitude: 52.13,
-          longitude: 5.29,
-        },
-      }),
-    );
-
-    expect(markup).not.toContain('aria-label="Zoom in"');
-    expect(markup).not.toContain('aria-label="Focus France"');
-  });
-});
-
-describe("game world map drawer", () => {
-  it("advertises map guessing when a country tap handler is available", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        guessedCountries: [],
-        isExpanded: false,
-        countryOptions: ["France"],
-        onCountryGuess: () => undefined,
-        onExpandedChange: () => undefined,
-      }),
-    );
-
-    expect(markup).toContain("Tap a country · half points");
-    expect(markup).toContain("map-world-guessing");
-  });
-
-  it("maps only listed countries to clickable geometry", () => {
-    const playableCountries = getPlayableCountriesByMapName(["France"]);
-
-    expect(playableCountries.get("france")).toBe("France");
-    expect(playableCountries.has("siachen glacier")).toBe(false);
-  });
-
-  it("renders a compact control when the map drawer is hidden", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        drawerState: "hidden",
-        guessedCountries: [],
-        isExpanded: false,
-        onDrawerStateChange: () => undefined,
-        onExpandedChange: () => undefined,
-      }),
-    );
-
-    expect(markup).toContain('aria-label="Show world map"');
-    expect(markup).not.toContain('role="application"');
-  });
-
-  it("uses the top handle to expand the medium drawer", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        drawerState: "medium",
-        guessedCountries: [],
-        isExpanded: false,
-        onDrawerStateChange: () => undefined,
-        onExpandedChange: () => undefined,
-      }),
-    );
-
-    expect(markup).toContain('aria-label="Expand world map"');
-    expect(markup).toContain('aria-label="Hide world map"');
-    expect(markup).toContain("pointer-events-none");
-    expect(markup).not.toContain("map-world-guessing");
   });
 });

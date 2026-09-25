@@ -444,7 +444,7 @@ describe("round service", () => {
     expect(result.canonicalAnswer).toBe(correctAnswer);
   });
 
-  it("awards half score for a correct map guess", async () => {
+  it("awards standard score for a correct map guess", async () => {
     const round = await startRound(
       { category: "countries", seed: "alpha" },
       "user_test_map_guess",

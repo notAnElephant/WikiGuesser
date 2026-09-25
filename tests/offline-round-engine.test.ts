@@ -88,7 +88,7 @@ describe("offline round engine", () => {
     );
   });
 
-  it("halves a correct map-guess score and reveals the solution", () => {
+  it("awards standard score for a correct map guess and reveals the solution", () => {
     const round = startOfflineRound(pack, { mode: "classic", seed: "fixed" });
     const entity = pack.entities.find(
       (candidate) => candidate.id === round.state.entityId,

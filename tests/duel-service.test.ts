@@ -279,7 +279,7 @@ describe("duel service", () => {
     );
   });
 
-  it("halves the score for a map guess", async () => {
+  it("awards standard score for a map guess", async () => {
     const current = duel({
       rounds: [
         {

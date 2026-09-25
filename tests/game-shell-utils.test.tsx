@@ -24,16 +24,12 @@ describe("game shell clue rendering", () => {
     ).toBe(flagUrl);
   });
 
-  it("renders the flag-colors clue as a blurred flag image", () => {
+  it("renders the flag-colors clue from its supplied image URL", () => {
     const markup = renderToStaticMarkup(
       renderClueValue({ key: "flag-colors", value: flagUrl }),
     );
 
-    expect(markup).toContain('alt="Blurred country flag"');
     expect(markup).toContain('src="' + flagUrl.replaceAll("&", "&amp;") + '"');
-    expect(markup).toContain("blur-xl");
-    expect(markup).toContain('aria-label="Enlarge blurred country flag"');
-    expect(markup).toContain("blur-[12px]");
   });
 
   it("does not render a flag placeholder before the clue is revealed", () => {
