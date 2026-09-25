@@ -33,10 +33,7 @@ import type {
 } from "@/src/lib/types";
 import {
   Ban,
-  ChevronDown,
-  ChevronUp,
   Eye,
-  GripHorizontal,
   House,
   MoreHorizontal,
   RotateCcw,
@@ -142,16 +139,12 @@ export function GamePlayView({
   const frameRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const clueScrollRef = useRef<HTMLDivElement>(null);
-  const dragStart = useRef<number | null>(null);
-  const didDrag = useRef(false);
   const [isTyping, setIsTyping] = useState(false);
   const { isMobile, height, visibleHeight } = usePlayViewport(
     frameRef,
     isCountryRound,
     isTyping,
   );
-  const [sheetExpanded, setSheetExpanded] = useState(false);
-  const [showCluesWhileTyping, setShowCluesWhileTyping] = useState(false);
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
   const [activeOption, setActiveOption] = useState(-1);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -181,16 +174,14 @@ export function GamePlayView({
       : [];
   const suggestionsOpen = isCountryListOpen && hasCountrySearch;
   const mobileMap = isMobile && isCountryRound;
-  const compactSheet = mobileMap && isTyping && !showCluesWhileTyping;
+  const compactSheet = mobileMap && isTyping;
   const shownClues = isRevealMode ? currentClues : visibleClassicClues;
   const sheetHeight = mobileMap
     ? compactSheet
       ? visibleHeight < 500
         ? "min(64%, calc(var(--spacing-10) * 4))"
         : "min(46%, calc(var(--spacing-10) * 4))"
-      : sheetExpanded || showCluesWhileTyping
-        ? "64%"
-        : `${Math.min(48, 33 + shownClues.length * 5)}%`
+      : "43%"
     : undefined;
   // On a short keyboard viewport, reclaim navigation space for the map.
   const compactViewport = mobileMap && isTyping && visibleHeight < 500;
@@ -210,8 +201,6 @@ export function GamePlayView({
   }, [message, messageRevision, statusAppearance.tone, toast]);
 
   useEffect(() => {
-    setSheetExpanded(false);
-    setShowCluesWhileTyping(false);
     setIsCountryListOpen(false);
     setActiveOption(-1);
     setPendingExit(null);
@@ -245,11 +234,6 @@ export function GamePlayView({
     setIsCountryListOpen(false);
     setActiveOption(-1);
     inputRef.current?.focus({ preventScroll: true });
-  }
-
-  function toggleClues() {
-    if (isTyping) setShowCluesWhileTyping((value) => !value);
-    else setSheetExpanded((value) => !value);
   }
 
   return (
@@ -370,39 +354,6 @@ export function GamePlayView({
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
-          {mobileMap ? (
-            <Button
-              label="Resize clue sheet"
-              variant="ghost"
-              icon={<GripHorizontal className="text-secondary" />}
-              className="h-6 shrink-0 touch-none rounded-none"
-              width="100%"
-              aria-expanded={sheetExpanded}
-              aria-controls={cluesId}
-              onPointerDown={(event) => {
-                dragStart.current = event.clientY;
-                didDrag.current = false;
-                event.currentTarget.setPointerCapture(event.pointerId);
-              }}
-              onPointerUp={(event) => {
-                if (dragStart.current !== null) {
-                  const distance = event.clientY - dragStart.current;
-                  didDrag.current = Math.abs(distance) > 16;
-                  if (didDrag.current) setSheetExpanded(distance < 0);
-                }
-                dragStart.current = null;
-              }}
-              onPointerCancel={() => {
-                dragStart.current = null;
-                didDrag.current = true;
-              }}
-              onClick={() => {
-                if (!didDrag.current) toggleClues();
-              }}
-            >
-              <Text className="sr-only">Resize clue sheet</Text>
-            </Button>
-          ) : null}
           <HStack
             justify="between"
             align="center"
@@ -417,39 +368,6 @@ export function GamePlayView({
               <Text className="min-w-0 truncate" color="secondary">
                 {renderClueValue(latestClue)}
               </Text>
-            ) : null}
-            {mobileMap ? (
-              <Button
-                label={
-                  compactSheet
-                    ? "Expand clues"
-                    : sheetExpanded || showCluesWhileTyping
-                      ? "Collapse clues"
-                      : "Expand clues"
-                }
-                variant="ghost"
-                size="sm"
-                className="shrink-0"
-                icon={
-                  sheetExpanded || showCluesWhileTyping ? (
-                    <ChevronDown />
-                  ) : (
-                    <ChevronUp />
-                  )
-                }
-                aria-expanded={
-                  !compactSheet && (sheetExpanded || showCluesWhileTyping)
-                }
-                aria-controls={cluesId}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={toggleClues}
-              >
-                {compactSheet
-                  ? "Expand"
-                  : sheetExpanded || showCluesWhileTyping
-                    ? "Collapse"
-                    : "Expand"}
-              </Button>
             ) : null}
           </HStack>
           <VStack
@@ -587,7 +505,6 @@ export function GamePlayView({
                           }
                           onFocus={() => {
                             setIsTyping(true);
-                            setShowCluesWhileTyping(false);
                             setIsCountryListOpen(hasCountrySearch);
                           }}
                           onBlur={() => {
@@ -725,6 +642,7 @@ export function GamePlayView({
               {showRestartButton ? (
                 <Button
                   label={restartButtonLabel}
+                  icon={<RotateCcw />}
                   onClick={startRound}
                   isDisabled={isBusy}
                   variant="primary"
@@ -733,6 +651,7 @@ export function GamePlayView({
               {showHomeButton ? (
                 <Button
                   label={homeButtonLabel}
+                  icon={<House />}
                   onClick={clearForCategoryChoice}
                   variant="secondary"
                 />
