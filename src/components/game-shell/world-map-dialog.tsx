@@ -892,16 +892,6 @@ export function WorldMapDialog({
               />
             </>
           ) : null}
-          {presentation === "game" && embedded ? (
-            <Button
-              className="absolute right-3 top-3 z-10 hidden lg:inline-flex"
-              elevation="high"
-              label={isMapExpanded ? "Minimize" : "Expand"}
-              icon={isMapExpanded ? <ChevronDown /> : <ChevronUp />}
-              onClick={() => onExpandedChange(!isMapExpanded)}
-              variant="secondary"
-            />
-          ) : null}
           {presentation === "game" && onCountryGuess ? (
             <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-accent-bg/20 bg-body px-3 py-1.5 text-xs font-semibold text-accent shadow-sm backdrop-blur  sm:left-4 sm:top-4">
               Tap a country
@@ -1080,7 +1070,7 @@ export function WorldMapDialog({
               })
             : null}
 
-          {presentation === "result" && projection && solutionCountry
+          {projection && solutionCountry
             ? (() => {
                 const point = projection([
                   solutionCountry.longitude,
