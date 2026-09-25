@@ -52,20 +52,6 @@ export function HeaderAuthControls({
         />
       </Show>
       <Show when="signed-in">
-        <IconButton
-          className="hidden min-h-11 min-w-11 sm:inline-flex sm:min-h-0 sm:min-w-0"
-          href="/stats"
-          icon={
-            <ChartNoAxesCombined
-              aria-hidden="true"
-              className="size-4"
-              strokeWidth={2.2}
-            />
-          }
-          label="My stats"
-          tooltip="My stats"
-          variant="ghost"
-        />
         <AccountUserButton
           adminDailyAnswersPage={adminDailyAnswersPage}
           isAdmin={isAdmin}
@@ -73,5 +59,26 @@ export function HeaderAuthControls({
       </Show>
       <MobileMenu isAdmin={isAdmin} />
     </>
+  );
+}
+
+export function HeaderStatsButton() {
+  return (
+    <Show when="signed-in">
+      <IconButton
+        className="hidden min-h-11 min-w-11 sm:inline-flex sm:min-h-0 sm:min-w-0"
+        href="/stats"
+        icon={
+          <ChartNoAxesCombined
+            aria-hidden="true"
+            className="size-4"
+            strokeWidth={2.2}
+          />
+        }
+        label="My stats"
+        tooltip="My stats"
+        variant="ghost"
+      />
+    </Show>
   );
 }
