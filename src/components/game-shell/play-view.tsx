@@ -316,7 +316,7 @@ export function GamePlayView({
         gap={0}
         className={
           isCountryRound
-            ? "min-h-0 flex-1 lg:relative lg:block lg:h-[80dvh] lg:flex-none"
+            ? "min-h-0 flex-1 bg-muted lg:relative lg:block lg:h-[80dvh] lg:flex-none"
             : "min-h-0 flex-1"
         }
       >
@@ -350,26 +350,55 @@ export function GamePlayView({
           as="section"
           aria-label="Clues and guess"
           height={sheetHeight}
-          className={`relative min-h-0 shrink-0 bg-surface ${isCountryRound ? "rounded-t-3xl border-t border-border lg:absolute lg:bottom-4 lg:right-4 lg:z-10 lg:max-h-[90%] lg:w-96 lg:rounded-xl lg:border lg:shadow-lg" : "w-full rounded-xl border border-border"}`}
+          className={`relative min-h-0 shrink-0 bg-surface ${isCountryRound ? "rounded-t-3xl border-t border-border lg:absolute lg:right-4 lg:top-4 lg:z-10 lg:max-h-[90%] lg:min-h-56 lg:w-104 lg:rounded-xl lg:border lg:border-accent-bg/20 lg:shadow-xl" : "w-full rounded-xl border border-border"}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
-          <HStack
-            justify="between"
-            align="center"
-            gap={2}
+          <VStack
+            gap={compactSheet ? 0 : 2}
             paddingInline={4}
-            className="min-h-8 shrink-0 lg:py-2"
+            paddingBlock={compactSheet ? 1 : 3}
+            className={`shrink-0 border-b border-accent-bg/15 bg-accent-muted ${isCountryRound ? "rounded-t-3xl lg:rounded-t-xl" : "rounded-t-xl"}`}
           >
-            <Text weight="semibold" id={`${cluesId}-heading`} textWrap="nowrap">
-              Clues {revealedCount}/{currentClues.length}
-            </Text>
-            {compactSheet && latestClue ? (
-              <Text className="min-w-0 truncate" color="secondary">
-                {renderClueValue(latestClue)}
+            <HStack justify="between" align="center" gap={2}>
+              <Text
+                type="large"
+                weight="semibold"
+                id={`${cluesId}-heading`}
+                textWrap="nowrap"
+              >
+                Clue sheet
               </Text>
+              {compactSheet && latestClue ? (
+                <Text className="min-w-0 truncate" color="secondary">
+                  {renderClueValue(latestClue)}
+                </Text>
+              ) : (
+                <Text color="secondary" type="supporting" textWrap="nowrap">
+                  {Math.max(currentClues.length - revealedCount, 0)} left
+                </Text>
+              )}
+            </HStack>
+            {!compactSheet && currentClues.length > 0 ? (
+              <HStack
+                gap={1.5}
+                role="progressbar"
+                aria-label="Clues revealed"
+                aria-valuemin={0}
+                aria-valuemax={currentClues.length}
+                aria-valuenow={revealedCount}
+              >
+                {currentClues.map((clue) => (
+                  <VStack
+                    as="span"
+                    key={clue.key}
+                    aria-hidden="true"
+                    className={`h-2 flex-1 rounded-full ${clue.isRevealed ? "bg-accent-bg" : "bg-border"}`}
+                  />
+                ))}
+              </HStack>
             ) : null}
-          </HStack>
+          </VStack>
           <VStack
             id={cluesId}
             ref={clueScrollRef}
@@ -386,7 +415,7 @@ export function GamePlayView({
               hasDividers
               aria-labelledby={`${cluesId}-heading`}
             >
-              {shownClues.map((clue) => {
+              {shownClues.map((clue, index) => {
                 const remaining = round
                   ? getClueUnlockRoundsRemaining(currentClues, clue)
                   : 0;
@@ -394,6 +423,11 @@ export function GamePlayView({
                   <ListItem
                     key={clue.key}
                     label={clue.label}
+                    className={
+                      isRevealMode && index === shownClues.length - 1
+                        ? "border-b-0"
+                        : undefined
+                    }
                     endContent={
                       clue.isRevealed || !round ? (
                         <Text
@@ -435,7 +469,9 @@ export function GamePlayView({
               paddingInline={3}
               paddingBlock={2}
               gap={2}
-              className="shrink-0 border-t border-border"
+              className={
+                isRevealMode ? "shrink-0" : "shrink-0 border-t border-border"
+              }
             >
               {isRevealStep ? (
                 <Text color="secondary">
