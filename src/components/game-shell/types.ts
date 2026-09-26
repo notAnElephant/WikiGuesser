@@ -35,6 +35,7 @@ export interface RoundOutcome {
   status: "win" | "loss";
   canonicalAnswer: string;
   score: number;
+  guessMethod?: "map" | "text";
   kind: RoundKind;
   category: EntityCategory;
   mode: GameMode;

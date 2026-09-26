@@ -11,17 +11,70 @@ interface AppToastOptions {
 
 type ToastTone = "error" | "info" | "success" | "warning";
 
-function promoteToastViewport() {
+const toastViewportOrigins = new WeakMap<
+  HTMLElement,
+  { restore: () => void }
+>();
+
+function setToastViewportOpen(viewport: HTMLElement, isOpen: boolean) {
+  try {
+    if (isOpen) {
+      viewport.showPopover();
+    } else if (viewport.matches(":popover-open")) {
+      viewport.hidePopover();
+    }
+  } catch {
+    // The viewport may already have changed popover state during a render.
+  }
+}
+
+export function promoteToastViewport() {
   requestAnimationFrame(() => {
     const viewport = document.querySelector<HTMLElement>(
       '[popover="manual"][aria-label="Notifications"]',
     );
-    if (!viewport?.matches(":popover-open")) {
+    if (!viewport) {
       return;
     }
 
-    viewport.hidePopover();
-    viewport.showPopover();
+    const dialog = document.querySelector<HTMLDialogElement>("dialog[open]");
+    const origin = toastViewportOrigins.get(viewport);
+
+    if (dialog && !dialog.contains(viewport)) {
+      const parent = viewport.parentElement;
+      if (!parent) {
+        return;
+      }
+
+      const nextSibling = viewport.nextSibling;
+      setToastViewportOpen(viewport, false);
+      dialog.append(viewport);
+      setToastViewportOpen(viewport, true);
+
+      const restore = () => {
+        if (parent.isConnected) {
+          setToastViewportOpen(viewport, false);
+          parent.insertBefore(
+            viewport,
+            nextSibling?.parentNode === parent ? nextSibling : null,
+          );
+          setToastViewportOpen(viewport, true);
+        }
+        toastViewportOrigins.delete(viewport);
+      };
+
+      toastViewportOrigins.set(viewport, { restore });
+      dialog.addEventListener("close", restore, { once: true });
+      return;
+    }
+
+    if (!dialog && origin) {
+      origin.restore();
+      return;
+    }
+
+    setToastViewportOpen(viewport, false);
+    setToastViewportOpen(viewport, true);
   });
 }
 

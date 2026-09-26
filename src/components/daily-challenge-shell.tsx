@@ -481,6 +481,9 @@ export function DailyChallengeShell({
             status: payload.isCorrect ? "win" : "loss",
             canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
             score: payload.isCorrect ? payload.score : 0,
+            ...(payload.isCorrect
+              ? { guessMethod: isMapGuess ? "map" as const : "text" as const }
+              : {}),
             kind: "daily",
             category: payload.category,
             mode: payload.mode,

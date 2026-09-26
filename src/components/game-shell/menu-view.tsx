@@ -1,8 +1,3 @@
-import { Button } from "@astryxdesign/core/Button";
-import { Card } from "@astryxdesign/core/Card";
-import { Icon } from "@astryxdesign/core/Icon";
-import { SelectableCard } from "@astryxdesign/core/SelectableCard";
-import { Token } from "@astryxdesign/core/Token";
 import {
   CATEGORY_META,
   GAME_MODE_OPTIONS,
@@ -13,6 +8,11 @@ import {
   getModeMeta,
 } from "@/src/components/game-shell/utils";
 import type { CategorySummary, GameMode } from "@/src/lib/types";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Icon } from "@astryxdesign/core/Icon";
+import { SelectableCard } from "@astryxdesign/core/SelectableCard";
+import { Token } from "@astryxdesign/core/Token";
 import { Compass, Play, Shuffle, Sparkles } from "lucide-react";
 
 interface GameMenuViewProps {
@@ -56,8 +56,18 @@ export function GameMenuView({
     <div className="grid min-h-[calc(100dvh-1rem)] gap-4 sm:min-h-[calc(100dvh-1.5rem)] sm:gap-5">
       <Card className="overflow-hidden p-5 sm:p-7" elevation="low" padding={0}>
         <div className="flex flex-wrap gap-2">
-          <Token color="purple" icon={<Icon icon={Sparkles} size="sm" />} label="Free play" size="sm" />
-          <Token color="gray" icon={<Icon icon={Shuffle} size="sm" />} label={`${totalEntityCount} answers live`} size="sm" />
+          <Token
+            color="purple"
+            icon={<Icon icon={Sparkles} size="sm" />}
+            label="Free play"
+            size="sm"
+          />
+          <Token
+            color="gray"
+            icon={<Icon icon={Shuffle} size="sm" />}
+            label={`${totalEntityCount} answers live`}
+            size="sm"
+          />
         </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] lg:items-end">
@@ -93,7 +103,7 @@ export function GameMenuView({
             </Card>
 
             <Card padding={4}>
-              <div className="mb-3 inline-flex rounded-2xl bg-accent-muted p-2.5 bg-accent-muted">
+              <div className="mb-3 inline-flex rounded-2xl bg-accent-muted p-2.5">
                 <SelectedModeIcon
                   aria-hidden="true"
                   className="size-5 text-primary"
@@ -219,7 +229,7 @@ export function GameMenuView({
                       padding={4}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <span className="inline-flex rounded-2xl bg-accent-muted p-2.5 bg-accent-muted">
+                        <span className="inline-flex rounded-2xl bg-accent-muted p-2.5">
                           <ModeIcon
                             aria-hidden="true"
                             className="size-5 text-primary"
@@ -286,7 +296,7 @@ export function GameMenuView({
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="inline-flex rounded-2xl bg-accent-muted p-2.5 bg-accent-muted">
+                <span className="inline-flex rounded-2xl bg-accent-muted p-2.5">
                   <SelectedModeIcon
                     aria-hidden="true"
                     className="size-5 text-primary"

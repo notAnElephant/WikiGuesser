@@ -25,9 +25,7 @@ export function CountryFlagPreview({
         <img
           alt={`Flag of ${countryName}`}
           className="h-auto max-h-10 w-auto max-w-16 object-contain"
-          height={44}
           src={src}
-          width={64}
         />
       </button>
       <Dialog
@@ -44,9 +42,7 @@ export function CountryFlagPreview({
         <img
           alt={`Flag of ${countryName}, enlarged`}
           className="h-auto max-h-full w-full rounded-lg border border-border object-contain"
-          height={480}
           src={src}
-          width={720}
         />
       </Dialog>
     </>

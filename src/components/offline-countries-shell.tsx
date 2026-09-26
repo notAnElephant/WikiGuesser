@@ -248,7 +248,7 @@ export function OfflineCountriesShell() {
       setGuess("");
 
       if (outcome.isComplete) {
-        await finishRound(outcome);
+        await finishRound(outcome, countryName ? "map" : "text");
         return;
       }
 
@@ -267,7 +267,10 @@ export function OfflineCountriesShell() {
     }
   }
 
-  async function finishRound(outcome: ReturnType<typeof submitOfflineGuess>) {
+  async function finishRound(
+    outcome: ReturnType<typeof submitOfflineGuess>,
+    guessMethod: "map" | "text",
+  ) {
     setRound(null);
     setRoundState(null);
     setCompletedGuesses(outcome.guesses);
@@ -279,6 +282,7 @@ export function OfflineCountriesShell() {
       mode: outcome.mode,
       playOrigin: "offline",
       score: outcome.score,
+      ...(outcome.isCorrect ? { guessMethod } : {}),
       solutionCountry: outcome.solutionCountry,
       status: outcome.isCorrect ? "win" : "loss",
     });

@@ -343,6 +343,7 @@ export function useGameShellController({
             status: "win",
             canonicalAnswer: data.canonicalAnswer ?? "Unknown",
             score: data.score,
+            guessMethod: isMapGuess ? "map" : "text",
             kind: data.kind,
             category: data.category,
             mode: data.mode,

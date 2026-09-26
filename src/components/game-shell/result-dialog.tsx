@@ -1,3 +1,4 @@
+import { promoteToastViewport } from "@/src/components/app-toaster";
 import { FeedbackForm } from "@/src/components/feedback-form";
 import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
@@ -12,6 +13,8 @@ import { HStack } from "@astryxdesign/core/HStack";
 import { Icon } from "@astryxdesign/core/Icon";
 import { StackItem } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
+import { Token } from "@astryxdesign/core/Token";
+import { Tooltip } from "@astryxdesign/core/Tooltip";
 import { VStack } from "@astryxdesign/core/VStack";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -25,7 +28,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const WorldMapDialog = dynamic(
   () =>
@@ -74,6 +77,10 @@ export function GameResultDialog({
 }: GameResultDialogProps) {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isRatingPromptVisible, setIsRatingPromptVisible] = useState(true);
+  useEffect(() => {
+    promoteToastViewport();
+  }, []);
+
   const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const flagUrl = result.clues.find(
     (clue) => clue.key === "flag-colors",
@@ -132,18 +139,25 @@ export function GameResultDialog({
 
           <Grid className="mt-3" columns={{ minWidth: 220, max: 2 }} gap={2}>
             <Card className="rounded-lg" padding={2}>
-              <HStack align="center" gap={2}>
-                <Icon color="accent" icon={Trophy} size="md" />
-                <VStack gap={0}>
-                  <Text
-                    className="uppercase tracking-wider"
-                    color="secondary"
-                    type="supporting"
-                  >
-                    Score
-                  </Text>
-                  <Text weight="semibold">{result.score} pts</Text>
-                </VStack>
+              <HStack align="center" gap={2} justify="between">
+                <HStack align="center" gap={2}>
+                  <Icon color="accent" icon={Trophy} size="md" />
+                  <VStack gap={0}>
+                    <Text
+                      className="uppercase tracking-wider"
+                      color="secondary"
+                      type="supporting"
+                    >
+                      Score
+                    </Text>
+                    <Text weight="semibold">{result.score} pts</Text>
+                  </VStack>
+                </HStack>
+                {result.status === "win" && result.guessMethod === "text" ? (
+                  <Tooltip content="Guessing by name gives you double points!">
+                    <Token color="green" label="2× points" size="sm" />
+                  </Tooltip>
+                ) : null}
               </HStack>
             </Card>
             <Card className="rounded-lg" padding={2}>

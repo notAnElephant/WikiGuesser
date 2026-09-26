@@ -163,7 +163,7 @@ export function GamePlayView({
   const isRevealMode = currentMode === "blurred-lines";
   const isRevealStep = Boolean(round && isRevealMode && !round.canGuess);
   const potentialScore = round
-    ? getScoreForGuess(revealedCount + (isRevealStep ? 1 : 0))
+    ? getScoreForGuess(revealedCount + (isRevealStep ? 1 : 0), "map")
     : displayScore;
   const hasCountrySearch = normalizeGuess(guess).length > 0;
   const matchingCountries =

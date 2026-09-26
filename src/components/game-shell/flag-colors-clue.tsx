@@ -10,8 +10,7 @@ interface FlagColorsClueProps {
   revealed?: boolean;
 }
 
-const blurredFlagClass =
-  "aspect-[3/2] w-full scale-105 object-cover blur-md";
+const blurredFlagClass = "h-auto w-full blur-md";
 
 export function FlagColorsClue({ src, revealed = false }: FlagColorsClueProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -26,11 +25,9 @@ export function FlagColorsClue({ src, revealed = false }: FlagColorsClueProps) {
       >
         <img
           alt={revealed ? "Country flag" : "Blurred country flag"}
-          className={revealed ? "aspect-[3/2] w-full object-cover" : blurredFlagClass}
-          height={320}
+          className={revealed ? "h-auto w-full" : blurredFlagClass}
           loading="lazy"
           src={src}
-          width={480}
         />
         <span className="pointer-events-none absolute bottom-2 right-2 inline-flex size-8 items-center justify-center rounded-full bg-overlay text-on-dark shadow-sm backdrop-blur-sm">
           <Maximize2 aria-hidden="true" className="size-4" strokeWidth={2.2} />
@@ -57,10 +54,8 @@ export function FlagColorsClue({ src, revealed = false }: FlagColorsClueProps) {
         <div className="w-full overflow-hidden rounded-lg border border-border bg-surface">
           <img
             alt={revealed ? "Country flag, enlarged" : "Blurred country flag, enlarged"}
-            className={revealed ? "aspect-[3/2] max-h-[80dvh] w-full object-cover" : "aspect-[3/2] max-h-[80dvh] w-full scale-105 object-cover blur-[clamp(16px,3.2vw,32px)]"}
-            height={960}
+            className={revealed ? "mx-auto block h-auto max-h-[80dvh] max-w-full object-contain" : "mx-auto block h-auto max-h-[80dvh] max-w-full object-contain blur-2xl"}
             src={src}
-            width={1440}
           />
         </div>
       </Dialog>

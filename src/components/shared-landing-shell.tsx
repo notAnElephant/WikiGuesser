@@ -497,7 +497,7 @@ function FreePlaySetupView({ mode }: { mode: GameMode }) {
       <HStack gap={3} justify="between" wrap="wrap">
         <Text weight="semibold">Free play · {modeMeta.label} · Countries</Text>
         <Text color="accent" weight="semibold">
-          Available score: 100 pts · 0/6 clues
+          Available score: 50 pts · 0/6 clues
         </Text>
       </HStack>
       <Card elevation="low" padding={5}>
@@ -1286,6 +1286,7 @@ export function SharedLandingShell({
             status: "win",
             canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
             score: payload.score,
+            guessMethod: isMapGuess ? "map" : "text",
             kind: payload.kind,
             category: payload.category,
             mode: payload.mode,

@@ -229,15 +229,6 @@ export function WorldMapDialog({
   const [mapTransform, setMapTransform] = useState<ZoomTransform>(zoomIdentity);
   const [drawerDragOffsetY, setDrawerDragOffsetY] = useState(0);
   const [isDrawerDragging, setIsDrawerDragging] = useState(false);
-  const guessedNames = useMemo(
-    () =>
-      new Set(
-        guessedCountries.flatMap((country) => [
-          ...getMapCountryNames(country.mapNames),
-        ]),
-      ),
-    [guessedCountries],
-  );
   const guessedCountryByName = useMemo(() => {
     const countriesByName = new Map<string, DuelResultGuessedCountry>();
 
@@ -796,8 +787,8 @@ export function WorldMapDialog({
           : presentation === "result"
             ? "relative w-full"
             : isMapExpanded
-              ? "fixed inset-0 z-[80] grid place-items-center bg-overlay p-2 backdrop-blur-[3px] sm:p-5"
-              : "pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-2 sm:justify-end sm:px-5 lg:pointer-events-auto lg:static lg:z-auto lg:block lg:px-0"
+              ? "fixed inset-0 z-80 grid place-items-center bg-overlay p-2 backdrop-blur-[3px] sm:p-5"
+              : "pointer-events-none fixed inset-0 z-70 flex items-end justify-center px-2 sm:justify-end sm:px-5 lg:pointer-events-auto lg:static lg:z-auto lg:block lg:px-0"
       }
       onMouseDown={(event) => {
         if (isMapExpanded && event.target === event.currentTarget) {
