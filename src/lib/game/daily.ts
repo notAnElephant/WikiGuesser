@@ -48,6 +48,35 @@ function hashSeed(value: string) {
   return hash >>> 0;
 }
 
+function shuffleWithSeed<T>(items: T[], seed: string) {
+  const shuffled = [...items];
+  let state = hashSeed(seed);
+
+  // Mulberry32 gives a small deterministic PRNG suitable for a daily deck.
+  const random = () => {
+    state += 0x6d2b79f5;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [
+      shuffled[swapIndex]!,
+      shuffled[index]!,
+    ];
+  }
+
+  return shuffled;
+}
+
+function getUtcDayOrdinal(dayKey: string) {
+  const [year, month, day] = dayKey.split("-").map(Number);
+  return Math.floor(Date.UTC(year!, month! - 1, day!) / 86_400_000);
+}
+
 export function selectDailyChallengeEntity(
   entities: NormalizedEntity[],
   dayKey: string,
@@ -60,6 +89,22 @@ export function selectDailyChallengeEntity(
 
   if (matchingEntities.length === 0) {
     throw new Error("No playable entities are available for that category.");
+  }
+
+  if (category === "countries") {
+    const dayOrdinal = getUtcDayOrdinal(dayKey);
+    const cycle = Math.floor(dayOrdinal / matchingEntities.length);
+    const position =
+      ((dayOrdinal % matchingEntities.length) + matchingEntities.length) %
+      matchingEntities.length;
+    // QIDs are the stable identity stored in DailyChallenge.entityQid. Sort
+    // before shuffling so a snapshot's row order cannot alter the deck.
+    const stablePool = [...matchingEntities].sort((left, right) =>
+      left.qid.localeCompare(right.qid),
+    );
+    const deck = shuffleWithSeed(stablePool, `daily-country-cycle:${cycle}`);
+
+    return deck[position]!;
   }
 
   const seed = `${dayKey}:${category}:${mode}`;
