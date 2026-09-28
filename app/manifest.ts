@@ -9,19 +9,19 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         purpose: "any",
         sizes: "192x192",
-        src: "/icons/icon-192.png?v=blue-20260917",
+        src: "/icons/icon-blue-192-20260928.png",
         type: "image/png",
       },
       {
         purpose: "any",
         sizes: "512x512",
-        src: "/icons/icon-512.png?v=blue-20260917",
+        src: "/icons/icon-blue-512-20260928.png",
         type: "image/png",
       },
       {
         purpose: "maskable",
         sizes: "512x512",
-        src: "/icons/icon-maskable-512.png?v=blue-20260917",
+        src: "/icons/icon-maskable-blue-20260928.png",
         type: "image/png",
       },
     ],

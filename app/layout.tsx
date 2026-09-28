@@ -67,6 +67,13 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: "/icons/icon-blue-20260928.png", type: "image/png", sizes: "512x512" },
+      { url: "/icons/favicon-blue-20260928.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/icons/apple-icon-blue-20260928.png", type: "image/png", sizes: "180x180" }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
