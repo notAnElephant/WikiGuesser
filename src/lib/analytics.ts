@@ -60,7 +60,7 @@ type AnalyticsEvents = {
 // exceptions to the production project.
 export const postHogProjectToken =
   process.env.NODE_ENV === "production"
-    ? process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN || undefined
+    ? process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
     : undefined;
 
 export const isPostHogConfigured = Boolean(postHogProjectToken);

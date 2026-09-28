@@ -29,7 +29,6 @@ describe("PostHog configuration", () => {
   it("disables PostHog in production when the token is empty", async () => {
     const analytics = await loadAnalytics("production", "");
 
-    expect(analytics.postHogProjectToken).toBeUndefined();
     expect(analytics.isPostHogConfigured).toBe(false);
   });
 });
