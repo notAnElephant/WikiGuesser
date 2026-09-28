@@ -84,15 +84,15 @@ export function getEffectiveOfflineClues(
 function getClues(
   entity: OfflineCountryEntity,
   state: OfflineRoundState,
-  revealAll = false,
+  revealAllValues = false,
 ): RoundClue[] {
   const revealed = new Set(state.revealedClueKeys);
   return getEffectiveOfflineClues(entity, state.mode, state.continent).map(
     (clue) => {
-      const isRevealed = revealAll || revealed.has(clue.key);
+      const isRevealed = revealed.has(clue.key);
       return {
         ...clue,
-        value: isRevealed ? clue.value : null,
+        value: isRevealed || revealAllValues ? clue.value : null,
         prefetchedValue: clue.value,
         isRevealed,
         ...(clue.key === "currency"
@@ -111,7 +111,7 @@ function getClues(
 function buildProgress(
   entity: OfflineCountryEntity,
   state: OfflineRoundState,
-  revealAll = false,
+  revealAllValues = false,
 ): OfflineRoundProgress {
   const effectiveClues = getEffectiveOfflineClues(
     entity,
@@ -126,7 +126,7 @@ function buildProgress(
     category: "countries",
     continent: state.continent,
     mode: state.mode,
-    clues: getClues(entity, state, revealAll),
+    clues: getClues(entity, state, revealAllValues),
     revealedClues: effectiveClues.filter((clue) => revealed.has(clue.key)),
     remainingClues: Math.max(
       effectiveClues.length - state.revealedClueKeys.length,

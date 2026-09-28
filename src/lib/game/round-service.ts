@@ -356,7 +356,7 @@ export async function submitGuess(
     const result: GuessRoundResult = {
       roundId: roundState.roundId,
       token: null,
-      ...buildRoundProgress(entity, roundState, { revealAll: true }),
+      ...buildRoundProgress(entity, roundState, { revealAllValues: true }),
       isCorrect: true,
       isComplete: true,
       canonicalAnswer: entity.canonicalAnswer,
@@ -407,7 +407,7 @@ export async function submitGuess(
     const result: GuessRoundResult = {
       roundId: roundState.roundId,
       token: null,
-      ...buildRoundProgress(entity, roundState, { revealAll: true }),
+      ...buildRoundProgress(entity, roundState, { revealAllValues: true }),
       isCorrect: false,
       isComplete: true,
       canonicalAnswer: entity.canonicalAnswer,
@@ -456,7 +456,7 @@ export async function submitGuess(
   const result: GuessRoundResult = {
     roundId: roundState.roundId,
     token: null,
-    ...buildRoundProgress(entity, roundState, { revealAll: true }),
+    ...buildRoundProgress(entity, roundState, { revealAllValues: true }),
     isCorrect: false,
     isComplete: true,
     canonicalAnswer: entity.canonicalAnswer,
@@ -500,7 +500,7 @@ export async function giveUpRound(
   const result: GuessRoundResult = {
     roundId: roundState.roundId,
     token: null,
-    ...buildRoundProgress(entity, roundState, { revealAll: true }),
+    ...buildRoundProgress(entity, roundState, { revealAllValues: true }),
     isCorrect: false,
     isComplete: true,
     canonicalAnswer: entity.canonicalAnswer,

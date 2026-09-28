@@ -34,6 +34,7 @@ import type {
 import {
   Ban,
   Eye,
+  EyeOff,
   House,
   MoreHorizontal,
   RotateCcw,
@@ -175,7 +176,12 @@ export function GamePlayView({
   const suggestionsOpen = isCountryListOpen && hasCountrySearch;
   const mobileMap = isMobile && isCountryRound;
   const compactSheet = mobileMap && isTyping;
-  const shownClues = isRevealMode ? currentClues : visibleClassicClues;
+  const shownClues =
+    view === "result"
+      ? currentClues
+      : isRevealMode
+        ? currentClues
+        : visibleClassicClues;
   const sheetHeight = mobileMap
     ? compactSheet
       ? visibleHeight < 500
@@ -375,7 +381,9 @@ export function GamePlayView({
                 </Text>
               ) : (
                 <Text color="secondary" type="supporting" textWrap="nowrap">
-                  {Math.max(currentClues.length - revealedCount, 0)} left
+                  {view === "result"
+                    ? `${revealedCount} seen in game`
+                    : `${Math.max(currentClues.length - revealedCount, 0)} left`}
                 </Text>
               )}
             </HStack>
@@ -428,11 +436,31 @@ export function GamePlayView({
                         ? "border-b-0"
                         : undefined
                     }
+                    startContent={
+                      view === "result" ? (
+                        clue.isRevealed ? (
+                          <Eye
+                            aria-label="Seen during the game"
+                            className="size-4 text-accent"
+                          />
+                        ) : (
+                          <EyeOff
+                            aria-label="Shown after the game"
+                            className="size-4 text-secondary"
+                          />
+                        )
+                      ) : undefined
+                    }
                     endContent={
                       clue.isRevealed || !round ? (
                         <Text
                           className="max-w-48 break-words text-right"
-                          weight="medium"
+                          weight={clue.isRevealed ? "medium" : undefined}
+                          color={
+                            view === "result" && !clue.isRevealed
+                              ? "secondary"
+                              : undefined
+                          }
                         >
                           {renderClueValue(clue, Boolean(result))}
                         </Text>

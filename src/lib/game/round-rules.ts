@@ -59,16 +59,17 @@ export function getEffectiveRoundClues(
 export function getRoundClues(
   entity: NormalizedEntity,
   state: RoundRuleState,
-  options?: { revealAll?: boolean },
+  options?: { revealAllValues?: boolean },
 ): RoundClue[] {
   const revealedClueSet = new Set(state.revealedClueKeys);
   return getEffectiveRoundClues(entity, state.mode, state.continent).map(
     (clue) => {
-      const isRevealed = options?.revealAll || revealedClueSet.has(clue.key);
+      const isRevealed = revealedClueSet.has(clue.key);
+      const hasValue = isRevealed || options?.revealAllValues;
       return {
         key: clue.key,
         label: clue.label,
-        value: isRevealed ? clue.value : null,
+        value: hasValue ? clue.value : null,
         prefetchedValue: clue.value,
         isRevealed,
         difficulty: clue.difficulty,
@@ -89,7 +90,7 @@ export function getRoundClues(
 export function buildRoundProgress(
   entity: NormalizedEntity,
   state: RoundRuleState,
-  options?: { revealAll?: boolean },
+  options?: { revealAllValues?: boolean },
 ): RoundRuleProgress {
   const effectiveClues = getEffectiveRoundClues(
     entity,

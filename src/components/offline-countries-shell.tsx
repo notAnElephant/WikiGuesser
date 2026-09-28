@@ -269,7 +269,7 @@ export function OfflineCountriesShell() {
 
   async function finishRound(
     outcome: ReturnType<typeof submitOfflineGuess>,
-    guessMethod: "map" | "text",
+    guessMethod?: "map" | "text",
   ) {
     setRound(null);
     setRoundState(null);
