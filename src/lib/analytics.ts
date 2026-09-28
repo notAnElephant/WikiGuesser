@@ -56,9 +56,14 @@ type AnalyticsEvents = {
   };
 };
 
-export const isPostHogConfigured = Boolean(
-  process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
-);
+// Local `next dev` sessions would otherwise send development-only React
+// exceptions to the production project.
+export const postHogProjectToken =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN || undefined
+    : undefined;
+
+export const isPostHogConfigured = Boolean(postHogProjectToken);
 
 export function captureAnalyticsEvent<Event extends keyof AnalyticsEvents>(
   event: Event,
