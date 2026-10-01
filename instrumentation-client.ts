@@ -1,9 +1,9 @@
 import posthog from "posthog-js";
 
-const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
+import { postHogProjectToken } from "@/src/lib/analytics";
 
-if (projectToken) {
-  posthog.init(projectToken, {
+if (postHogProjectToken) {
+  posthog.init(postHogProjectToken, {
     api_host:
       process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
     autocapture: false,
