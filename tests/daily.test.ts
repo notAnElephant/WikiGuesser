@@ -89,4 +89,23 @@ describe("daily helpers", () => {
     expect(first.id).toBe(second.id);
     expect(first.category).toBe("countries");
   });
+
+  it("uses different countries for the two daily modes", () => {
+    for (const dayKey of ["2026-04-09", "2026-09-29", "2026-09-30"]) {
+      const classic = selectDailyChallengeEntity(
+        demoSnapshot.entities,
+        dayKey,
+        "countries",
+        "classic",
+      );
+      const blurredLines = selectDailyChallengeEntity(
+        demoSnapshot.entities,
+        dayKey,
+        "countries",
+        "blurred-lines",
+      );
+
+      expect(blurredLines.qid).not.toBe(classic.qid);
+    }
+  });
 });

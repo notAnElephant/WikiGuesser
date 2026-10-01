@@ -3,7 +3,7 @@ import type {
   GameMode,
   NormalizedEntity,
 } from "@/src/lib/types";
-import { DAILY_RESET_TIME_ZONE } from "@/src/lib/types";
+import { DAILY_RESET_TIME_ZONE, GAME_MODES } from "@/src/lib/types";
 
 const dayKeyFormatter = new Intl.DateTimeFormat("en-CA", {
   timeZone: DAILY_RESET_TIME_ZONE,
@@ -92,6 +92,10 @@ export function selectDailyChallengeEntity(
   }
 
   if (category === "countries") {
+    if (matchingEntities.length < GAME_MODES.length) {
+      throw new Error("Each daily mode needs a distinct playable country.");
+    }
+
     const dayOrdinal = getUtcDayOrdinal(dayKey);
     const cycle = Math.floor(dayOrdinal / matchingEntities.length);
     const position =
@@ -104,7 +108,11 @@ export function selectDailyChallengeEntity(
     );
     const deck = shuffleWithSeed(stablePool, `daily-country-cycle:${cycle}`);
 
-    return deck[position]!;
+    // Keep each mode's country unique on the same day while preserving a
+    // complete, deterministic rotation through the deck for both modes.
+    const modeOffset =
+      GAME_MODES.indexOf(mode) * Math.floor(deck.length / GAME_MODES.length);
+    return deck[(position + modeOffset) % deck.length]!;
   }
 
   const seed = `${dayKey}:${category}:${mode}`;
