@@ -11,7 +11,7 @@ import {
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, CalendarDays, Gauge, Trophy } from "lucide-react";
 
 import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
@@ -31,21 +31,6 @@ interface DailyLeaderboardShellProps {
   data: DailyLeaderboardPageData;
   initialMode: GameMode;
   initialPeriod: LeaderboardPeriod;
-}
-
-function LocalCompletionTime({ completedAt }: { completedAt: string }) {
-  const [formattedTime, setFormattedTime] = useState<string | null>(null);
-
-  useEffect(() => {
-    setFormattedTime(
-      new Intl.DateTimeFormat(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date(completedAt)),
-    );
-  }, [completedAt]);
-
-  return <time dateTime={completedAt}>{formattedTime ?? "-"}</time>;
 }
 
 export function DailyLeaderboardShell({
@@ -165,13 +150,9 @@ export function DailyLeaderboardShell({
               entries.map((entry, index) => (
                 <ListItem
                   description={
-                    entry.completedAt ? (
-                      <LocalCompletionTime completedAt={entry.completedAt} />
-                    ) : period === "today" ? (
-                      "Today"
-                    ) : (
-                      `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`
-                    )
+                    period === "total"
+                      ? `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`
+                      : undefined
                   }
                   endContent={
                     <HStack gap={2}>
