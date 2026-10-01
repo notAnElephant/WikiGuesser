@@ -20,6 +20,7 @@ interface LandingPageProps {
 
 export async function LandingPage({ initialGame }: LandingPageProps) {
   const { userId } = await auth();
+  const isAdmin = await isAdminUser(userId);
   const actorId = await getOptionalActorId();
   const cookieStore = await cookies();
   const snapshot = await getLatestSnapshot();
@@ -49,7 +50,7 @@ export async function LandingPage({ initialGame }: LandingPageProps) {
         dailyData={dailyLandingData}
         hasPendingClaim={hasPendingClaim}
         initialGame={initialGame}
-        isAdmin={isAdminUser(userId)}
+        isAdmin={isAdmin}
         isSignedIn={Boolean(userId)}
       />
     </section>

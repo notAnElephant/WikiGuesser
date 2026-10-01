@@ -88,7 +88,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const { userId } = await auth();
-  const isAdmin = isAdminUser(userId);
+  const isAdmin = await isAdminUser(userId);
 
   return (
     <html data-astryx-theme="chocolate" lang="en" suppressHydrationWarning>
