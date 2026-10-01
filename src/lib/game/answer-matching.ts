@@ -13,6 +13,24 @@ export function normalizeGuess(value: string): string {
     .replace(/\s+/g, " ");
 }
 
+export function findUniqueCountryMatch(
+  countryOptions: string[],
+  guess: string,
+): string | null {
+  const normalizedGuess = normalizeGuess(guess);
+  if (!normalizedGuess) return null;
+
+  const exactMatch = countryOptions.find(
+    (country) => normalizeGuess(country) === normalizedGuess,
+  );
+  if (exactMatch) return exactMatch;
+
+  const matches = countryOptions.filter((country) =>
+    normalizeGuess(country).includes(normalizedGuess),
+  );
+  return matches.length === 1 ? matches[0] : null;
+}
+
 export function dedupeAcceptedAnswers(
   answers: AcceptedAnswer[],
 ): AcceptedAnswer[] {

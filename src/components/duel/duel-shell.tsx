@@ -9,7 +9,10 @@ import { Text } from "@astryxdesign/core/Text";
 import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { useAppToast } from "@/src/components/app-toaster";
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  findUniqueCountryMatch,
+  normalizeGuess,
+} from "@/src/lib/game/answer-matching";
 import { getMapCountryNames } from "@/src/lib/game/world-map-data";
 import type {
   EntityCategory,
@@ -394,10 +397,10 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
               version: currentRound.version,
             })
           }
-          onGuess={() =>
+          onGuess={(submittedGuess) =>
             currentRound &&
             void mutate("guess", currentRound.position, {
-              guess: guess.trim(),
+              guess: submittedGuess,
               method: "text",
               version: currentRound.version,
             })
@@ -584,7 +587,7 @@ function ActiveDuel({
   onGuessChange: (value: string) => void;
   onStart: () => void;
   onReveal: (key: string) => void;
-  onGuess: () => void;
+  onGuess: (guess: string) => void;
   onGiveUp: () => void;
   onMapGuess: (countryName: string) => void;
   countryOptions: string[];
@@ -604,12 +607,11 @@ function ActiveDuel({
     currentRound.guesses.map((entry) => normalizeGuess(entry.name)),
   );
   const normalizedGuess = normalizeGuess(guess);
-  const isCountryGuessValid =
-    !isCountryDuel ||
-    countryOptions.some(
-      (country) => normalizeGuess(country) === normalizedGuess,
-    );
-  const isRepeatedGuess = guessedCountryNames.has(normalizedGuess);
+  const matchedCountry = findUniqueCountryMatch(countryOptions, guess);
+  const isCountryGuessValid = !isCountryDuel || Boolean(matchedCountry);
+  const isRepeatedGuess = guessedCountryNames.has(
+    normalizeGuess(matchedCountry ?? guess),
+  );
   const validationMessage =
     isCountryDuel && guess.trim() && !isCountryGuessValid
       ? "Pick a listed country."
@@ -687,7 +689,7 @@ function ActiveDuel({
           isCountryGuessValid &&
           !isRepeatedGuess
         )
-          onGuess();
+          onGuess(matchedCountry ?? guess.trim());
       }}
       handleMapGuess={onMapGuess}
       header={

@@ -21,7 +21,10 @@ import { ContinentPickerDialog } from "@/src/components/shared-landing-shell";
 import { ThemeToggle } from "@/src/components/theme-toggle";
 import { WikiGuesserLogo } from "@/src/components/wikiguesser-logo";
 import { CONTINENT_LABELS, isContinentId } from "@/src/lib/content/continents";
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  findUniqueCountryMatch,
+  normalizeGuess,
+} from "@/src/lib/game/answer-matching";
 import {
   getActiveOfflineCountryPack,
   getActiveOfflineRound,
@@ -172,11 +175,12 @@ export function OfflineCountriesShell() {
   const currentClues = round?.clues ?? result?.clues ?? [];
   const currentMode = round?.mode ?? result?.mode ?? selectedMode;
   const normalizedGuess = normalizeGuess(guess);
+  const matchedCountry = findUniqueCountryMatch(countryOptions, guess);
   const hasGuess = normalizedGuess.length > 0;
-  const isValidGuess = countryOptions.some(
-    (country) => normalizeGuess(country) === normalizedGuess,
+  const isValidGuess = Boolean(matchedCountry);
+  const isAlreadyGuessed = guessedNames.has(
+    normalizeGuess(matchedCountry ?? guess),
   );
-  const isAlreadyGuessed = guessedNames.has(normalizedGuess);
   const canSubmitGuess = Boolean(
     round?.canGuess && hasGuess && isValidGuess && !isAlreadyGuessed && !isBusy,
   );
@@ -233,7 +237,7 @@ export function OfflineCountriesShell() {
   }
 
   async function submitGuess(countryName?: string) {
-    const submittedGuess = countryName ?? guess.trim();
+    const submittedGuess = countryName ?? matchedCountry ?? guess.trim();
     if (!pack || !roundState || !submittedGuess || isBusy) return;
     if (!countryName && (!isValidGuess || isAlreadyGuessed)) return;
 

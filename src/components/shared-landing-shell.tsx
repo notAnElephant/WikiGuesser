@@ -50,7 +50,10 @@ import {
   isClueLocked,
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  findUniqueCountryMatch,
+  normalizeGuess,
+} from "@/src/lib/game/answer-matching";
 import { captureAnalyticsEvent, toGameContext } from "@/src/lib/analytics";
 import { CONTINENT_LABELS } from "@/src/lib/content/continents";
 import { getActiveOfflineCountryPack } from "@/src/lib/offline";
@@ -199,9 +202,9 @@ export function GameLauncher({
               a miss, choose another clue.
             </Text>
             <Text>
-              A correct map guess earns 50, 40, 30, 20, 10, or 5 points as
-              more clues are revealed. Guess by name for double points. Giving
-              up earns 0.
+              A correct map guess earns 50, 40, 30, 20, 10, or 5 points as more
+              clues are revealed. Guess by name for double points. Giving up
+              earns 0.
             </Text>
             <Text>
               Play each daily puzzle once, or practise with unlimited free play.
@@ -766,13 +769,14 @@ export function SharedLandingShell({
   const isCountryRound = (round?.category ?? result?.category) === "countries";
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
+  const matchedCountry = findUniqueCountryMatch(countryOptions, guess);
   const normalizedGuessedEntities = new Set(
     guessedEntities.map((entry) => normalizeGuess(entry.name)),
   );
-  const isCountryGuessValid =
-    !isCountryRound || validCountryLookup.has(normalizedGuess);
+  const isCountryGuessValid = !isCountryRound || Boolean(matchedCountry);
   const isAlreadyGuessed =
-    hasGuess && normalizedGuessedEntities.has(normalizedGuess);
+    hasGuess &&
+    normalizedGuessedEntities.has(normalizeGuess(matchedCountry ?? guess));
   const availableCountryOptions = countryOptions.filter(
     (option) => !normalizedGuessedEntities.has(normalizeGuess(option)),
   );
@@ -1212,7 +1216,9 @@ export function SharedLandingShell({
     const submittedGuess = isMapGuess
       ? guessValue
       : isCountryRound
-        ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
+        ? (matchedCountry ??
+          validCountryLookup.get(normalizedGuess) ??
+          guess.trim())
         : guess.trim();
 
     isSubmittingGuessRef.current = true;

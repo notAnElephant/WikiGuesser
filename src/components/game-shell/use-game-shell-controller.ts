@@ -13,7 +13,10 @@ import {
   isClueLocked,
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  findUniqueCountryMatch,
+  normalizeGuess,
+} from "@/src/lib/game/answer-matching";
 import type {
   GameMode,
   GuessRoundResult,
@@ -74,13 +77,14 @@ export function useGameShellController({
   const isCountryRound = (round?.category ?? result?.category) === "countries";
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
+  const matchedCountry = findUniqueCountryMatch(countryOptions, guess);
   const normalizedGuessedEntities = new Set(
     guessedEntities.map((entry) => normalizeGuess(entry.name)),
   );
-  const isCountryGuessValid =
-    !isCountryRound || validCountryLookup.has(normalizedGuess);
+  const isCountryGuessValid = !isCountryRound || Boolean(matchedCountry);
   const isAlreadyGuessed =
-    hasGuess && normalizedGuessedEntities.has(normalizedGuess);
+    hasGuess &&
+    normalizedGuessedEntities.has(normalizeGuess(matchedCountry ?? guess));
   const availableCountryOptions = countryOptions.filter(
     (option) => !normalizedGuessedEntities.has(normalizeGuess(option)),
   );
@@ -300,7 +304,9 @@ export function useGameShellController({
     const submittedGuess = isMapGuess
       ? guessValue
       : isCountryRound
-        ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
+        ? (matchedCountry ??
+          validCountryLookup.get(normalizedGuess) ??
+          guess.trim())
         : guess.trim();
 
     isSubmittingGuessRef.current = true;

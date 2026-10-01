@@ -20,7 +20,10 @@ import {
   isClueLocked,
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  findUniqueCountryMatch,
+  normalizeGuess,
+} from "@/src/lib/game/answer-matching";
 import {
   findOtherAvailableDaily,
   getDailyComboKey,
@@ -227,13 +230,14 @@ export function DailyChallengeShell({
   const isCountryRound = (round?.category ?? result?.category) === "countries";
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
+  const matchedCountry = findUniqueCountryMatch(countryOptions, guess);
   const normalizedGuessedEntities = new Set(
     guessedEntities.map((entry) => normalizeGuess(entry.name)),
   );
-  const isCountryGuessValid =
-    !isCountryRound || validCountryLookup.has(normalizedGuess);
+  const isCountryGuessValid = !isCountryRound || Boolean(matchedCountry);
   const isAlreadyGuessed =
-    hasGuess && normalizedGuessedEntities.has(normalizedGuess);
+    hasGuess &&
+    normalizedGuessedEntities.has(normalizeGuess(matchedCountry ?? guess));
   const availableCountryOptions = countryOptions.filter(
     (option) => !normalizedGuessedEntities.has(normalizeGuess(option)),
   );
@@ -435,7 +439,9 @@ export function DailyChallengeShell({
     const submittedGuess = isMapGuess
       ? guessValue
       : isCountryRound
-        ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
+        ? (matchedCountry ??
+          validCountryLookup.get(normalizedGuess) ??
+          guess.trim())
         : guess.trim();
 
     isSubmittingGuessRef.current = true;
@@ -482,7 +488,11 @@ export function DailyChallengeShell({
             canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
             score: payload.isCorrect ? payload.score : 0,
             ...(payload.isCorrect
-              ? { guessMethod: isMapGuess ? "map" as const : "text" as const }
+              ? {
+                  guessMethod: isMapGuess
+                    ? ("map" as const)
+                    : ("text" as const),
+                }
               : {}),
             kind: "daily",
             category: payload.category,
@@ -687,8 +697,18 @@ export function DailyChallengeShell({
     <section className="grid gap-4">
       <Card className="overflow-hidden p-5 sm:p-7" elevation="low" padding={0}>
         <div className="flex flex-wrap items-center gap-2">
-          <Token color="purple" icon={<Icon icon={Sparkles} size="sm" />} label="Daily challenge" size="sm" />
-          <Token color="gray" icon={<Icon icon={CalendarDays} size="sm" />} label={`Resets in ${resetCountdown}`} size="sm" />
+          <Token
+            color="purple"
+            icon={<Icon icon={Sparkles} size="sm" />}
+            label="Daily challenge"
+            size="sm"
+          />
+          <Token
+            color="gray"
+            icon={<Icon icon={CalendarDays} size="sm" />}
+            label={`Resets in ${resetCountdown}`}
+            size="sm"
+          />
         </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)] lg:items-end">
