@@ -106,6 +106,7 @@ export function GameResultDialog({
       width="48rem"
     >
       <DialogHeader
+        data-autofocus
         onOpenChange={(isOpen) => {
           if (!isOpen) onClose();
         }}
@@ -122,6 +123,7 @@ export function GameResultDialog({
           )
         }
         subtitle={result.status === "win" ? "Solved" : "Missed"}
+        tabIndex={-1}
         title={result.canonicalAnswer}
       />
 
