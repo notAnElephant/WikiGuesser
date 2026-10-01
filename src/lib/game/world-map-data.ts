@@ -13,6 +13,24 @@ export interface MapCountryProperties {
 const MAP_NAME_ALIASES: Record<string, readonly string[]> = {
   "antigua and barbuda": ["Antigua and Barb."],
   "bosnia and herzegovina": ["Bosnia and Herz."],
+  "cape verde": ["Cabo Verde"],
+  "central african republic": ["Central African Rep."],
+  "czech republic": ["Czechia"],
+  "dominican republic": ["Dominican Rep."],
+  "equatorial guinea": ["Eq. Guinea"],
+  "federated states of micronesia": ["Micronesia"],
+  "ivory coast": ["Côte d'Ivoire"],
+  "marshall islands": ["Marshall Is."],
+  "north macedonia": ["Macedonia"],
+  "people s republic of china": ["China"],
+  "saint kitts and nevis": ["St. Kitts and Nevis"],
+  "saint vincent and the grenadines": ["St. Vin. and Gren."],
+  "solomon islands": ["Solomon Is."],
+  "south sudan": ["S. Sudan"],
+  "the bahamas": ["Bahamas"],
+  "the gambia": ["Gambia"],
+  "united states": ["United States of America"],
+  "vatican city": ["Vatican"],
 };
 
 const MAP_NAME_OVERRIDES: Record<string, readonly string[]> = {

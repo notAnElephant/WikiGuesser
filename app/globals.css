@@ -198,10 +198,19 @@
       stroke var(--duration-fast) ease;
   }
 
-  .map-world-guessing
-    .map-country:not(.map-country--guessed):not(.map-country--solution):hover {
+  .map-world-guessing .map-country--playable:hover {
     cursor: pointer;
     fill: var(--color-accent-muted);
+  }
+
+  .map-country--unavailable {
+    cursor: not-allowed;
+    fill: color-mix(
+      in srgb,
+      var(--color-text-disabled) 35%,
+      var(--color-background-surface)
+    );
+    stroke-dasharray: var(--spacing-1) var(--spacing-1);
   }
 
   .map-country--guessed {

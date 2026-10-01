@@ -80,6 +80,40 @@ describe("world map coverage", () => {
     expect(playableCountries.get("france")).toBe("France");
     expect(playableCountries.has("siachen glacier")).toBe(false);
   });
+
+  it("matches playable country names to differently named map regions", () => {
+    const mapNamesByCountry = new Map([
+      ["Cape Verde", "Cabo Verde"],
+      ["Central African Republic", "Central African Rep."],
+      ["Czech Republic", "Czechia"],
+      ["Dominican Republic", "Dominican Rep."],
+      ["Equatorial Guinea", "Eq. Guinea"],
+      ["Federated States of Micronesia", "Micronesia"],
+      ["Ivory Coast", "Côte d'Ivoire"],
+      ["Marshall Islands", "Marshall Is."],
+      ["North Macedonia", "Macedonia"],
+      ["People's Republic of China", "China"],
+      ["Saint Kitts and Nevis", "St. Kitts and Nevis"],
+      ["Saint Vincent and the Grenadines", "St. Vin. and Gren."],
+      ["Solomon Islands", "Solomon Is."],
+      ["South Sudan", "S. Sudan"],
+      ["The Bahamas", "Bahamas"],
+      ["The Gambia", "Gambia"],
+      ["United States", "United States of America"],
+      ["Vatican City", "Vatican"],
+    ]);
+    const playableCountries = getPlayableCountriesByMapName([
+      ...mapNamesByCountry.keys(),
+    ]);
+
+    for (const [country, mapName] of mapNamesByCountry) {
+      const normalizedMapName = [...getMapCountryNames([mapName])][0];
+      expect(playableCountries.get(normalizedMapName)).toBe(country);
+      expect(hasMapGeometry([country])).toBe(true);
+    }
+
+    expect(playableCountries.has("siachen glacier")).toBe(false);
+  });
 });
 
 describe("getResizedMapTransform", () => {

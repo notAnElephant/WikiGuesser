@@ -904,6 +904,10 @@ export function WorldMapDialog({
                     const guessedCountry = guessedCountryByName.get(name);
                     const playableCountry = playableCountryByMapName.get(name);
                     const isSolution = solutionNames.has(name);
+                    const isUnavailable =
+                      Boolean(onCountryGuess) &&
+                      !playableCountry &&
+                      !guessedCountry;
 
                     return countryPath ? (
                       <path
@@ -916,7 +920,11 @@ export function WorldMapDialog({
                               ? guessedCountry.markerTone
                                 ? `map-country map-country--guessed-${guessedCountry.markerTone}`
                                 : "map-country map-country--guessed"
-                              : "map-country"
+                              : isUnavailable
+                                ? "map-country map-country--unavailable"
+                                : onCountryGuess && playableCountry
+                                  ? "map-country map-country--playable"
+                                  : "map-country"
                         }
                         d={countryPath}
                         key={`${country.id ?? name}-${index}`}
@@ -928,7 +936,11 @@ export function WorldMapDialog({
                               : undefined
                         }
                         vectorEffect="non-scaling-stroke"
-                      />
+                      >
+                        {isUnavailable ? (
+                          <title>{`${country.properties.name} is unavailable to guess`}</title>
+                        ) : null}
+                      </path>
                     ) : null;
                   })
                 : null}
