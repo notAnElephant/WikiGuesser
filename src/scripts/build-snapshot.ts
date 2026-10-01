@@ -1,6 +1,7 @@
 import "@/src/scripts/load-env";
 import { buildSnapshotFromSources } from "@/src/lib/content/build-snapshot";
 import { allCategoryDefinitions } from "@/src/lib/content/category-definitions";
+import { assertCountrySourceCoverage } from "@/src/lib/content/country-source-coverage";
 import { readGeneratedJson } from "@/src/lib/content/generated-io";
 import {
   getLatestSnapshotOrNull,
@@ -38,6 +39,13 @@ async function main() {
     hydratedInput,
     previousSnapshot,
   );
+  if (categories.includes("countries")) {
+    const discovery = await readGeneratedJson<{ qids: string[] }>(
+      "discovery",
+      "countries.json",
+    );
+    assertCountrySourceCoverage(discovery.qids, result.snapshot.entities);
+  }
   await persistSnapshot(result.snapshot);
 
   console.log(
