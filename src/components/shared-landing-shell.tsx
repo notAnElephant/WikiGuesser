@@ -28,7 +28,6 @@ import {
   CalendarDays,
   Gamepad2,
   Globe2,
-  LoaderCircle,
   Play,
   ShieldCheck,
   X,
@@ -152,6 +151,7 @@ export function GameLauncher({
   const [pendingFreePlayMode, setPendingFreePlayMode] =
     useState<GameMode | null>(null);
   const [isAdminTestOpen, setIsAdminTestOpen] = useState(false);
+  const [activeLaunch, setActiveLaunch] = useState<string | null>(null);
 
   function startFilteredFreePlay(continent: ContinentId | null) {
     if (!pendingFreePlayMode) {
@@ -160,6 +160,7 @@ export function GameLauncher({
 
     const mode = pendingFreePlayMode;
     setPendingFreePlayMode(null);
+    setActiveLaunch(`free-play:${mode}`);
     onStartFreePlay(mode, continent);
   }
 
@@ -235,9 +236,11 @@ export function GameLauncher({
                 description={launcherModeCopy[mode.id].dailyDescription}
                 disabled={isDisabled}
                 icon={mode.icon}
+                isLoading={isBusy && activeLaunch === `daily:${mode.id}`}
                 key={mode.id}
                 onClick={() => {
                   if (option) {
+                    setActiveLaunch(`daily:${mode.id}`);
                     onStartDaily(option);
                   }
                 }}
@@ -260,6 +263,7 @@ export function GameLauncher({
               description={launcherModeCopy[mode.id].freeDescription}
               disabled={isBusy}
               icon={mode.icon}
+              isLoading={isBusy && activeLaunch === `free-play:${mode.id}`}
               key={mode.id}
               onClick={() => {
                 setPendingFreePlayMode(mode.id);
@@ -281,6 +285,7 @@ export function GameLauncher({
               description="Reproduce a country-specific issue."
               disabled={isBusy}
               icon={ShieldCheck}
+              isLoading={isBusy && activeLaunch === "admin-test"}
               onClick={() => setIsAdminTestOpen(true)}
               title="Test a country"
               variant="secondary"
@@ -306,6 +311,7 @@ export function GameLauncher({
           onClose={() => setIsAdminTestOpen(false)}
           onStart={(country, mode) => {
             setIsAdminTestOpen(false);
+            setActiveLaunch("admin-test");
             onStartAdminTest(country, mode);
           }}
         />
@@ -558,6 +564,7 @@ interface LauncherRowProps {
   description: string;
   disabled: boolean;
   icon: (typeof GAME_MODE_OPTIONS)[number]["icon"];
+  isLoading?: boolean;
   onClick: () => void;
   status?: string;
   title: string;
@@ -569,6 +576,7 @@ function LauncherRow({
   description,
   disabled,
   icon: ModeIcon,
+  isLoading = false,
   onClick,
   status,
   title,
@@ -598,14 +606,9 @@ function LauncherRow({
         ) : null}
         <Button
           className="min-w-40 whitespace-nowrap"
-          icon={
-            disabled && actionLabel !== "Played" ? (
-              <LoaderCircle aria-hidden="true" className="animate-spin" />
-            ) : (
-              <Play aria-hidden="true" />
-            )
-          }
+          icon={<Play aria-hidden="true" />}
           isDisabled={disabled}
+          isLoading={isLoading}
           label={`${actionLabel}: ${title}`}
           onClick={onClick}
           size="lg"
