@@ -52,30 +52,28 @@ async function buildDailyOptions(
   actorId: string | null,
   dayKey: string,
 ): Promise<DailyChallengeOption[]> {
-  const options: DailyChallengeOption[] = [];
-  const snapshot = await getLatestSnapshot();
+  // Runs one lookup per combo concurrently instead of awaiting them in series,
+  // and no longer loads the (large) snapshot unless a challenge has to be
+  // created. This is the hot path for every landing-page render.
+  const challenges = await Promise.all(
+    ACTIVE_GAME_CATEGORIES.flatMap((category) =>
+      GAME_MODES.map((mode) =>
+        getOrCreateChallengeForDay(category, mode, dayKey),
+      ),
+    ),
+  );
 
-  for (const category of ACTIVE_GAME_CATEGORIES) {
-    for (const mode of GAME_MODES) {
-      const challenge = await getOrCreateChallengeForDay(
-        category,
-        mode,
-        dayKey,
-        snapshot,
-      );
-      options.push({
-        challengeId: challenge.id,
-        dayKey: challenge.dayKey,
-        category,
-        mode,
-        playerStatus: {
-          hasPlayed: false,
-          score: null,
-          completedAt: null,
-        },
-      });
-    }
-  }
+  const options: DailyChallengeOption[] = challenges.map((challenge) => ({
+    challengeId: challenge.id,
+    dayKey: challenge.dayKey,
+    category: challenge.category as EntityCategory,
+    mode: challenge.mode as GameMode,
+    playerStatus: {
+      hasPlayed: false,
+      score: null,
+      completedAt: null,
+    },
+  }));
 
   if (!actorId) {
     return options;
@@ -197,8 +195,26 @@ async function getOrCreateChallengeForDay(
   mode: GameMode,
   dayKey: string,
   snapshot?: MaterializedSnapshot,
-) {
+): Promise<DailyChallenge> {
   const prisma = getPrismaClient();
+
+  // Challenges are immutable once created for a day, so read first. The old
+  // code performed an `upsert` on every render, which was ~700ms per combo
+  // even when nothing changed.
+  const existing = await prisma.dailyChallenge.findUnique({
+    where: {
+      dayKey_category_mode: {
+        dayKey,
+        category,
+        mode,
+      },
+    },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
   const activeSnapshot = snapshot ?? (await getLatestSnapshot());
   const entity = selectDailyChallengeEntity(
     activeSnapshot.entities,

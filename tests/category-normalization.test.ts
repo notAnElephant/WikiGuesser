@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { categoryDefinitions } from "@/src/lib/content/category-definitions";
+import { normalizeEntitiesForCategory } from "@/src/lib/content/build-snapshot";
 import type { SourceEntity } from "@/src/lib/types";
 import {
   citySourceFixture,
@@ -9,6 +10,20 @@ import {
 } from "@/tests/fixtures";
 
 describe("category normalization", () => {
+  it("fails snapshot building if a listed country has too few clues", async () => {
+    const sparseCountry = {
+      ...countrySourceFixture,
+      qid: "Q-missing-clues",
+      label: "Missing country",
+      wikipediaTitle: null,
+      claims: {},
+    };
+
+    await expect(
+      normalizeEntitiesForCategory("countries", [sparseCountry]),
+    ).rejects.toThrow("Missing country (Q-missing-clues)");
+  });
+
   it("builds a playable country entity", () => {
     const entity =
       categoryDefinitions.countries.normalize(countrySourceFixture);

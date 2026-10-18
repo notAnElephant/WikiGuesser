@@ -31,7 +31,24 @@ function toNormalizedEntity(record: SnapshotEntity): NormalizedEntity {
   };
 }
 
-export async function getLatestSnapshotOrNull(): Promise<MaterializedSnapshot | null> {
+/**
+ * In-memory cache for the active snapshot.
+ *
+ * The snapshot only changes when a new one is ingested, yet every page render
+ * used to re-read all snapshot entities from Postgres. That read is the single
+ * biggest cost of a render (hundreds of ms), so we keep it in memory for a
+ * short window. `persistSnapshot` clears it for in-process callers; the TTL
+ * bounds staleness for processes that persist elsewhere (e.g. the ingest
+ * script) without adding a version query to the hot path.
+ */
+const SNAPSHOT_CACHE_TTL_MS = 30_000;
+
+let latestSnapshotCache: {
+  expiresAt: number;
+  snapshot: MaterializedSnapshot;
+} | null = null;
+
+async function loadLatestSnapshotOrNull(): Promise<MaterializedSnapshot | null> {
   if (!env.databaseUrl) {
     throw new Error("DATABASE_URL is not configured.");
   }
@@ -63,6 +80,23 @@ export async function getLatestSnapshotOrNull(): Promise<MaterializedSnapshot | 
     entityCount: snapshot.entities.length,
     createdAt: snapshot.createdAt,
   });
+
+  return snapshot;
+}
+
+export async function getLatestSnapshotOrNull(): Promise<MaterializedSnapshot | null> {
+  if (latestSnapshotCache && latestSnapshotCache.expiresAt > Date.now()) {
+    return latestSnapshotCache.snapshot;
+  }
+
+  const snapshot = await loadLatestSnapshotOrNull();
+
+  if (snapshot) {
+    latestSnapshotCache = {
+      expiresAt: Date.now() + SNAPSHOT_CACHE_TTL_MS,
+      snapshot,
+    };
+  }
 
   return snapshot;
 }
@@ -157,4 +191,6 @@ export async function persistSnapshot(
     },
     { timeout: 15_000 },
   );
+
+  latestSnapshotCache = null;
 }

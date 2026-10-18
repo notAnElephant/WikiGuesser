@@ -20,7 +20,7 @@ function getCoordinate(entity: NormalizedEntity): Coordinate | null {
     : null;
 }
 
-function findGuessedCountry(
+export function findCountryEntityByGuess(
   guess: string,
   entities: NormalizedEntity[],
 ): NormalizedEntity | null {
@@ -70,7 +70,7 @@ export function getGuessedCountryMapData(
     return null;
   }
 
-  const guessedEntity = findGuessedCountry(guess, entities);
+  const guessedEntity = findCountryEntityByGuess(guess, entities);
   const from = guessedEntity ? getCoordinate(guessedEntity) : null;
   const to = getCoordinate(goal);
 

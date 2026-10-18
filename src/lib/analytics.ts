@@ -14,6 +14,7 @@ type GameContext = {
   continent?: ContinentId;
   game_type: "daily" | "free_play";
   mode: GameMode;
+  play_origin: "server";
 };
 
 type AnalyticsEvents = {
@@ -32,6 +33,22 @@ type AnalyticsEvents = {
     guesses: number;
   };
   game_started: GameContext;
+  theme_experiment_assigned: {
+    theme: "chocolate" | "matcha";
+  };
+  theme_rating_prompt_shown: {
+    device: "mobile" | "desktop";
+    theme: "chocolate" | "matcha";
+  };
+  theme_rating_submitted: {
+    device: "mobile" | "desktop";
+    score: number;
+    theme: "chocolate" | "matcha";
+  };
+  feedback_submitted: {
+    feedback_kind: "positive" | "bug" | "content_issue" | "confusing" | "feature_idea" | "other";
+    source: "global" | "round-result" | "clue";
+  };
   guess_submitted: GameContext & {
     attempt_number: number;
     completed: boolean;
@@ -39,9 +56,14 @@ type AnalyticsEvents = {
   };
 };
 
-export const isPostHogConfigured = Boolean(
-  process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
-);
+// Local `next dev` sessions would otherwise send development-only React
+// exceptions to the production project.
+export const postHogProjectToken =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+    : undefined;
+
+export const isPostHogConfigured = Boolean(postHogProjectToken);
 
 export function captureAnalyticsEvent<Event extends keyof AnalyticsEvents>(
   event: Event,
@@ -65,5 +87,6 @@ export function toGameContext(
     ...(continent ? { continent } : {}),
     game_type: kind === "daily" ? "daily" : "free_play",
     mode,
+    play_origin: "server",
   };
 }

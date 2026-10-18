@@ -2,8 +2,14 @@ import { randomBytes, randomUUID } from "node:crypto";
 
 import { Prisma, type DuelAttempt } from "@prisma/client";
 
+import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
 import { matchesEntityGuess } from "@/src/lib/game/answer-matching";
-import { getGuessedCountryMapData } from "@/src/lib/game/guess-direction";
+import { getClueUnlockRoundsRemaining } from "@/src/lib/game/clue-locking";
+import {
+  findCountryEntityByGuess,
+  getGuessedCountryMapData,
+  getSolutionCountryMapData,
+} from "@/src/lib/game/guess-direction";
 import {
   acceptDuel as acceptStoredDuel,
   completeDuelIfReady,
@@ -36,6 +42,16 @@ type StoredGuess = {
   name: string;
   mapData: GuessedCountryMapData | null;
 };
+
+/**
+ * Duel creation receives a raw Clerk ID, while the public duel routes pass the
+ * application actor ID (for example, `user_123` versus `user:user_123`).
+ * Store and compare the raw ID in both cases so a participant retains access
+ * after the invitation has been accepted.
+ */
+function duelProfileKey(actorOrClerkUserId: string) {
+  return getClerkUserIdFromActorId(actorOrClerkUserId) ?? actorOrClerkUserId;
+}
 
 function asClues(value: Prisma.JsonValue): PlayableClue[] {
   return value as unknown as PlayableClue[];
@@ -87,7 +103,7 @@ function scoreForRevealCount(revealCount: number) {
   );
 }
 
-function participantId(duel: DuelWithDetails, profileId: string) {
+function participantId(duel: DuelWithDetails, profileId: string | null) {
   if (duel.challengerId === profileId) return profileId;
   if (duel.opponentId === profileId) return profileId;
   return null;
@@ -140,6 +156,7 @@ function visibleClues(
     value: completed || revealed.has(clue.key) ? clue.value : null,
     isRevealed: completed || revealed.has(clue.key),
     difficulty: clue.difficulty,
+    spoilerLevel: clue.spoilerLevel,
   }));
 }
 
@@ -147,12 +164,36 @@ function roundView(
   duel: DuelWithDetails,
   round: DuelWithDetails["rounds"][number],
   ownAttempt: DuelAttempt | null,
+  comparisonAttempts: readonly DuelAttempt[],
   isCurrent: boolean,
 ) {
-  const completed = Boolean(ownAttempt?.completedAt || ownAttempt?.givenUp);
+  const completed =
+    duel.status === "COMPLETED" ||
+    Boolean(ownAttempt?.completedAt || ownAttempt?.givenUp);
   const guesses = ownAttempt ? asGuesses(ownAttempt.guesses) : [];
   const clues =
     isCurrent || completed ? visibleClues(duel, round, ownAttempt) : [];
+
+  const attemptResult = (
+    playerId: string | null,
+    playerLabel: string,
+    isChallenger: boolean,
+  ) => {
+    const attempt = comparisonAttempts.find(
+      (candidate) => candidate.userProfileId === playerId,
+    );
+
+    return {
+      playerId: playerId ?? "",
+      playerLabel,
+      isChallenger,
+      score: attempt?.score ?? null,
+      isCorrect: attempt?.isCorrect ?? null,
+      completed: Boolean(attempt?.completedAt || attempt?.givenUp),
+      givenUp: Boolean(attempt?.givenUp),
+      guesses: attempt ? asGuesses(attempt.guesses) : [],
+    };
+  };
 
   return {
     position: round.position,
@@ -168,7 +209,26 @@ function roundView(
     canGuess: ownAttempt?.canGuess ?? false,
     score: ownAttempt?.score ?? null,
     guess: guesses.at(-1)?.name ?? null,
+    guesses,
+    attempts:
+      duel.status === "COMPLETED"
+        ? [
+            attemptResult(
+              duel.challengerId,
+              duel.challenger.displayName?.trim() || "Challenger",
+              true,
+            ),
+            attemptResult(
+              duel.opponentId,
+              duel.opponent?.displayName?.trim() || "Opponent",
+              false,
+            ),
+          ]
+        : [],
     answer: completed ? round.canonicalAnswer : null,
+    solutionCountry: completed
+      ? getSolutionCountryMapData(roundEntity(duel, round))
+      : null,
     message:
       ownAttempt && !completed && guesses.length > 0
         ? duel.mode === "blurred-lines"
@@ -184,7 +244,7 @@ function roundView(
 
 export function buildDuelView(
   duel: DuelWithDetails,
-  profileId: string,
+  profileId: string | null,
   origin?: string,
 ) {
   const ownId = participantId(duel, profileId);
@@ -203,6 +263,7 @@ export function buildDuelView(
       duel,
       round,
       attemptFor(round, ownId),
+      round.attempts,
       round.id === firstIncomplete?.id,
     ),
   );
@@ -221,7 +282,11 @@ export function buildDuelView(
     status,
     challenger: publicPlayer(duel.challenger)!,
     opponent: publicPlayer(duel.opponent),
-    playerRole: isChallenger ? ("challenger" as const) : ("opponent" as const),
+    playerRole: ownId
+      ? isChallenger
+        ? ("challenger" as const)
+        : ("opponent" as const)
+      : ("spectator" as const),
     canAccept: duel.status === "INVITED" && !duel.opponentId && !isChallenger,
     settings: {
       rounds: duel.roundCount,
@@ -316,9 +381,10 @@ export async function createDuel(
 
 export async function getDuel(
   inviteCode: string,
-  clerkUserId: string,
+  actorOrClerkUserId: string,
   origin?: string,
 ) {
+  const clerkUserId = duelProfileKey(actorOrClerkUserId);
   const [duel, profile] = await Promise.all([
     getOrRefreshDuelByInviteCode(inviteCode),
     ensureDuelUserProfile(clerkUserId),
@@ -327,18 +393,26 @@ export async function getDuel(
   if (
     duel.opponentId &&
     duel.challengerId !== profile.id &&
-    duel.opponentId !== profile.id
+    duel.opponentId !== profile.id &&
+    duel.status !== "COMPLETED"
   ) {
     throw new Error("This duel belongs to two other players.");
   }
-  return buildDuelView(duel, profile.id, origin);
+  return buildDuelView(
+    duel,
+    duel.challengerId === profile.id || duel.opponentId === profile.id
+      ? profile.id
+      : null,
+    origin,
+  );
 }
 
 export async function acceptDuel(
   inviteCode: string,
-  clerkUserId: string,
+  actorOrClerkUserId: string,
   origin?: string,
 ) {
+  const clerkUserId = duelProfileKey(actorOrClerkUserId);
   const profile = await ensureDuelUserProfile(clerkUserId);
   const duel = await acceptStoredDuel(inviteCode, profile.id);
   return buildDuelView(duel, profile.id, origin);
@@ -346,9 +420,10 @@ export async function acceptDuel(
 
 export async function createDuelRematch(
   inviteCode: string,
-  clerkUserId: string,
+  actorOrClerkUserId: string,
   origin?: string,
 ) {
+  const clerkUserId = duelProfileKey(actorOrClerkUserId);
   const [source, profile] = await Promise.all([
     getOrRefreshDuelByInviteCode(inviteCode),
     ensureDuelUserProfile(clerkUserId),
@@ -374,8 +449,9 @@ export async function createDuelRematch(
 async function participantRound(
   inviteCode: string,
   position: number,
-  clerkUserId: string,
+  actorOrClerkUserId: string,
 ) {
+  const clerkUserId = duelProfileKey(actorOrClerkUserId);
   const [duel, profile] = await Promise.all([
     getOrRefreshDuelByInviteCode(inviteCode),
     ensureDuelUserProfile(clerkUserId),
@@ -447,11 +523,22 @@ export async function revealDuelClue(
   const revealed = asStrings(attempt.revealedClueKeys);
   if (revealed.includes(selected.key))
     throw new Error("That clue is already revealed.");
-  const hiddenSafe = clues.some(
-    (clue) => clue.spoilerLevel === "safe" && !revealed.includes(clue.key),
+  const clueUnlockState = clues.map((clue) => ({
+    key: clue.key,
+    spoilerLevel: clue.spoilerLevel,
+    isRevealed: revealed.includes(clue.key),
+  }));
+  const selectedClueUnlockState = clueUnlockState.find(
+    (clue) => clue.key === selected.key,
+  )!;
+  const unlockRoundsRemaining = getClueUnlockRoundsRemaining(
+    clueUnlockState,
+    selectedClueUnlockState,
   );
-  if (selected.spoilerLevel === "late" && hiddenSafe) {
-    throw new Error("That clue is still locked.");
+  if (unlockRoundsRemaining > 0) {
+    throw new Error(
+      `Reveal ${unlockRoundsRemaining} more ${unlockRoundsRemaining === 1 ? "clue" : "clues"} to unlock this field.`,
+    );
   }
   await updateDuelAttempt(attempt.id, profile.id, input.version, {
     revealedClueKeys: [...revealed, selected.key],
@@ -479,13 +566,25 @@ export async function guessDuelRound(
   if (!attempt.canGuess) throw new Error("Reveal a clue before guessing.");
 
   const entity = roundEntity(duel, round);
+  const mapGuessSnapshot =
+    input.method === "map" ? await getLatestSnapshot() : null;
+
+  if (
+    input.method === "map" &&
+    !findCountryEntityByGuess(input.guess, mapGuessSnapshot!.entities)
+  ) {
+    throw new Error("Pick a listed country.");
+  }
+
   const isCorrect = matchesEntityGuess(entity, input.guess);
   const revealed = asStrings(attempt.revealedClueKeys);
   const guesses = asGuesses(attempt.guesses);
-  const snapshot = isCorrect ? null : await getLatestSnapshot();
-  const mapData = snapshot
-    ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
-    : null;
+  const snapshot =
+    mapGuessSnapshot ?? (isCorrect ? null : await getLatestSnapshot());
+  const mapData =
+    !isCorrect && snapshot
+      ? getGuessedCountryMapData(input.guess, entity, snapshot.entities)
+      : null;
   const nextGuesses = [
     ...guesses,
     { name: mapData?.name ?? input.guess.trim(), mapData },
@@ -495,7 +594,10 @@ export async function guessDuelRound(
   if (isCorrect) {
     await updateDuelAttempt(attempt.id, profile.id, input.version, {
       guesses: nextGuesses as unknown as Prisma.InputJsonValue,
-      score: scoreForRevealCount(revealed.length),
+      score:
+        input.method === "map"
+          ? Math.floor(scoreForRevealCount(revealed.length) / 2)
+          : scoreForRevealCount(revealed.length),
       isCorrect: true,
       completedAt: new Date(),
       canGuess: false,

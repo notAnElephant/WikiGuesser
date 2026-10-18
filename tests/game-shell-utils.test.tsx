@@ -24,16 +24,36 @@ describe("game shell clue rendering", () => {
     ).toBe(flagUrl);
   });
 
-  it("renders the flag-colors clue as a blurred flag image", () => {
+  it("renders the flag-colors clue from its supplied image URL", () => {
     const markup = renderToStaticMarkup(
       renderClueValue({ key: "flag-colors", value: flagUrl }),
     );
 
-    expect(markup).toContain('alt="Blurred country flag"');
     expect(markup).toContain('src="' + flagUrl.replaceAll("&", "&amp;") + '"');
-    expect(markup).toContain("blur-xl");
-    expect(markup).toContain('aria-label="Enlarge blurred country flag"');
-    expect(markup).toContain("blur-[12px]");
+  });
+
+  it("reveals the flag after the round while keeping it blurred during play", () => {
+    const clue = { key: "flag-colors", value: flagUrl };
+    const active = renderToStaticMarkup(renderClueValue(clue));
+    const complete = renderToStaticMarkup(renderClueValue(clue, true));
+
+    expect(active).toContain("blur-md");
+    expect(complete).not.toContain("blur-md");
+    expect(complete).not.toContain("blur-[clamp");
+    expect(complete).toContain("Country flag");
+  });
+
+  it("reveals the full currency after the round", () => {
+    const clue = {
+      key: "currency",
+      value: "Moldovan leu",
+      currencyRedactionTexts: ["Moldovan"],
+    };
+    const active = renderToStaticMarkup(renderClueValue(clue));
+    const complete = renderToStaticMarkup(renderClueValue(clue, true));
+
+    expect(active).toContain("country reference hidden");
+    expect(complete).toBe("Moldovan leu");
   });
 
   it("does not render a flag placeholder before the clue is revealed", () => {
@@ -115,6 +135,13 @@ describe("blurred-lines clue locking", () => {
 });
 
 describe("game status toasts", () => {
+  it.each(["", "   "])(
+    "does not display a toast when the status message is blank: %j",
+    (message) => {
+      expect(shouldDisplayGameStatusToast(message)).toBe(false);
+    },
+  );
+
   it.each(["Correct.", "Answer: France."])(
     "does not display a toast for a completed round message: %s",
     (message) => {

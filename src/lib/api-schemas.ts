@@ -11,6 +11,11 @@ export const startRoundSchema = z.object({
   seed: z.string().min(1).optional(),
 });
 
+export const startAdminTestRoundSchema = z.object({
+  country: z.string().trim().min(1),
+  mode: z.enum(GAME_MODES),
+});
+
 export const startDailyRoundSchema = z.object({
   category: z.enum(DAILY_CATEGORY_OPTIONS),
   mode: z.enum(GAME_MODES),
@@ -43,8 +48,46 @@ export const duelMutationSchema = z.object({
 
 export const duelGuessSchema = duelMutationSchema.extend({
   guess: z.string().trim().min(1),
+  method: z.enum(["text", "map"]).optional(),
 });
 
 export const duelRevealSchema = duelMutationSchema.extend({
   clueKey: z.string().trim().min(1),
 });
+
+const feedbackContextSchema = z
+  .object({
+    source: z.enum(["global", "round-result", "clue"]),
+    gameType: z.enum(["daily", "free_play"]).optional(),
+    category: z.enum(ENTITY_CATEGORIES).optional(),
+    mode: z.enum(GAME_MODES).optional(),
+    outcome: z.enum(["win", "loss"]).optional(),
+    score: z.number().int().nonnegative().optional(),
+    cluesRevealed: z.number().int().nonnegative().optional(),
+    clueKey: z.string().trim().min(1).max(100).optional(),
+    clueLabel: z.string().trim().min(1).max(100).optional(),
+  })
+  .strict();
+
+export const createFeedbackSchema = z
+  .object({
+    kind: z.enum([
+      "positive",
+      "bug",
+      "content_issue",
+      "confusing",
+      "feature_idea",
+      "other",
+    ]),
+    message: z.string().trim().max(2_000).optional(),
+    context: feedbackContextSchema.optional(),
+  })
+  .strict();
+
+export const createThemeRatingSchema = z
+  .object({
+    device: z.enum(["mobile", "desktop"]),
+    score: z.number().int().min(1).max(5),
+    theme: z.enum(["chocolate", "matcha"]),
+  })
+  .strict();

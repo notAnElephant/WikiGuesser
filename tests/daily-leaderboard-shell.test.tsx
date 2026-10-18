@@ -37,13 +37,12 @@ describe("DailyLeaderboardShell", () => {
       />,
     );
 
-    expect(markup).toContain("Games");
     expect(markup).toContain('aria-label="12 games played"');
     expect(markup).toContain("Ada");
     expect(markup).toContain("420");
   });
 
-  it("uses a timezone-neutral placeholder for completion times on the server", () => {
+  it("does not show completion times on today's leaderboard", () => {
     const comboKey = getDailyComboKey("countries", "classic");
     const data: DailyLeaderboardPageData = {
       dayKey: "2026-08-25",
@@ -73,9 +72,8 @@ describe("DailyLeaderboardShell", () => {
       />,
     );
 
-    expect(markup).toContain('dateTime="2026-08-25T09:45:00.000Z"');
-    expect(markup).toContain(
-      '<time dateTime="2026-08-25T09:45:00.000Z">—</time>',
-    );
+    expect(markup).toContain("Ada");
+    expect(markup).toContain("420");
+    expect(markup).not.toContain("2026-08-25T09:45:00.000Z");
   });
 });

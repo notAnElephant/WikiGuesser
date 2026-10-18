@@ -11,6 +11,9 @@ const redirectableProductionHosts = new Set([
 const isPublicRoute = createRouteMatcher([
   "/",
   "/leaderboard",
+  "/offline",
+  "/daily/(.*)",
+  "/play/(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/duel/(.*)",
@@ -20,6 +23,9 @@ const isPublicRoute = createRouteMatcher([
   "/api/rounds/(.*)/reveal",
   "/api/rounds/(.*)/give-up",
   "/api/daily/start",
+  "/api/feedback",
+  "/api/theme-ratings",
+  "/api/offline/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

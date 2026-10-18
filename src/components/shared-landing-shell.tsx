@@ -1,6 +1,19 @@
 "use client";
 
 import { GoogleOneTap } from "@clerk/nextjs";
+import { VStack } from "@astryxdesign/core/VStack";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Text } from "@astryxdesign/core/Text";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
+import { SelectableCard } from "@astryxdesign/core/SelectableCard";
+import {
+  createStaticSource,
+  Typeahead,
+  type SearchableItem,
+} from "@astryxdesign/core/Typeahead";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti";
 import {
@@ -15,16 +28,14 @@ import {
   CalendarDays,
   Gamepad2,
   Globe2,
-  LoaderCircle,
   Play,
+  ShieldCheck,
   X,
 } from "lucide-react";
 
 import { DuelCreator } from "@/src/components/duel/duel-creator";
-import {
-  GAME_MODE_OPTIONS,
-  primaryButtonClass,
-} from "@/src/components/game-shell/config";
+import { OfflinePackStatus } from "@/src/components/offline-pack-status";
+import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
 import type {
@@ -39,13 +50,21 @@ import {
   isClueLocked,
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  findUniqueCountryMatch,
+  normalizeGuess,
+} from "@/src/lib/game/answer-matching";
 import { captureAnalyticsEvent, toGameContext } from "@/src/lib/analytics";
 import { CONTINENT_LABELS } from "@/src/lib/content/continents";
+import { getActiveOfflineCountryPack } from "@/src/lib/offline";
 import {
   findOtherAvailableDaily,
   getDailyComboKey,
 } from "@/src/lib/game/daily";
+import {
+  getGameModeHref,
+  type GameRouteTarget,
+} from "@/src/lib/game/game-routes";
 import type {
   CategorySummary,
   ContinentId,
@@ -64,6 +83,8 @@ interface SharedLandingShellProps {
   countryOptions: string[];
   dailyData: DailyLandingData;
   hasPendingClaim: boolean;
+  initialGame?: GameRouteTarget;
+  isAdmin: boolean;
   isSignedIn: boolean;
 }
 
@@ -86,26 +107,27 @@ const launcherModeCopy: Record<
   classic: {
     dailyDescription: "Clues reveal after every miss.",
     dailyTitle: "Classic Daily",
-    freeDescription: "Guess, miss, reveal.",
+    freeDescription: "Each miss reveals the next clue.",
     freeTitle: "Classic",
   },
   "blurred-lines": {
-    dailyDescription: "Reveal only what you need.",
+    dailyDescription: "Choose a clue, then make a guess.",
     dailyTitle: "Choose Clues Daily",
-    freeDescription: "Open only what you need.",
+    freeDescription: "Choose a clue, then make a guess.",
     freeTitle: "Choose Clues",
   },
 };
 
-const launcherSecondaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-full border border-[#0f766e]/36 px-5 py-3 text-sm font-semibold text-[#0f766e] transition hover:-translate-y-0.5 hover:border-[#0f766e]/56 hover:bg-[#0f766e]/6 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 dark:border-[#24d4c2]/42 dark:text-[#55e7d5] dark:hover:border-[#24d4c2]/64 dark:hover:bg-[#24d4c2]/7";
-
 interface GameLauncherProps {
   claimBanner: string | null;
   continentOptions: ContinentOption[];
+  countryOptions: string[];
   dailyOptions: DailyChallengeOption[];
   isBusy: boolean;
   isClaimingPending: boolean;
+  isAdmin: boolean;
+  onChooseFreePlay: (mode: GameMode) => void;
+  onStartAdminTest: (country: string, mode: GameMode) => void;
   onStartDaily: (option: DailyChallengeOption) => void;
   onStartFreePlay: (mode: GameMode, continent: ContinentId | null) => void;
   resetCountdown: string;
@@ -116,9 +138,13 @@ interface GameLauncherProps {
 export function GameLauncher({
   claimBanner,
   continentOptions,
+  countryOptions,
   dailyOptions,
   isBusy,
   isClaimingPending,
+  isAdmin,
+  onChooseFreePlay,
+  onStartAdminTest,
   onStartDaily,
   onStartFreePlay,
   resetCountdown,
@@ -127,6 +153,8 @@ export function GameLauncher({
 }: GameLauncherProps) {
   const [pendingFreePlayMode, setPendingFreePlayMode] =
     useState<GameMode | null>(null);
+  const [isAdminTestOpen, setIsAdminTestOpen] = useState(false);
+  const [activeLaunch, setActiveLaunch] = useState<string | null>(null);
 
   function startFilteredFreePlay(continent: ContinentId | null) {
     if (!pendingFreePlayMode) {
@@ -135,37 +163,65 @@ export function GameLauncher({
 
     const mode = pendingFreePlayMode;
     setPendingFreePlayMode(null);
+    setActiveLaunch(`free-play:${mode}`);
     onStartFreePlay(mode, continent);
   }
 
   return (
     <section className="grid gap-5 pb-3 sm:gap-7">
       <header className="flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between">
-        <h1 className="m-0 font-serif-display text-[clamp(3rem,9vw,5.4rem)] font-semibold leading-[0.88] tracking-[-0.065em] text-[#1f1b17] dark:text-[#f5f7fb]">
+        <h1 className="m-0 font-heading text-4xl sm:text-5xl font-semibold leading-tight tracking-tight text-primary">
           Pick your game
         </h1>
-        <div className="inline-flex items-center gap-2 pb-1 text-sm font-medium text-[#6b6259] dark:text-[#9aa9bb]">
+        <div className="inline-flex items-center gap-2 pb-1 text-sm font-medium text-secondary">
           <CalendarDays
             aria-hidden="true"
-            className="size-4 text-[#0f766e] dark:text-[#24d4c2]"
+            className="size-4 text-accent"
             strokeWidth={2.1}
           />
           Daily resets in
-          <strong className="font-semibold text-[#0f766e] dark:text-[#55e7d5]">
+          <strong className="font-semibold text-accent">
             {resetCountdown}
           </strong>
         </div>
       </header>
+      <VStack gap={2}>
+        <Text>
+          Guess the country from its clues. Fewer clues earn more points.
+        </Text>
+        <details className="text-sm text-secondary">
+          <summary className="cursor-pointer py-2 font-semibold text-accent">
+            How to play
+          </summary>
+          <VStack gap={2} paddingBlock={2}>
+            <Text>
+              Classic: start with one clue. Each wrong guess reveals the next.
+            </Text>
+            <Text>
+              Choose Clues: reveal an unlocked clue, then make one guess. After
+              a miss, choose another clue.
+            </Text>
+            <Text>
+              A correct map guess earns 50, 40, 30, 20, 10, or 5 points as more
+              clues are revealed. Guess by name for double points. Giving up
+              earns 0.
+            </Text>
+            <Text>
+              Play each daily puzzle once, or practise with unlimited free play.
+            </Text>
+          </VStack>
+        </details>
+      </VStack>
 
       {claimBanner ? (
-        <div className="rounded-2xl border border-emerald-500/18 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-400/18 dark:bg-emerald-400/10 dark:text-emerald-200">
+        <div className="rounded-2xl border border-success bg-success-muted px-4 py-3 text-sm font-medium text-success">
           {claimBanner}
         </div>
       ) : null}
 
       <div className="grid gap-4">
         <LauncherBand
-          description="Two chances. One country each."
+          description="Two daily puzzles. One country each."
           isDaily
           title="Today"
         >
@@ -183,9 +239,11 @@ export function GameLauncher({
                 description={launcherModeCopy[mode.id].dailyDescription}
                 disabled={isDisabled}
                 icon={mode.icon}
+                isLoading={isBusy && activeLaunch === `daily:${mode.id}`}
                 key={mode.id}
                 onClick={() => {
                   if (option) {
+                    setActiveLaunch(`daily:${mode.id}`);
                     onStartDaily(option);
                   }
                 }}
@@ -208,13 +266,35 @@ export function GameLauncher({
               description={launcherModeCopy[mode.id].freeDescription}
               disabled={isBusy}
               icon={mode.icon}
+              isLoading={isBusy && activeLaunch === `free-play:${mode.id}`}
               key={mode.id}
-              onClick={() => setPendingFreePlayMode(mode.id)}
+              onClick={() => {
+                setPendingFreePlayMode(mode.id);
+                onChooseFreePlay(mode.id);
+              }}
               title={launcherModeCopy[mode.id].freeTitle}
               variant="secondary"
             />
           ))}
         </LauncherBand>
+
+        {isAdmin ? (
+          <LauncherBand
+            description="Start a chosen country in either game mode. Visible only to admins."
+            title="Admin test"
+          >
+            <LauncherRow
+              actionLabel="Choose country"
+              description="Reproduce a country-specific issue."
+              disabled={isBusy}
+              icon={ShieldCheck}
+              isLoading={isBusy && activeLaunch === "admin-test"}
+              onClick={() => setIsAdminTestOpen(true)}
+              title="Test a country"
+              variant="secondary"
+            />
+          </LauncherBand>
+        ) : null}
       </div>
 
       {pendingFreePlayMode ? (
@@ -227,7 +307,112 @@ export function GameLauncher({
           totalCountryCount={totalCountryCount}
         />
       ) : null}
+      {isAdminTestOpen ? (
+        <AdminTestRoundDialog
+          countryOptions={countryOptions}
+          isBusy={isBusy}
+          onClose={() => setIsAdminTestOpen(false)}
+          onStart={(country, mode) => {
+            setIsAdminTestOpen(false);
+            setActiveLaunch("admin-test");
+            onStartAdminTest(country, mode);
+          }}
+        />
+      ) : null}
     </section>
+  );
+}
+
+interface AdminTestRoundDialogProps {
+  countryOptions: string[];
+  isBusy: boolean;
+  onClose: () => void;
+  onStart: (country: string, mode: GameMode) => void;
+}
+
+function AdminTestRoundDialog({
+  countryOptions,
+  isBusy,
+  onClose,
+  onStart,
+}: AdminTestRoundDialogProps) {
+  const [country, setCountry] = useState<SearchableItem | null>(null);
+  const [mode, setMode] = useState<GameMode>("classic");
+  const countrySource = useMemo(
+    () =>
+      createStaticSource(
+        countryOptions.map((option) => ({ id: option, label: option })),
+      ),
+    [countryOptions],
+  );
+
+  return (
+    <Dialog
+      isOpen
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+      padding={6}
+      purpose="form"
+      width="32rem"
+    >
+      <DialogHeader
+        onOpenChange={(isOpen) => {
+          if (!isOpen) onClose();
+        }}
+        startContent={
+          <ShieldCheck aria-hidden="true" className="text-accent" />
+        }
+        subtitle="This bypasses normal random country selection."
+        title="Start an admin test round"
+      />
+      <VStack gap={4} paddingBlock={4}>
+        <Typeahead
+          hasAutoFocus
+          hasEntriesOnFocus
+          label="Country"
+          maxMenuItems={12}
+          onChange={setCountry}
+          placeholder="Search countries"
+          searchSource={countrySource}
+          value={country}
+          width="100%"
+        />
+        <VStack gap={2}>
+          <Text weight="semibold">Game mode</Text>
+          <HStack gap={2} wrap="wrap">
+            {GAME_MODE_OPTIONS.map((option) => (
+              <Button
+                key={option.id}
+                label={`Select ${launcherModeCopy[option.id].freeTitle} mode`}
+                onClick={() => setMode(option.id)}
+                variant={mode === option.id ? "primary" : "secondary"}
+              >
+                {launcherModeCopy[option.id].freeTitle}
+              </Button>
+            ))}
+          </HStack>
+        </VStack>
+        <HStack gap={2} justify="end">
+          <Button
+            label="Cancel admin test"
+            onClick={onClose}
+            variant="secondary"
+          >
+            Cancel
+          </Button>
+          <Button
+            isDisabled={!country || isBusy}
+            label="Start admin test"
+            onClick={() => {
+              if (country) onStart(country.label, mode);
+            }}
+          >
+            Start test
+          </Button>
+        </HStack>
+      </VStack>
+    </Dialog>
   );
 }
 
@@ -240,7 +425,7 @@ interface ContinentPickerDialogProps {
   totalCountryCount: number;
 }
 
-function ContinentPickerDialog({
+export function ContinentPickerDialog({
   continentOptions,
   mode,
   onClose,
@@ -249,101 +434,92 @@ function ContinentPickerDialog({
   totalCountryCount,
 }: ContinentPickerDialogProps) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(25,20,14,0.46)] p-4 backdrop-blur-sm dark:bg-[rgba(3,7,14,0.62)]"
-      onClick={onClose}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          onClose();
-        }
+    <Dialog
+      isOpen
+      maxHeight="calc(100dvh - var(--spacing-8))"
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
       }}
+      padding={6}
+      width="42rem"
     >
-      <div
-        aria-describedby="continent-picker-description"
-        aria-labelledby="continent-picker-title"
-        aria-modal="true"
-        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-4xl border border-[rgba(17,94,89,0.14)] bg-[linear-gradient(180deg,rgba(255,251,245,0.98),rgba(255,247,238,0.95))] p-6 shadow-[0_20px_70px_rgba(29,22,14,0.26)] dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(14,22,34,0.98),rgba(19,29,43,0.95))] dark:shadow-[0_20px_70px_rgba(0,0,0,0.46)] sm:p-7"
-        onClick={(event) => event.stopPropagation()}
-        role="dialog"
-      >
-        <button
-          aria-label="Close continent picker"
-          className="absolute right-4 top-4 inline-flex size-10 items-center justify-center rounded-full border border-black/8 bg-white/72 text-[#6b6259] transition hover:bg-white hover:text-[#1f1b17] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f766e] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb] dark:hover:bg-white/10 dark:hover:text-[#f5f7fb]"
-          onClick={onClose}
-          type="button"
-        >
-          <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
-        </button>
+      <Layout
+        header={
+          <DialogHeader
+            onOpenChange={(isOpen) => {
+              if (!isOpen) onClose();
+            }}
+            startContent={<Globe2 aria-hidden="true" className="text-accent" />}
+            subtitle="Pick the country pool for this round."
+            title="Choose a continent"
+          />
+        }
+        content={
+          <LayoutContent padding={6} label="Continent choices">
+            <div className="grid gap-3 pt-4 sm:grid-cols-2">
+              <SelectableCard
+                isSelected={selectedContinent === null}
+                label="All continents"
+                onChange={() => onSelect(null)}
+                padding={4}
+              >
+                <strong className="block font-heading text-xl text-primary">
+                  All continents
+                </strong>
+                <span className="mt-1 block text-sm text-secondary">
+                  {totalCountryCount} countries
+                </span>
+              </SelectableCard>
 
-        <div className="flex items-start gap-4 pr-10">
-          <span className="inline-flex size-14 shrink-0 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.18))] dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.14))]">
-            <Globe2
-              aria-hidden="true"
-              className="size-6 text-[#1f1b17] dark:text-[#f5f7fb]"
-              strokeWidth={2.1}
-            />
-          </span>
-          <div className="min-w-0">
-            <p className="m-0 text-[0.74rem] font-semibold uppercase tracking-[0.2em] text-[#115e59] dark:text-[#75e6d7]">
+              {continentOptions.map((option) => (
+                <SelectableCard
+                  isSelected={selectedContinent === option.id}
+                  key={option.id}
+                  label={option.label}
+                  onChange={() => onSelect(option.id)}
+                  padding={4}
+                >
+                  <strong className="block font-heading text-xl text-primary">
+                    {option.label}
+                  </strong>
+                  <span className="mt-1 block text-sm text-secondary">
+                    {option.entityCount} countries
+                  </span>
+                </SelectableCard>
+              ))}
+            </div>
+            <p className="m-0 pt-4 text-xs text-secondary">
               {launcherModeCopy[mode].freeTitle} free play
             </p>
-            <h2
-              className="m-0 mt-2 font-serif-display text-[clamp(2rem,8vw,3.1rem)] font-semibold leading-[0.92] tracking-[-0.06em] text-[#1f1b17] dark:text-[#f5f7fb]"
-              id="continent-picker-title"
-            >
-              Choose a continent
-            </h2>
-            <p
-              className="m-0 mt-3 text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]"
-              id="continent-picker-description"
-            >
-              Pick the country pool for this round.
-            </p>
-          </div>
-        </div>
+          </LayoutContent>
+        }
+      />
+    </Dialog>
+  );
+}
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button
-            autoFocus={selectedContinent === null}
-            className={`rounded-[22px] border p-4 text-left transition hover:-translate-y-0.5 hover:border-[#0f766e]/42 hover:bg-[#0f766e]/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f766e] dark:hover:border-[#24d4c2]/48 dark:hover:bg-[#24d4c2]/7 ${
-              selectedContinent === null
-                ? "border-[#0f766e]/40 bg-[#0f766e]/7 dark:border-[#24d4c2]/46 dark:bg-[#24d4c2]/8"
-                : "border-black/8 bg-white/68 dark:border-white/10 dark:bg-white/5"
-            }`}
-            onClick={() => onSelect(null)}
-            type="button"
-          >
-            <strong className="block font-serif-display text-xl tracking-[-0.035em] text-[#1f1b17] dark:text-[#f5f7fb]">
-              All continents
-            </strong>
-            <span className="mt-1 block text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-              {totalCountryCount} countries
-            </span>
-          </button>
+function FreePlaySetupView({ mode }: { mode: GameMode }) {
+  const modeMeta = getModeMeta(mode);
 
-          {continentOptions.map((option) => (
-            <button
-              autoFocus={selectedContinent === option.id}
-              className={`rounded-[22px] border p-4 text-left transition hover:-translate-y-0.5 hover:border-[#0f766e]/42 hover:bg-[#0f766e]/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f766e] dark:hover:border-[#24d4c2]/48 dark:hover:bg-[#24d4c2]/7 ${
-                selectedContinent === option.id
-                  ? "border-[#0f766e]/40 bg-[#0f766e]/7 dark:border-[#24d4c2]/46 dark:bg-[#24d4c2]/8"
-                  : "border-black/8 bg-white/68 dark:border-white/10 dark:bg-white/5"
-              }`}
-              key={option.id}
-              onClick={() => onSelect(option.id)}
-              type="button"
-            >
-              <strong className="block font-serif-display text-xl tracking-[-0.035em] text-[#1f1b17] dark:text-[#f5f7fb]">
-                {option.label}
-              </strong>
-              <span className="mt-1 block text-sm text-[#6b6259] dark:text-[#9aa9bb]">
-                {option.entityCount} countries
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
+  return (
+    <VStack as="main" gap={4}>
+      <HStack gap={3} justify="between" wrap="wrap">
+        <Text weight="semibold">Free play · {modeMeta.label} · Countries</Text>
+        <Text color="accent" weight="semibold">
+          Available score: 50 pts · 0/6 clues
+        </Text>
+      </HStack>
+      <Card elevation="low" padding={5}>
+        <VStack gap={2}>
+          <h1 className="m-0 font-heading text-2xl font-semibold leading-tight tracking-tighter text-primary sm:text-3xl">
+            {mode === "blurred-lines" ? "Choose a clue" : "Follow the clues"}
+          </h1>
+          <Text color="secondary">
+            Choose a continent to prepare your next round.
+          </Text>
+        </VStack>
+      </Card>
+    </VStack>
   );
 }
 
@@ -363,30 +539,26 @@ function LauncherBand({
   const BandIcon = isDaily ? CalendarDays : Gamepad2;
 
   return (
-    <section
-      className={`overflow-hidden rounded-[30px] border ${
-        isDaily
-          ? "border-[#0f766e]/24 bg-[linear-gradient(145deg,rgba(15,118,110,0.08),rgba(255,255,255,0.8))] shadow-[0_20px_48px_rgba(15,118,110,0.08)] dark:border-[#24d4c2]/22 dark:bg-[linear-gradient(145deg,rgba(36,212,194,0.075),rgba(13,21,32,0.92))] dark:shadow-[0_20px_48px_rgba(0,0,0,0.22)]"
-          : "border-black/10 bg-white/62 dark:border-white/10 dark:bg-white/[0.025]"
-      }`}
+    <Card
+      className="overflow-hidden"
+      elevation={isDaily ? "low" : "none"}
+      padding={0}
     >
       <div className="grid lg:grid-cols-[minmax(230px,0.72fr)_minmax(0,1.6fr)]">
-        <div className="flex flex-col justify-center border-b border-black/8 p-5 dark:border-white/10 sm:p-6 lg:border-b-0 lg:border-r">
-          <span className="mb-4 hidden size-12 items-center justify-center rounded-full border border-[#0f766e]/24 text-[#0f766e] dark:border-[#24d4c2]/32 dark:text-[#55e7d5] lg:inline-flex">
+        <div className="flex flex-col justify-center border-b border-border p-4 sm:p-5 lg:border-b-0 lg:border-r">
+          <span className="mb-4 hidden size-12 items-center justify-center rounded-md border border-border bg-surface text-accent lg:inline-flex">
             <BandIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />
           </span>
-          <h2 className="m-0 font-serif-display text-[clamp(2.15rem,6vw,3.45rem)] font-semibold tracking-[-0.055em] text-[#1f1b17] dark:text-[#f5f7fb]">
+          <h2 className="m-0 font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-primary">
             {title}
           </h2>
-          <p className="m-0 mt-2 text-[0.98rem] leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
+          <p className="m-0 mt-2 text-base leading-6 text-secondary">
             {description}
           </p>
         </div>
-        <div className="divide-y divide-black/8 px-4 dark:divide-white/10 sm:px-6">
-          {children}
-        </div>
+        <div className="divide-y divide-border px-4 sm:px-6">{children}</div>
       </div>
-    </section>
+    </Card>
   );
 }
 
@@ -395,6 +567,7 @@ interface LauncherRowProps {
   description: string;
   disabled: boolean;
   icon: (typeof GAME_MODE_OPTIONS)[number]["icon"];
+  isLoading?: boolean;
   onClick: () => void;
   status?: string;
   title: string;
@@ -406,22 +579,23 @@ function LauncherRow({
   description,
   disabled,
   icon: ModeIcon,
+  isLoading = false,
   onClick,
   status,
   title,
   variant,
 }: LauncherRowProps) {
   return (
-    <div className="grid gap-4 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:py-6">
+    <div className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:py-5">
       <div className="flex min-w-0 items-center gap-4">
-        <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-full border border-[#0f766e]/24 text-[#0f766e] dark:border-[#24d4c2]/32 dark:text-[#55e7d5]">
+        <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-accent">
           <ModeIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />
         </span>
         <div className="min-w-0">
-          <h3 className="m-0 font-serif-display text-[1.55rem] font-semibold tracking-[-0.035em] text-[#1f1b17] dark:text-[#f5f7fb]">
+          <h3 className="m-0 font-heading text-xl font-semibold tracking-tight text-primary">
             {title}
           </h3>
-          <p className="m-0 mt-1 text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
+          <p className="m-0 mt-1 text-sm leading-6 text-secondary">
             {description}
           </p>
         </div>
@@ -429,28 +603,23 @@ function LauncherRow({
 
       <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
         {status ? (
-          <span className="whitespace-nowrap text-sm font-medium text-[#6b6259] dark:text-[#9aa9bb]">
+          <span className="whitespace-nowrap text-sm font-medium text-secondary">
             {status}
           </span>
         ) : null}
-        <button
-          aria-label={`${actionLabel}: ${title}`}
-          className={`${variant === "primary" ? primaryButtonClass : launcherSecondaryButtonClass} w-full min-w-40 whitespace-nowrap px-5 disabled:hover:translate-y-0 sm:w-auto`}
-          disabled={disabled}
+        <Button
+          className="min-w-40 whitespace-nowrap"
+          icon={<Play aria-hidden="true" />}
+          isDisabled={disabled}
+          isLoading={isLoading}
+          label={`${actionLabel}: ${title}`}
           onClick={onClick}
-          type="button"
+          size="lg"
+          variant={variant}
+          width="100%"
         >
-          {disabled && actionLabel !== "Played" ? (
-            <LoaderCircle
-              aria-hidden="true"
-              className="size-4 animate-spin"
-              strokeWidth={2.2}
-            />
-          ) : (
-            <Play aria-hidden="true" className="size-4" strokeWidth={2.2} />
-          )}
           {actionLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -507,6 +676,8 @@ export function SharedLandingShell({
   countryOptions,
   dailyData,
   hasPendingClaim,
+  initialGame,
+  isAdmin,
   isSignedIn,
 }: SharedLandingShellProps) {
   const router = useRouter();
@@ -522,6 +693,7 @@ export function SharedLandingShell({
   );
   const [selectedContinent, setSelectedContinent] =
     useState<ContinentId | null>(null);
+  const [isAdminTestRound, setIsAdminTestRound] = useState(false);
   const [round, setRound] = useState<ActiveRound | null>(null);
   const [result, setResult] = useState<RoundOutcome | null>(null);
   const [guess, setGuess] = useState("");
@@ -537,13 +709,21 @@ export function SharedLandingShell({
     isSignedIn && hasPendingClaim,
   );
   const [resetCountdown, setResetCountdown] = useState("00:00");
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isDirectFreePlayPickerOpen, setIsDirectFreePlayPickerOpen] =
+    useState(true);
   const [playedOverrides, setPlayedOverrides] = useState<
     Record<string, PlayedOverride>
   >({});
+  const autoStartedRouteRef = useRef<string | null>(null);
 
   function setMessage(nextMessage: string) {
     setMessageState(nextMessage);
     setMessageRevision((current) => current + 1);
+  }
+
+  function pushGameUrl(kind: "daily" | "play", mode: GameMode) {
+    window.history.pushState(null, "", getGameModeHref(kind, mode));
   }
   const [isPending, startTransition] = useTransition();
 
@@ -589,13 +769,14 @@ export function SharedLandingShell({
   const isCountryRound = (round?.category ?? result?.category) === "countries";
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
+  const matchedCountry = findUniqueCountryMatch(countryOptions, guess);
   const normalizedGuessedEntities = new Set(
     guessedEntities.map((entry) => normalizeGuess(entry.name)),
   );
-  const isCountryGuessValid =
-    !isCountryRound || validCountryLookup.has(normalizedGuess);
+  const isCountryGuessValid = !isCountryRound || Boolean(matchedCountry);
   const isAlreadyGuessed =
-    hasGuess && normalizedGuessedEntities.has(normalizedGuess);
+    hasGuess &&
+    normalizedGuessedEntities.has(normalizeGuess(matchedCountry ?? guess));
   const availableCountryOptions = countryOptions.filter(
     (option) => !normalizedGuessedEntities.has(normalizeGuess(option)),
   );
@@ -632,6 +813,16 @@ export function SharedLandingShell({
       : isAlreadyGuessed
         ? "Already tried."
         : null;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+
+    updatePreference();
+    mediaQuery.addEventListener("change", updatePreference);
+
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
 
   useEffect(() => {
     setResetCountdown(getTimeUntilBudapestMidnight());
@@ -691,25 +882,26 @@ export function SharedLandingShell({
     };
   }, [hasPendingClaim, isSignedIn, router]);
 
-  function clearToHome(options?: { refresh?: boolean }) {
+  function clearToHome() {
     setRound(null);
     setResult(null);
     setGuess("");
     setGuessedEntities([]);
     setScore(null);
     setIsSyncingReveal(false);
+    setIsAdminTestRound(false);
 
-    if (options?.refresh) {
-      router.refresh();
-    }
+    router.push("/");
   }
 
   function startFreePlay(
     mode: GameMode = selectedMode ?? "classic",
     continent: ContinentId | null = selectedContinent,
+    onFailure?: () => void,
   ) {
     if (!defaultFreePlayCategory) {
       setMessage("Free play unavailable.");
+      onFailure?.();
       return;
     }
 
@@ -722,6 +914,7 @@ export function SharedLandingShell({
     setScore(null);
     setResult(null);
     setIsSyncingReveal(false);
+    setIsAdminTestRound(false);
 
     startTransition(async () => {
       try {
@@ -742,6 +935,7 @@ export function SharedLandingShell({
             error?: string;
           } | null;
           setMessage(payload?.error ?? "Round failed. Retry.");
+          onFailure?.();
           return;
         }
 
@@ -754,12 +948,64 @@ export function SharedLandingShell({
             payload.continent,
           ),
         });
-        setRound(payload);
+        setRound({ ...payload, playOrigin: "server" });
         setMessage(
           payload.mode === "blurred-lines" ? "Tap a row." : "Round live.",
         );
       } catch {
+        const offlinePack = await getActiveOfflineCountryPack().catch(
+          () => null,
+        );
+
+        if (offlinePack) {
+          const params = new URLSearchParams({ mode });
+          if (continent) params.set("continent", continent);
+          router.push(`/offline?${params.toString()}`);
+          return;
+        }
+
         setMessage("Round failed. Retry.");
+        onFailure?.();
+      }
+    });
+  }
+
+  function startAdminTestRound(country: string, mode: GameMode) {
+    setSelectedPlayType("free-play");
+    setSelectedCategory("countries");
+    setSelectedMode(mode);
+    setSelectedContinent(null);
+    setGuess("");
+    setGuessedEntities([]);
+    setScore(null);
+    setResult(null);
+    setIsSyncingReveal(false);
+    setIsAdminTestRound(true);
+
+    startTransition(async () => {
+      try {
+        const response = await fetch("/api/admin/rounds/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ country, mode }),
+        });
+        const payload = (await response.json()) as StartRoundResult & {
+          error?: string;
+        };
+
+        if (!response.ok) {
+          setMessage(payload.error ?? "Test round failed. Retry.");
+          return;
+        }
+
+        setRound({ ...payload, playOrigin: "server" });
+        setMessage(
+          payload.mode === "blurred-lines"
+            ? "Admin test live. Tap a row."
+            : "Admin test live.",
+        );
+      } catch {
+        setMessage("Test round failed. Retry.");
       }
     });
   }
@@ -785,6 +1031,7 @@ export function SharedLandingShell({
     setScore(null);
     setResult(null);
     setIsSyncingReveal(false);
+    setIsAdminTestRound(false);
 
     startTransition(async () => {
       let response: Response;
@@ -822,12 +1069,34 @@ export function SharedLandingShell({
           payload.continent,
         ),
       });
-      setRound(payload);
+      setRound({ ...payload, playOrigin: "server" });
       setMessage(
         payload.mode === "blurred-lines" ? "Tap a row." : "Daily live.",
       );
     });
   }
+
+  useEffect(() => {
+    if (!initialGame || initialGame.kind !== "daily") {
+      autoStartedRouteRef.current = null;
+      return;
+    }
+
+    const routeKey = `${initialGame.kind}:${initialGame.mode}`;
+
+    if (autoStartedRouteRef.current === routeKey) {
+      return;
+    }
+
+    autoStartedRouteRef.current = routeKey;
+    const option = dailyOptions.find(
+      (candidate) =>
+        candidate.category === dailyData.defaultCategory &&
+        candidate.mode === initialGame.mode,
+    );
+
+    void startDaily(option ?? null);
+  }, [dailyData.defaultCategory, dailyOptions, initialGame]);
 
   function startSelectedFlow() {
     if (selectedPlayType === "daily") {
@@ -839,7 +1108,7 @@ export function SharedLandingShell({
   }
 
   function revealClue(clueKey: string) {
-    if (!round || isSyncingReveal) {
+    if (!round || round.playOrigin !== "server" || isSyncingReveal) {
       return;
     }
 
@@ -900,13 +1169,13 @@ export function SharedLandingShell({
           clues_revealed: payload.clues.filter((entry) => entry.isRevealed)
             .length,
         });
-        setRound(payload);
+        setRound({ ...payload, playOrigin: "server" });
         setMessage(
           payload.remainingClues === 0 ? "Last clue." : "Clue unlocked.",
         );
       } catch {
         setRound(previousRound);
-        setMessage("Reveal failed.");
+        setMessage("Connection lost. Reconnect to continue this online round.");
       } finally {
         setIsSyncingReveal(false);
       }
@@ -921,7 +1190,7 @@ export function SharedLandingShell({
     const isMapGuess = Boolean(mapCountryName);
     const guessValue = mapCountryName ?? guess.trim();
 
-    if (!round || !guessValue) {
+    if (!round || round.playOrigin !== "server" || !guessValue) {
       return;
     }
 
@@ -947,7 +1216,9 @@ export function SharedLandingShell({
     const submittedGuess = isMapGuess
       ? guessValue
       : isCountryRound
-        ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
+        ? (matchedCountry ??
+          validCountryLookup.get(normalizedGuess) ??
+          guess.trim())
         : guess.trim();
 
     isSubmittingGuessRef.current = true;
@@ -1020,9 +1291,11 @@ export function SharedLandingShell({
         if (payload.isCorrect) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: "win",
             canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
             score: payload.score,
+            guessMethod: isMapGuess ? "map" : "text",
             kind: payload.kind,
             category: payload.category,
             mode: payload.mode,
@@ -1047,6 +1320,7 @@ export function SharedLandingShell({
         if (payload.isComplete) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: "loss",
             canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
             score: 0,
@@ -1072,6 +1346,7 @@ export function SharedLandingShell({
         }
 
         setRound({
+          playOrigin: "server",
           roundId: payload.roundId,
           token: payload.token!,
           kind: payload.kind,
@@ -1084,6 +1359,8 @@ export function SharedLandingShell({
           canGuess: payload.canGuess,
         });
         setMessage(getMissMessage(payload));
+      } catch {
+        setMessage("Connection lost. Reconnect to continue this online round.");
       } finally {
         isSubmittingGuessRef.current = false;
         setIsSubmittingGuess(false);
@@ -1101,7 +1378,7 @@ export function SharedLandingShell({
   }
 
   function giveUpRound() {
-    if (!round) {
+    if (!round || round.playOrigin !== "server") {
       return;
     }
 
@@ -1149,6 +1426,7 @@ export function SharedLandingShell({
         });
         setRound(null);
         setResult({
+          playOrigin: "server",
           status: "loss",
           canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
           score: 0,
@@ -1178,17 +1456,53 @@ export function SharedLandingShell({
   }
 
   if (view === "menu") {
+    if (initialGame?.kind === "play") {
+      return (
+        <>
+          <FreePlaySetupView mode={initialGame.mode} />
+          {isDirectFreePlayPickerOpen ? (
+            <ContinentPickerDialog
+              continentOptions={continentOptions}
+              mode={initialGame.mode}
+              onClose={() => {
+                setIsDirectFreePlayPickerOpen(false);
+                clearToHome();
+              }}
+              onSelect={(continent) => {
+                setIsDirectFreePlayPickerOpen(false);
+                void startFreePlay(initialGame.mode, continent, () =>
+                  setIsDirectFreePlayPickerOpen(true),
+                );
+              }}
+              selectedContinent={selectedContinent}
+              totalCountryCount={countryOptions.length}
+            />
+          ) : null}
+        </>
+      );
+    }
+
     return (
       <div className="grid gap-6">
+        <OfflinePackStatus />
         <GameLauncher
           claimBanner={claimBanner}
           continentOptions={continentOptions}
+          countryOptions={countryOptions}
           dailyOptions={dailyOptions.filter(
             (option) => option.category === dailyData.defaultCategory,
           )}
           isBusy={isBusy}
           isClaimingPending={isClaimingPending}
-          onStartDaily={(option) => void startDaily(option)}
+          isAdmin={isAdmin}
+          onChooseFreePlay={(mode) => pushGameUrl("play", mode)}
+          onStartAdminTest={(country, mode) =>
+            void startAdminTestRound(country, mode)
+          }
+          onStartDaily={(option) => {
+            pushGameUrl("daily", option.mode);
+            void startDaily(option);
+          }}
           onStartFreePlay={(mode, continent) =>
             void startFreePlay(mode, continent)
           }
@@ -1221,11 +1535,13 @@ export function SharedLandingShell({
           displayScore={displayScore}
           giveUpRound={giveUpRound}
           flowLabel={
-            isDailyFlow
-              ? "Daily"
-              : selectedContinent
-                ? `${CONTINENT_LABELS[selectedContinent]} free play`
-                : "Free play"
+            isAdminTestRound
+              ? "Admin test"
+              : isDailyFlow
+                ? "Daily"
+                : selectedContinent
+                  ? `${CONTINENT_LABELS[selectedContinent]} free play`
+                  : "Free play"
           }
           guess={guess}
           guessedEntities={guessedEntities}
@@ -1252,6 +1568,7 @@ export function SharedLandingShell({
 
         {result?.status === "win" &&
         result.showDialog !== false &&
+        !prefersReducedMotion &&
         viewportWidth > 0 &&
         viewportHeight > 0 ? (
           <Confetti
@@ -1297,6 +1614,7 @@ export function SharedLandingShell({
                 }
 
                 if (otherAvailableDailyOption) {
+                  pushGameUrl("daily", otherAvailableDailyOption.mode);
                   void startDaily(otherAvailableDailyOption);
                   return;
                 }
@@ -1306,7 +1624,7 @@ export function SharedLandingShell({
                   return;
                 }
 
-                clearToHome({ refresh: true });
+                clearToHome();
               }}
               onSecondaryAction={() => {
                 if (
@@ -1318,9 +1636,7 @@ export function SharedLandingShell({
                   return;
                 }
 
-                result.kind === "daily"
-                  ? clearToHome({ refresh: true })
-                  : clearToHome();
+                result.kind === "daily" ? clearToHome() : clearToHome();
               }}
               onTertiaryAction={
                 result.kind === "daily" && !isSignedIn
@@ -1344,6 +1660,7 @@ export function SharedLandingShell({
                   : "Play again"
               }
               result={result}
+              statsHref={isSignedIn ? "/stats" : undefined}
               secondaryActionLabel={
                 result.kind === "daily" && otherAvailableDailyOption
                   ? isSignedIn

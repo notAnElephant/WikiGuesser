@@ -193,6 +193,32 @@ describe("duel service", () => {
     );
   });
 
+  it("allows a nonparticipant to read a completed duel as a spectator", async () => {
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "outsider" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(
+      duel({ status: "COMPLETED", completedAt: date }),
+    );
+
+    const result = await getDuel("abc123", "clerk-outsider");
+
+    expect(result.playerRole).toBe("spectator");
+    expect(result.status).toBe("completed");
+    expect(result.scores).toEqual({ challenger: 0, opponent: 0 });
+  });
+
+  it("recognizes an authenticated actor ID as the duel creator", async () => {
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "challenger" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(duel());
+
+    const result = await getDuel("abc123", "user:clerk-challenger");
+
+    expect(repository.ensureDuelUserProfile).toHaveBeenCalledWith(
+      "clerk-challenger",
+    );
+    expect(result.playerRole).toBe("challenger");
+    expect(result.status).toBe("active");
+  });
+
   it("passes the optimistic version when revealing a clue", async () => {
     const current = duel({
       rounds: [{ ...duel().rounds[0], attempts: [attempt("challenger")] }],
@@ -217,6 +243,23 @@ describe("duel service", () => {
     );
   });
 
+  it("keeps the flag clue locked until three clues are revealed", async () => {
+    const current = duel({
+      rounds: [{ ...duel().rounds[0], attempts: [attempt("challenger")] }],
+    });
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "challenger" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(current);
+
+    await expect(
+      revealDuelClue(
+        "abc123",
+        1,
+        { clueKey: "flag-colors", version: 7 },
+        "clerk",
+      ),
+    ).rejects.toThrow("Reveal 3 more clues");
+  });
+
   it("passes the optimistic version when guessing", async () => {
     const current = duel({
       rounds: [{ ...duel().rounds[0], attempts: [attempt("challenger")] }],
@@ -233,6 +276,42 @@ describe("duel service", () => {
       "challenger",
       7,
       expect.objectContaining({ isCorrect: true }),
+    );
+  });
+
+  it("awards standard score for a map guess", async () => {
+    const current = duel({
+      rounds: [
+        {
+          ...duel().rounds[0],
+          attempts: [
+            attempt("challenger", { revealedClueKeys: ["continent"] }),
+          ],
+        },
+      ],
+    });
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "challenger" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(current);
+    repository.getDuelByInviteCode.mockResolvedValue(current);
+    repository.updateDuelAttempt.mockResolvedValue(
+      attempt("challenger", { version: 8 }),
+    );
+
+    await guessDuelRound(
+      "abc123",
+      1,
+      { guess: "France", method: "map", version: 7 },
+      "clerk",
+    );
+
+    expect(repository.updateDuelAttempt).toHaveBeenCalledWith(
+      "challenger-attempt",
+      "challenger",
+      7,
+      expect.objectContaining({
+        guesses: [{ name: "France", mapData: null }],
+        score: 50,
+      }),
     );
   });
 });

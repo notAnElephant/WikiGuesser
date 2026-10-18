@@ -2,7 +2,7 @@
 
 import { LeaderboardProfilePage } from "@/src/components/leaderboard-profile-page";
 import { UserButton } from "@clerk/nextjs";
-import { Shield, Trophy } from "lucide-react";
+import { ChartNoAxesCombined, Shield, Trophy } from "lucide-react";
 import type { ReactNode } from "react";
 
 interface AccountUserButtonProps {
@@ -16,10 +16,18 @@ export function AccountUserButton({
 }: AccountUserButtonProps) {
   const icon = <Trophy aria-hidden="true" className="size-4" />;
   const adminIcon = <Shield aria-hidden="true" className="size-4" />;
+  const statsIcon = (
+    <ChartNoAxesCombined aria-hidden="true" className="size-4" />
+  );
 
   return (
     <UserButton>
       <UserButton.MenuItems>
+        <UserButton.Link
+          label="My stats"
+          labelIcon={statsIcon}
+          href="/stats"
+        />
         <UserButton.Action
           label="Leaderboard name"
           labelIcon={icon}
