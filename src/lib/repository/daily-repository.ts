@@ -224,22 +224,8 @@ async function getOrCreateChallengeForDay(
   );
 
   try {
-    return await prisma.dailyChallenge.upsert({
-      where: {
-        dayKey_category_mode: {
-          dayKey,
-          category,
-          mode,
-        },
-      },
-      // A non-empty update makes Prisma emit a native INSERT ... ON CONFLICT
-      // DO UPDATE. An empty update falls back to a non-atomic read-then-insert,
-      // so two requests at the day rollover both insert and one hits the unique
-      // constraint. Writing dayKey to its own value keeps the row unchanged.
-      update: {
-        dayKey,
-      },
-      create: {
+    return await prisma.dailyChallenge.create({
+      data: {
         dayKey,
         category,
         mode,
@@ -254,8 +240,7 @@ async function getOrCreateChallengeForDay(
       },
     });
   } catch (error) {
-    // If a concurrent request wrote the row between our read and insert, re-read
-    // the row it created instead of crashing the page render.
+    // A concurrent request may have created the immutable challenge first.
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
