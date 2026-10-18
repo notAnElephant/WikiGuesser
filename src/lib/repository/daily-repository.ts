@@ -223,29 +223,41 @@ async function getOrCreateChallengeForDay(
     mode,
   );
 
-  return prisma.dailyChallenge.upsert({
-    where: {
-      dayKey_category_mode: {
+  try {
+    return await prisma.dailyChallenge.create({
+      data: {
         dayKey,
         category,
         mode,
+        snapshotKey: activeSnapshot.key,
+        entityId: entity.id,
+        entityQid: entity.qid,
+        canonicalAnswer: entity.canonicalAnswer,
+        acceptedAnswers:
+          entity.acceptedAnswers as unknown as Prisma.InputJsonValue,
+        clues: entity.clues as unknown as Prisma.InputJsonValue,
+        metadata: entity.metadata as unknown as Prisma.InputJsonValue,
       },
-    },
-    update: {},
-    create: {
-      dayKey,
-      category,
-      mode,
-      snapshotKey: activeSnapshot.key,
-      entityId: entity.id,
-      entityQid: entity.qid,
-      canonicalAnswer: entity.canonicalAnswer,
-      acceptedAnswers:
-        entity.acceptedAnswers as unknown as Prisma.InputJsonValue,
-      clues: entity.clues as unknown as Prisma.InputJsonValue,
-      metadata: entity.metadata as unknown as Prisma.InputJsonValue,
-    },
-  });
+    });
+  } catch (error) {
+    // A concurrent request may have created the immutable challenge first.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return prisma.dailyChallenge.findUniqueOrThrow({
+        where: {
+          dayKey_category_mode: {
+            dayKey,
+            category,
+            mode,
+          },
+        },
+      });
+    }
+
+    throw error;
+  }
 }
 
 export async function getOrCreateDailyChallenge(
