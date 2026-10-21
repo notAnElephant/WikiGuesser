@@ -309,28 +309,20 @@ export function WorldMapDialog({
     };
   }, [isMapHidden]);
 
+  const hasMapSize = mapSize.width > 0 && mapSize.height > 0;
+
+  // Keep one zoom behavior across resizes: d3-zoom keeps per-behavior tap
+  // state, so a double tap that starts on one behavior and ends on a
+  // replacement crashes in its touchend handler.
   useEffect(() => {
     const svg = svgRef.current;
 
-    if (
-      !svg ||
-      !canInteractWithMap ||
-      mapSize.width <= 0 ||
-      mapSize.height <= 0
-    ) {
+    if (!svg || !canInteractWithMap || !hasMapSize) {
       return;
     }
 
     const behavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([MIN_MAP_SCALE, MAX_MAP_SCALE])
-      .extent([
-        [0, 0],
-        [mapSize.width, mapSize.height],
-      ])
-      .translateExtent([
-        [0, 0],
-        [mapSize.width, mapSize.height],
-      ])
       .on("start.animation", (event) => {
         if (event.sourceEvent && animationFrameRef.current !== null) {
           window.cancelAnimationFrame(animationFrameRef.current);
@@ -343,7 +335,6 @@ export function WorldMapDialog({
       });
     const selection = select(svg);
     selection.call(behavior);
-    selection.call(behavior.transform, mapTransformRef.current);
     zoomBehaviorRef.current = behavior;
 
     return () => {
@@ -352,9 +343,26 @@ export function WorldMapDialog({
         animationFrameRef.current = null;
       }
       selection.on(".zoom", null);
+      delete (svg as SVGSVGElement & { __zooming?: unknown }).__zooming;
       zoomBehaviorRef.current = null;
     };
-  }, [canInteractWithMap, mapSize]);
+  }, [canInteractWithMap, hasMapSize]);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    const behavior = zoomBehaviorRef.current;
+
+    if (!svg || !behavior || !hasMapSize) {
+      return;
+    }
+
+    const mapExtent: [[number, number], [number, number]] = [
+      [0, 0],
+      [mapSize.width, mapSize.height],
+    ];
+    behavior.extent(mapExtent).translateExtent(mapExtent);
+    select(svg).call(behavior.transform, mapTransformRef.current);
+  }, [canInteractWithMap, hasMapSize, mapSize]);
 
   useEffect(() => {
     const previousMapSize = previousMapSizeRef.current;
