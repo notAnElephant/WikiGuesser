@@ -1,6 +1,7 @@
 "use client";
 
 import posthog from "posthog-js";
+import type { MapFrameMetrics } from "@/src/lib/map-performance";
 
 import type {
   ContinentId,
@@ -18,6 +19,18 @@ type GameContext = {
 };
 
 type AnalyticsEvents = {
+  map_interaction_performance: MapFrameMetrics & {
+    measurement_version: 1;
+    app_revision: string;
+    input_type: string;
+    presentation: "game" | "result";
+    embedded: boolean;
+    map_width: number;
+    map_height: number;
+    zoom_start: number;
+    zoom_end: number;
+    zoom_updates: number;
+  };
   clue_revealed: GameContext & {
     clue_key: string;
     clues_revealed: number;
@@ -46,7 +59,13 @@ type AnalyticsEvents = {
     theme: "chocolate" | "matcha";
   };
   feedback_submitted: {
-    feedback_kind: "positive" | "bug" | "content_issue" | "confusing" | "feature_idea" | "other";
+    feedback_kind:
+      | "positive"
+      | "bug"
+      | "content_issue"
+      | "confusing"
+      | "feature_idea"
+      | "other";
     source: "global" | "round-result" | "clue";
   };
   guess_submitted: GameContext & {

@@ -1,6 +1,11 @@
 "use client";
 
 import {
+  captureAnalyticsEvent,
+  isPostHogConfigured,
+} from "@/src/lib/analytics";
+import { measureMapInteraction } from "@/src/lib/map-performance";
+import {
   COUNTRY_DATA,
   getMapCountryNames,
   getPlayableCountriesByMapName,
@@ -321,6 +326,9 @@ export function WorldMapDialog({
       return;
     }
 
+    let measurement: ReturnType<typeof measureMapInteraction> | null = null;
+    let zoomUpdates = 0;
+    let zoomEnd = 1;
     const behavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([MIN_MAP_SCALE, MAX_MAP_SCALE])
       .on("start.animation", (event) => {
@@ -328,16 +336,54 @@ export function WorldMapDialog({
           window.cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = null;
         }
+        if (
+          event.sourceEvent &&
+          isPostHogConfigured &&
+          document.visibilityState === "visible"
+        ) {
+          measurement?.cancel();
+          zoomUpdates = 0;
+          const zoomStart = event.transform.k;
+          const { width, height } = svg.viewBox.baseVal;
+          const inputType = event.sourceEvent.type;
+          measurement = measureMapInteraction((metrics) => {
+            if (
+              zoomUpdates < 2 ||
+              width !== svg.viewBox.baseVal.width ||
+              height !== svg.viewBox.baseVal.height
+            )
+              return;
+            captureAnalyticsEvent("map_interaction_performance", {
+              ...metrics,
+              measurement_version: 1,
+              app_revision: process.env.NEXT_PUBLIC_APP_REVISION ?? "unknown",
+              input_type: inputType,
+              presentation,
+              embedded,
+              map_width: width,
+              map_height: height,
+              zoom_start: zoomStart,
+              zoom_end: zoomEnd,
+              zoom_updates: zoomUpdates,
+            });
+          });
+        }
       })
       .on("zoom", (event) => {
+        zoomUpdates += 1;
         mapTransformRef.current = event.transform;
         setMapTransform(event.transform);
+      })
+      .on("end.performance", () => {
+        zoomEnd = mapTransformRef.current.k;
+        measurement?.finish();
       });
     const selection = select(svg);
     selection.call(behavior);
     zoomBehaviorRef.current = behavior;
 
     return () => {
+      measurement?.cancel();
       if (animationFrameRef.current !== null) {
         window.cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -346,7 +392,7 @@ export function WorldMapDialog({
       delete (svg as SVGSVGElement & { __zooming?: unknown }).__zooming;
       zoomBehaviorRef.current = null;
     };
-  }, [canInteractWithMap, hasMapSize]);
+  }, [canInteractWithMap, hasMapSize, embedded, presentation]);
 
   useEffect(() => {
     const svg = svgRef.current;
