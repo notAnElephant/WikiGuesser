@@ -730,11 +730,7 @@ export function DailyChallengeShell({
                 </p>
                 {selectedCard.playerStatus.hasPlayed ? (
                   <span className="mt-2 inline-flex items-center gap-2 rounded-full border border-warning bg-warning-muted px-3 py-2 text-sm font-medium text-warning">
-                    <CircleAlert
-                      aria-hidden="true"
-                      className="size-4"
-                      strokeWidth={2.1}
-                    />
+                    <Icon color="warning" icon={CircleAlert} size="sm" />
                     Already played today.
                   </span>
                 ) : null}
@@ -772,7 +768,7 @@ export function DailyChallengeShell({
         <Card className="grid gap-4 p-5 sm:p-6" elevation="low" padding={0}>
           <div className="flex items-center justify-between gap-3">
             <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-              <Trophy aria-hidden="true" className="size-4" strokeWidth={2.2} />
+              <Icon color="accent" icon={Trophy} size="sm" />
               Daily combos
             </div>
           </div>
@@ -798,18 +794,10 @@ export function DailyChallengeShell({
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <span className="inline-flex rounded-2xl bg-accent-muted p-2.5 bg-accent-muted">
-                        <CategoryIcon
-                          aria-hidden="true"
-                          className="size-5 text-primary"
-                          strokeWidth={2.1}
-                        />
+                        <Icon color="primary" icon={CategoryIcon} size="md" />
                       </span>
                       <span className="inline-flex rounded-2xl bg-card p-2.5">
-                        <ModeIcon
-                          aria-hidden="true"
-                          className="size-5 text-primary"
-                          strokeWidth={2.1}
-                        />
+                        <Icon color="primary" icon={ModeIcon} size="md" />
                       </span>
                     </div>
                     <span

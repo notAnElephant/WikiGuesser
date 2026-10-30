@@ -2,6 +2,8 @@
 
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
+import { HStack } from "@astryxdesign/core/HStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import {
   SegmentedControl,
   SegmentedControlItem,
@@ -113,7 +115,9 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
     >
       <section className="grid lg:grid-cols-[minmax(230px,0.72fr)_minmax(0,1.6fr)]">
         <header className="flex flex-col justify-center border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r">
-          <Swords aria-hidden="true" className="mb-4 size-6 text-accent" />
+          <HStack className="mb-4">
+            <Icon color="accent" icon={Swords} size="lg" />
+          </HStack>
           <p className="m-0 text-xs font-bold uppercase tracking-wider text-accent">
             Challenge a friend
           </p>
@@ -197,7 +201,7 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
                 href={inviteUrl}
                 className="inline-flex w-fit items-center gap-1 text-sm font-semibold text-accent"
               >
-                <Link2 aria-hidden="true" className="size-4" />
+                <Icon color="accent" icon={Link2} size="sm" />
                 Open duel
               </a>
             </section>

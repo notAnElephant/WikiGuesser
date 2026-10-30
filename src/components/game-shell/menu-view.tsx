@@ -85,11 +85,7 @@ export function GameMenuView({
               <div
                 className={`mb-3 inline-flex rounded-2xl bg-linear-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}
               >
-                <SelectedCategoryIcon
-                  aria-hidden="true"
-                  className="size-5 text-primary"
-                  strokeWidth={2.1}
-                />
+                <Icon color="primary" icon={SelectedCategoryIcon} size="md" />
               </div>
               <p className="m-0 text-xs font-semibold uppercase tracking-wider text-secondary">
                 Category
@@ -104,11 +100,7 @@ export function GameMenuView({
 
             <Card padding={4}>
               <div className="mb-3 inline-flex rounded-2xl bg-accent-muted p-2.5">
-                <SelectedModeIcon
-                  aria-hidden="true"
-                  className="size-5 text-primary"
-                  strokeWidth={2.1}
-                />
+                <Icon color="primary" icon={SelectedModeIcon} size="md" />
               </div>
               <p className="m-0 text-xs font-semibold uppercase tracking-wider text-secondary">
                 Mode
@@ -130,11 +122,7 @@ export function GameMenuView({
             <div className="grid gap-3">
               <div className="flex items-center justify-between gap-3">
                 <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-                  <Compass
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={2.2}
-                  />
+                  <Icon color="accent" icon={Compass} size="sm" />
                   Categories
                 </div>
               </div>
@@ -151,11 +139,7 @@ export function GameMenuView({
                       <span
                         className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${CATEGORY_META.random.accent}`}
                       >
-                        <Shuffle
-                          aria-hidden="true"
-                          className="size-5 text-primary"
-                          strokeWidth={2.1}
-                        />
+                        <Icon color="primary" icon={Shuffle} size="md" />
                       </span>
                     </div>
                     <strong className="font-heading text-xl tracking-tight text-primary">
@@ -184,11 +168,7 @@ export function GameMenuView({
                         <span
                           className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${categoryMeta.accent}`}
                         >
-                          <CategoryIcon
-                            aria-hidden="true"
-                            className="size-5 text-primary"
-                            strokeWidth={2.1}
-                          />
+                          <Icon color="primary" icon={CategoryIcon} size="md" />
                         </span>
                       </div>
                       <strong className="font-heading text-xl tracking-tight text-primary">
@@ -205,11 +185,7 @@ export function GameMenuView({
 
             <div className="grid gap-3">
               <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-                <Sparkles
-                  aria-hidden="true"
-                  className="size-4"
-                  strokeWidth={2.2}
-                />
+                <Icon color="accent" icon={Sparkles} size="sm" />
                 Modes
               </div>
 
@@ -230,11 +206,7 @@ export function GameMenuView({
                     >
                       <div className="flex items-start justify-between gap-3">
                         <span className="inline-flex rounded-2xl bg-accent-muted p-2.5">
-                          <ModeIcon
-                            aria-hidden="true"
-                            className="size-5 text-primary"
-                            strokeWidth={2.1}
-                          />
+                          <Icon color="primary" icon={ModeIcon} size="md" />
                         </span>
                         <span className="rounded-full bg-neutral px-2.5 py-1 text-xs font-semibold text-secondary">
                           {mode.summary}
@@ -257,10 +229,14 @@ export function GameMenuView({
             <div
               className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${statusAppearance.className}`}
             >
-              <StatusIcon
-                aria-hidden="true"
-                className="size-4 shrink-0"
-                strokeWidth={2.2}
+              <Icon
+                color={
+                  statusAppearance.tone === "info"
+                    ? "accent"
+                    : statusAppearance.tone
+                }
+                icon={StatusIcon}
+                size="sm"
               />
               <span>{message}</span>
             </div>
@@ -279,11 +255,7 @@ export function GameMenuView({
                 <span
                   className={`inline-flex rounded-2xl bg-linear-to-br p-2.5 ${selectedCategoryCardMeta.accent}`}
                 >
-                  <SelectedCategoryIcon
-                    aria-hidden="true"
-                    className="size-5 text-primary"
-                    strokeWidth={2.1}
-                  />
+                  <Icon color="primary" icon={SelectedCategoryIcon} size="md" />
                 </span>
                 <div className="min-w-0">
                   <p className="m-0 text-xs uppercase tracking-wider text-secondary">
@@ -297,11 +269,7 @@ export function GameMenuView({
 
               <div className="flex items-center gap-3">
                 <span className="inline-flex rounded-2xl bg-accent-muted p-2.5">
-                  <SelectedModeIcon
-                    aria-hidden="true"
-                    className="size-5 text-primary"
-                    strokeWidth={2.1}
-                  />
+                  <Icon color="primary" icon={SelectedModeIcon} size="md" />
                 </span>
                 <div className="min-w-0">
                   <p className="m-0 text-xs uppercase tracking-wider text-secondary">

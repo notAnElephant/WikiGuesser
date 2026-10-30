@@ -10,6 +10,7 @@ import {
 } from "@astryxdesign/core/SegmentedControl";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
+import { Icon } from "@astryxdesign/core/Icon";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, CalendarDays, Gauge, Trophy } from "lucide-react";
@@ -57,22 +58,14 @@ export function DailyLeaderboardShell({
             className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-secondary"
             dateTime={data.dayKey}
           >
-            <CalendarDays
-              aria-hidden="true"
-              className="size-3.5"
-              strokeWidth={2.2}
-            />
+            <Icon color="secondary" icon={CalendarDays} size="sm" />
             {data.dayKey}
           </time>
           <Link
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-secondary transition hover:bg-card hover:text-primary dark:hover:bg-surface/8 dark:hover:text-on-accent"
             href="/"
           >
-            <ArrowLeft
-              aria-hidden="true"
-              className="size-4"
-              strokeWidth={2.2}
-            />
+            <Icon icon={ArrowLeft} size="sm" />
             Back home
           </Link>
         </div>
@@ -90,7 +83,7 @@ export function DailyLeaderboardShell({
       <Card className="grid gap-4 p-4 sm:p-6" elevation="low" padding={0}>
         <div className="flex items-center justify-between gap-3">
           <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-            <Trophy aria-hidden="true" className="size-4" strokeWidth={2.2} />
+            <Icon color="accent" icon={Trophy} size="sm" />
             Rankings
           </div>
           <SegmentedControl
@@ -110,7 +103,7 @@ export function DailyLeaderboardShell({
 
         <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
           <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-secondary">
-            <Gauge aria-hidden="true" className="size-4" strokeWidth={2.2} />
+            <Icon color="secondary" icon={Gauge} size="sm" />
             Mode
           </div>
           <SegmentedControl

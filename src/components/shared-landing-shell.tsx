@@ -6,6 +6,7 @@ import { HStack } from "@astryxdesign/core/HStack";
 import { Text } from "@astryxdesign/core/Text";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
+import { Icon } from "@astryxdesign/core/Icon";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { Layout, LayoutContent } from "@astryxdesign/core/Layout";
 import { SelectableCard } from "@astryxdesign/core/SelectableCard";
@@ -546,8 +547,8 @@ function LauncherBand({
     >
       <div className="grid lg:grid-cols-[minmax(230px,0.72fr)_minmax(0,1.6fr)]">
         <div className="flex flex-col justify-center border-b border-border p-4 sm:p-5 lg:border-b-0 lg:border-r">
-          <span className="mb-4 hidden size-12 items-center justify-center rounded-md border border-border bg-surface text-accent lg:inline-flex">
-            <BandIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />
+          <span className="mb-4 hidden size-12 items-center justify-center text-accent lg:inline-flex">
+            <Icon color="accent" icon={BandIcon} size="lg" />
           </span>
           <h2 className="m-0 font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-primary">
             {title}
@@ -588,8 +589,8 @@ function LauncherRow({
   return (
     <div className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:py-5">
       <div className="flex min-w-0 items-center gap-4">
-        <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-accent">
-          <ModeIcon aria-hidden="true" className="size-5" strokeWidth={1.9} />
+        <span className="inline-flex size-12 shrink-0 items-center justify-center text-accent">
+          <Icon color="accent" icon={ModeIcon} size="lg" />
         </span>
         <div className="min-w-0">
           <h3 className="m-0 font-heading text-xl font-semibold tracking-tight text-primary">
