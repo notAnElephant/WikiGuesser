@@ -1,5 +1,6 @@
 import posthog from "posthog-js";
 
+import { isOpaqueCrossOriginException } from "@/src/lib/error-tracking";
 import { postHogProjectToken } from "@/src/lib/analytics";
 
 if (postHogProjectToken) {
@@ -7,6 +8,8 @@ if (postHogProjectToken) {
     api_host:
       process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
     autocapture: false,
+    before_send: (event) =>
+      isOpaqueCrossOriginException(event) ? null : event,
     capture_pageview: "history_change",
     capture_performance: true,
     defaults: "2026-05-30",

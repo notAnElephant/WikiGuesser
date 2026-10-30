@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  crossOrigin: "anonymous",
   reactStrictMode: true,
   env: {
     NEXT_PUBLIC_APP_REVISION:
