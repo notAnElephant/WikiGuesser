@@ -1,6 +1,6 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { getActorId } from "@/src/lib/auth/actor";
 import { createDuelRematch } from "@/src/lib/game/duel-service";
 
 export async function POST(
@@ -8,16 +8,12 @@ export async function POST(
   context: { params: Promise<{ inviteCode: string }> },
 ) {
   try {
-    const { isAuthenticated, userId } = await auth();
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json(
-        { error: "Sign in to request a rematch." },
-        { status: 401 },
-      );
-    }
-    const { inviteCode } = await context.params;
+    const [{ inviteCode }, actorId] = await Promise.all([
+      context.params,
+      getActorId(),
+    ]);
     return NextResponse.json(
-      await createDuelRematch(inviteCode, userId, new URL(request.url).origin),
+      await createDuelRematch(inviteCode, actorId, new URL(request.url).origin),
       { status: 201 },
     );
   } catch (error) {

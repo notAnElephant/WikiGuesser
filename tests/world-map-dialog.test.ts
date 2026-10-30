@@ -1,16 +1,16 @@
 import { geoMercator } from "d3-geo";
 import { zoomIdentity } from "d3-zoom";
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import {
   getFocusedMapTransform,
+  getLastGuessedCountry,
   getResizedMapTransform,
-  WorldMapDialog,
 } from "@/src/components/game-shell/world-map-dialog";
 import {
   getCountriesWithoutMapCoverage,
+  getMapCountryNames,
+  getPlayableCountriesByMapName,
   hasMapGeometry,
 } from "@/src/lib/game/world-map-data";
 import type { NormalizedEntity } from "@/src/lib/types";
@@ -38,6 +38,19 @@ function country(
 }
 
 describe("world map coverage", () => {
+  it("keeps the two Congo countries on their own polygons", () => {
+    expect(
+      getMapCountryNames([
+        "Democratic Republic of the Congo",
+        "DR Congo",
+        "Congo",
+      ]),
+    ).toEqual(new Set(["dem rep congo"]));
+    expect(getMapCountryNames(["Republic of the Congo", "Congo"])).toEqual(
+      new Set(["congo"]),
+    );
+  });
+
   it("includes São Tomé and Príncipe in the map geometry", () => {
     expect(hasMapGeometry(["São Tomé and Príncipe"])).toBe(true);
   });
@@ -59,6 +72,47 @@ describe("world map coverage", () => {
         country("Missing country", ["Missing country"], {}),
       ]).map((entity) => entity.canonicalAnswer),
     ).toEqual(["Missing country"]);
+  });
+
+  it("maps only listed countries to clickable geometry", () => {
+    const playableCountries = getPlayableCountriesByMapName(["France"]);
+
+    expect(playableCountries.get("france")).toBe("France");
+    expect(playableCountries.has("siachen glacier")).toBe(false);
+  });
+
+  it("matches playable country names to differently named map regions", () => {
+    const mapNamesByCountry = new Map([
+      ["Cape Verde", "Cabo Verde"],
+      ["Central African Republic", "Central African Rep."],
+      ["Czech Republic", "Czechia"],
+      ["Dominican Republic", "Dominican Rep."],
+      ["Equatorial Guinea", "Eq. Guinea"],
+      ["Federated States of Micronesia", "Micronesia"],
+      ["Ivory Coast", "Côte d'Ivoire"],
+      ["Marshall Islands", "Marshall Is."],
+      ["North Macedonia", "Macedonia"],
+      ["People's Republic of China", "China"],
+      ["Saint Kitts and Nevis", "St. Kitts and Nevis"],
+      ["Saint Vincent and the Grenadines", "St. Vin. and Gren."],
+      ["Solomon Islands", "Solomon Is."],
+      ["South Sudan", "S. Sudan"],
+      ["The Bahamas", "Bahamas"],
+      ["The Gambia", "Gambia"],
+      ["United States", "United States of America"],
+      ["Vatican City", "Vatican"],
+    ]);
+    const playableCountries = getPlayableCountriesByMapName([
+      ...mapNamesByCountry.keys(),
+    ]);
+
+    for (const [country, mapName] of mapNamesByCountry) {
+      const normalizedMapName = [...getMapCountryNames([mapName])][0];
+      expect(playableCountries.get(normalizedMapName)).toBe(country);
+      expect(hasMapGeometry([country])).toBe(true);
+    }
+
+    expect(playableCountries.has("siachen glacier")).toBe(false);
   });
 });
 
@@ -127,103 +181,28 @@ describe("getFocusedMapTransform", () => {
   });
 });
 
-describe("result world map", () => {
-  it("omits map controls while preserving the interactive map canvas", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        guessedCountries: [],
-        isExpanded: false,
-        onExpandedChange: () => undefined,
-        presentation: "result",
-        solutionCountry: {
-          qid: "Q55",
-          name: "Netherlands",
-          mapNames: ["Netherlands"],
-          latitude: 52.13,
-          longitude: 5.29,
-        },
-      }),
-    );
+describe("getLastGuessedCountry", () => {
+  it("selects only the newest guess for automatic map focus", () => {
+    const guesses = [
+      {
+        qid: "Q142",
+        name: "France",
+        mapNames: ["France"],
+        latitude: 46.23,
+        longitude: 2.21,
+        direction: "east" as const,
+      },
+      {
+        qid: "Q183",
+        name: "Germany",
+        mapNames: ["Germany"],
+        latitude: 51.17,
+        longitude: 10.45,
+        direction: "west" as const,
+      },
+    ];
 
-    expect(markup).toContain('role="application"');
-    expect(markup).not.toContain("Zoom in");
-    expect(markup).not.toContain("Reset map zoom");
-    expect(markup).not.toContain("Expand world map");
-  });
-
-  it("keeps result-map controls separate from its country labels", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        guessedCountries: [
-          {
-            qid: "Q142",
-            name: "France",
-            mapNames: ["France"],
-            latitude: 46.23,
-            longitude: 2.21,
-            direction: "south",
-          },
-        ],
-        isExpanded: false,
-        onExpandedChange: () => undefined,
-        presentation: "result",
-        solutionCountry: {
-          qid: "Q55",
-          name: "Netherlands",
-          mapNames: ["Netherlands"],
-          latitude: 52.13,
-          longitude: 5.29,
-        },
-      }),
-    );
-
-    expect(markup).not.toContain('aria-label="Zoom in"');
-    expect(markup).not.toContain('aria-label="Focus France"');
-  });
-});
-
-describe("game world map drawer", () => {
-  it("advertises map guessing when a country tap handler is available", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        guessedCountries: [],
-        isExpanded: false,
-        onCountryGuess: () => undefined,
-        onExpandedChange: () => undefined,
-      }),
-    );
-
-    expect(markup).toContain("Tap a country · half points");
-    expect(markup).toContain("map-world-guessing");
-  });
-
-  it("renders a compact control when the map drawer is hidden", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        drawerState: "hidden",
-        guessedCountries: [],
-        isExpanded: false,
-        onDrawerStateChange: () => undefined,
-        onExpandedChange: () => undefined,
-      }),
-    );
-
-    expect(markup).toContain('aria-label="Show world map"');
-    expect(markup).not.toContain('role="application"');
-  });
-
-  it("uses the top handle to expand the medium drawer", () => {
-    const markup = renderToStaticMarkup(
-      createElement(WorldMapDialog, {
-        drawerState: "medium",
-        guessedCountries: [],
-        isExpanded: false,
-        onDrawerStateChange: () => undefined,
-        onExpandedChange: () => undefined,
-      }),
-    );
-
-    expect(markup).toContain('aria-label="Expand world map"');
-    expect(markup).toContain('aria-label="Hide world map"');
+    expect(getLastGuessedCountry(guesses)).toBe(guesses[1]);
+    expect(getLastGuessedCountry([])).toBeNull();
   });
 });

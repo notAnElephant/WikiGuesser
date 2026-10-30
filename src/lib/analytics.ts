@@ -1,6 +1,7 @@
 "use client";
 
 import posthog from "posthog-js";
+import type { MapFrameMetrics } from "@/src/lib/map-performance";
 
 import type {
   ContinentId,
@@ -14,9 +15,25 @@ type GameContext = {
   continent?: ContinentId;
   game_type: "daily" | "free_play";
   mode: GameMode;
+  play_origin: "server";
 };
 
 type AnalyticsEvents = {
+  map_interaction_performance: MapFrameMetrics & {
+    measurement_version: 1;
+    app_revision: string;
+    input_type: string;
+    presentation: "game" | "result";
+    embedded: boolean;
+    map_width: number;
+    map_height: number;
+    zoom_start: number;
+    zoom_end: number;
+    zoom_updates: number;
+  };
+  chunk_load_reload: {
+    boundary: "route" | "global";
+  };
   clue_revealed: GameContext & {
     clue_key: string;
     clues_revealed: number;
@@ -32,6 +49,28 @@ type AnalyticsEvents = {
     guesses: number;
   };
   game_started: GameContext;
+  theme_experiment_assigned: {
+    theme: "chocolate" | "matcha";
+  };
+  theme_rating_prompt_shown: {
+    device: "mobile" | "desktop";
+    theme: "chocolate" | "matcha";
+  };
+  theme_rating_submitted: {
+    device: "mobile" | "desktop";
+    score: number;
+    theme: "chocolate" | "matcha";
+  };
+  feedback_submitted: {
+    feedback_kind:
+      | "positive"
+      | "bug"
+      | "content_issue"
+      | "confusing"
+      | "feature_idea"
+      | "other";
+    source: "global" | "round-result" | "clue";
+  };
   guess_submitted: GameContext & {
     attempt_number: number;
     completed: boolean;
@@ -39,9 +78,14 @@ type AnalyticsEvents = {
   };
 };
 
-export const isPostHogConfigured = Boolean(
-  process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN,
-);
+// Local `next dev` sessions would otherwise send development-only React
+// exceptions to the production project.
+export const postHogProjectToken =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+    : undefined;
+
+export const isPostHogConfigured = Boolean(postHogProjectToken);
 
 export function captureAnalyticsEvent<Event extends keyof AnalyticsEvents>(
   event: Event,
@@ -52,6 +96,19 @@ export function captureAnalyticsEvent<Event extends keyof AnalyticsEvents>(
   }
 
   posthog.capture(event, properties);
+}
+
+// Next.js only logs errors that an app error boundary catches, so exception
+// autocapture never sees them.
+export function captureAnalyticsException(
+  error: unknown,
+  properties: Record<string, unknown>,
+) {
+  if (!isPostHogConfigured) {
+    return;
+  }
+
+  posthog.captureException(error, properties);
 }
 
 export function toGameContext(
@@ -65,5 +122,6 @@ export function toGameContext(
     ...(continent ? { continent } : {}),
     game_type: kind === "daily" ? "daily" : "free_play",
     mode,
+    play_origin: "server",
   };
 }

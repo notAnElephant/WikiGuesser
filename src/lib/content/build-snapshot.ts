@@ -34,10 +34,26 @@ export async function normalizeEntitiesForCategory(
       allSourceEntities: sourceEntities,
     });
 
-    if (normalizedEntity && !seenNormalizedIds.has(normalizedEntity.id)) {
-      seenNormalizedIds.add(normalizedEntity.id);
-      normalizedEntities.push(normalizedEntity);
+    if (!normalizedEntity) {
+      if (category === "countries") {
+        throw new Error(
+          `Wikipedia country ${sourceEntity.label} (${sourceEntity.qid}) has insufficient playable clues.`,
+        );
+      }
+      continue;
     }
+
+    if (seenNormalizedIds.has(normalizedEntity.id)) {
+      if (category === "countries") {
+        throw new Error(
+          `Wikipedia country ${sourceEntity.label} (${sourceEntity.qid}) has a duplicate snapshot ID.`,
+        );
+      }
+      continue;
+    }
+
+    seenNormalizedIds.add(normalizedEntity.id);
+    normalizedEntities.push(normalizedEntity);
   }
 
   return normalizedEntities;

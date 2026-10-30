@@ -4,6 +4,7 @@ import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
 import { parseRoundState } from "@/src/lib/game/round-token";
 import {
   revealClue,
+  startAdminTestRound,
   startDailyRound,
   startRound,
   submitGuess,
@@ -59,6 +60,22 @@ vi.mock("@/src/lib/repository/daily-repository", () => {
 const mockedDailyRepository = vi.mocked(dailyRepository);
 
 describe("round service", () => {
+  it("starts a selected country in either game mode for admin testing", async () => {
+    const round = await startAdminTestRound(
+      { country: "France", mode: "blurred-lines" },
+      "user_admin",
+    );
+
+    expect(parseRoundState(round.token)).toMatchObject({
+      entityId: "countries-france",
+      mode: "blurred-lines",
+      kind: "standard",
+      isTest: true,
+    });
+    expect(round.canGuess).toBe(false);
+    expect(round.revealedClues).toHaveLength(0);
+  });
+
   it("starts a daily round from the stored challenge payload", async () => {
     const round = await startDailyRound(
       { category: "countries", mode: "classic" },
@@ -166,6 +183,24 @@ describe("round service", () => {
     });
     expect(result.guessedCountry?.latitude).toEqual(expect.any(Number));
     expect(result.guessedCountry?.longitude).toEqual(expect.any(Number));
+  });
+
+  it("rejects map guesses that are not playable countries", async () => {
+    const round = await startRound(
+      { category: "countries", seed: "alpha" },
+      "user_invalid_map_guess",
+    );
+
+    await expect(
+      submitGuess(
+        {
+          token: round.token,
+          guess: "Siachen Glacier",
+          method: "map",
+        },
+        "user_invalid_map_guess",
+      ),
+    ).rejects.toThrow("Pick a listed country.");
   });
 
   it("allows one final guess after the last classic clue is revealed", async () => {
@@ -303,7 +338,7 @@ describe("round service", () => {
         { token: round.token, clueKey: "flag-colors" },
         "user_flag_lock",
       ),
-    ).rejects.toThrow("That field unlocks in 3 rounds.");
+    ).rejects.toThrow("Reveal 3 more clues to unlock this field.");
 
     let currentRound = round;
     const earlyClueKeys = currentRound.clues
@@ -409,7 +444,7 @@ describe("round service", () => {
     expect(result.canonicalAnswer).toBe(correctAnswer);
   });
 
-  it("awards half score for a correct map guess", async () => {
+  it("awards standard score for a correct map guess", async () => {
     const round = await startRound(
       { category: "countries", seed: "alpha" },
       "user_test_map_guess",
@@ -431,6 +466,9 @@ describe("round service", () => {
 
     expect(result.isCorrect).toBe(true);
     expect(result.score).toBe(50);
+    expect(result.guessedCountry).toBeNull();
+    expect(result.direction).toBeNull();
+    expect(result.solutionCountry?.name).toBe(actualEntity!.canonicalAnswer);
   });
 
   it("rejects guesses for a different authenticated user", async () => {

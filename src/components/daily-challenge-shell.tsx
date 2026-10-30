@@ -1,9 +1,10 @@
 "use client";
 
-import {
-  primaryButtonClass,
-  surfaceClass,
-} from "@/src/components/game-shell/config";
+import { Button } from "@astryxdesign/core/Button";
+import { Card } from "@astryxdesign/core/Card";
+import { Icon } from "@astryxdesign/core/Icon";
+import { SelectableCard } from "@astryxdesign/core/SelectableCard";
+import { Token } from "@astryxdesign/core/Token";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { GameResultDialog } from "@/src/components/game-shell/result-dialog";
 import type {
@@ -19,7 +20,10 @@ import {
   isClueLocked,
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  findUniqueCountryMatch,
+  normalizeGuess,
+} from "@/src/lib/game/answer-matching";
 import {
   findOtherAvailableDaily,
   getDailyComboKey,
@@ -226,13 +230,14 @@ export function DailyChallengeShell({
   const isCountryRound = (round?.category ?? result?.category) === "countries";
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
+  const matchedCountry = findUniqueCountryMatch(countryOptions, guess);
   const normalizedGuessedEntities = new Set(
     guessedEntities.map((entry) => normalizeGuess(entry.name)),
   );
-  const isCountryGuessValid =
-    !isCountryRound || validCountryLookup.has(normalizedGuess);
+  const isCountryGuessValid = !isCountryRound || Boolean(matchedCountry);
   const isAlreadyGuessed =
-    hasGuess && normalizedGuessedEntities.has(normalizedGuess);
+    hasGuess &&
+    normalizedGuessedEntities.has(normalizeGuess(matchedCountry ?? guess));
   const availableCountryOptions = countryOptions.filter(
     (option) => !normalizedGuessedEntities.has(normalizeGuess(option)),
   );
@@ -329,7 +334,7 @@ export function DailyChallengeShell({
       }
 
       const payload = (await response.json()) as StartRoundResult;
-      setRound(payload);
+      setRound({ ...payload, playOrigin: "server" });
       setMessage(
         payload.mode === "blurred-lines" ? "Tap a row." : "Daily live.",
       );
@@ -387,7 +392,7 @@ export function DailyChallengeShell({
         }
 
         const payload = (await response.json()) as RevealClueResult;
-        setRound(payload);
+        setRound({ ...payload, playOrigin: "server" });
         setMessage(
           payload.remainingClues === 0 ? "Last clue." : "Clue unlocked.",
         );
@@ -434,7 +439,9 @@ export function DailyChallengeShell({
     const submittedGuess = isMapGuess
       ? guessValue
       : isCountryRound
-        ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
+        ? (matchedCountry ??
+          validCountryLookup.get(normalizedGuess) ??
+          guess.trim())
         : guess.trim();
 
     isSubmittingGuessRef.current = true;
@@ -476,9 +483,17 @@ export function DailyChallengeShell({
         if (payload.isCorrect || payload.isComplete) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: payload.isCorrect ? "win" : "loss",
             canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
             score: payload.isCorrect ? payload.score : 0,
+            ...(payload.isCorrect
+              ? {
+                  guessMethod: isMapGuess
+                    ? ("map" as const)
+                    : ("text" as const),
+                }
+              : {}),
             kind: "daily",
             category: payload.category,
             mode: payload.mode,
@@ -501,6 +516,7 @@ export function DailyChallengeShell({
         }
 
         setRound({
+          playOrigin: "server",
           roundId: payload.roundId,
           token: payload.token!,
           kind: payload.kind,
@@ -560,6 +576,7 @@ export function DailyChallengeShell({
       const payload = (await response.json()) as GuessRoundResult;
       setRound(null);
       setResult({
+        playOrigin: "server",
         status: "loss",
         canonicalAnswer: payload.canonicalAnswer ?? "Unknown",
         score: 0,
@@ -662,6 +679,7 @@ export function DailyChallengeShell({
                   : "Create account"
             }
             result={result}
+            statsHref={isSignedIn ? "/stats" : undefined}
             secondaryActionLabel={
               isSignedIn && !otherAvailableDailyCard ? null : "Daily hub"
             }
@@ -677,93 +695,80 @@ export function DailyChallengeShell({
 
   return (
     <section className="grid gap-4">
-      <div className={`${surfaceClass} overflow-hidden p-5 sm:p-7`}>
+      <Card className="overflow-hidden p-5 sm:p-7" elevation="low" padding={0}>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/12 bg-[#0f766e]/8 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:border-[#24d4c2]/14 dark:bg-[#24d4c2]/8 dark:text-[#8ff4e7]">
-            <Sparkles
-              aria-hidden="true"
-              className="size-3.5"
-              strokeWidth={2.2}
-            />
-            Daily challenge
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full border border-black/8 bg-white/76 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:border-white/10 dark:bg-white/6 dark:text-[#9aa9bb]">
-            <CalendarDays
-              aria-hidden="true"
-              className="size-3.5"
-              strokeWidth={2.2}
-            />
-            Resets in {resetCountdown}
-          </span>
+          <Token
+            color="purple"
+            icon={<Icon icon={Sparkles} size="sm" />}
+            label="Daily challenge"
+            size="sm"
+          />
+          <Token
+            color="gray"
+            icon={<Icon icon={CalendarDays} size="sm" />}
+            label={`Resets in ${resetCountdown}`}
+            size="sm"
+          />
         </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)] lg:items-end">
           <div>
-            <h1 className="m-0 max-w-[10ch] font-serif-display text-[clamp(2.4rem,8vw,4.6rem)] font-semibold leading-[0.92] tracking-[-0.065em] text-[#1f1b17] dark:text-[#f5f7fb]">
+            <h1 className="m-0 max-w-[10ch] font-heading text-4xl sm:text-5xl font-semibold leading-tight tracking-tight text-primary">
               WikiGuesser
             </h1>
-            <p className="m-0 mt-4 max-w-xl text-[1.02rem] leading-7 text-[#6b6259] dark:text-[#9aa9bb]">
+            <p className="m-0 mt-4 max-w-xl text-base leading-7 text-secondary">
               Play each category and mode once today. Come back tomorrow for a
               reset.
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-black/8 bg-white/78 p-5 dark:border-white/10 dark:bg-white/6">
+          <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="m-0 text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-[#6b6259] dark:text-[#9aa9bb]">
+                <p className="m-0 text-xs font-semibold uppercase tracking-wider text-secondary">
                   Today
                 </p>
                 {selectedCard.playerStatus.hasPlayed ? (
-                  <span className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-500/18 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:border-amber-300/16 dark:bg-amber-300/10 dark:text-amber-200">
-                    <CircleAlert
-                      aria-hidden="true"
-                      className="size-4"
-                      strokeWidth={2.1}
-                    />
+                  <span className="mt-2 inline-flex items-center gap-2 rounded-full border border-warning bg-warning-muted px-3 py-2 text-sm font-medium text-warning">
+                    <Icon color="warning" icon={CircleAlert} size="sm" />
                     Already played today.
                   </span>
                 ) : null}
-                <strong className="mt-2 block font-serif-display text-[1.9rem] tracking-[-0.05em] text-[#1f1b17] dark:text-[#f5f7fb]">
+                <strong className="mt-2 block font-heading text-2xl tracking-tight text-primary">
                   {data.dayKey}
                 </strong>
               </div>
-              <button
-                className={primaryButtonClass}
-                disabled={!canStartSelected || isBusy}
+              <Button
+                icon={
+                  isBusy ? (
+                    <LoaderCircle aria-hidden="true" className="animate-spin" />
+                  ) : (
+                    <ArrowRight aria-hidden="true" />
+                  )
+                }
+                isDisabled={!canStartSelected || isBusy}
+                isLoading={isBusy}
+                label={
+                  selectedCard.playerStatus.hasPlayed ? "Played" : "Start daily"
+                }
                 onClick={() => startDaily(selectedCard)}
-                type="button"
-              >
-                {isBusy ? (
-                  <LoaderCircle
-                    aria-hidden="true"
-                    className="size-4 animate-spin"
-                    strokeWidth={2.2}
-                  />
-                ) : (
-                  <ArrowRight
-                    aria-hidden="true"
-                    className="size-4"
-                    strokeWidth={2.2}
-                  />
-                )}
-                {selectedCard.playerStatus.hasPlayed ? "Played" : "Start daily"}
-              </button>
+                variant="primary"
+              />
             </div>
             {claimBanner ? (
-              <div className="mt-4 rounded-full border border-emerald-500/18 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:border-emerald-400/18 dark:bg-emerald-400/10 dark:text-emerald-200">
+              <div className="mt-4 rounded-full border border-success bg-success-muted px-3 py-2 text-sm font-medium text-success">
                 {claimBanner}
               </div>
             ) : null}
           </div>
         </div>
-      </div>
+      </Card>
 
       <div className="grid gap-4">
-        <div className={`${surfaceClass} grid gap-4 p-5 sm:p-6`}>
+        <Card className="grid gap-4 p-5 sm:p-6" elevation="low" padding={0}>
           <div className="flex items-center justify-between gap-3">
-            <div className="inline-flex items-center gap-2 text-[0.74rem] font-semibold uppercase tracking-[0.18em] text-[#115e59] dark:text-[#75e6d7]">
-              <Trophy aria-hidden="true" className="size-4" strokeWidth={2.2} />
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
+              <Icon color="accent" icon={Trophy} size="sm" />
               Daily combos
             </div>
           </div>
@@ -776,69 +781,60 @@ export function DailyChallengeShell({
               const ModeIcon = getModeMeta(card.mode).icon;
 
               return (
-                <button
-                  className={`grid gap-3 rounded-[28px] border p-4 text-left transition ${
-                    isSelected
-                      ? "border-[#0f766e] bg-[linear-gradient(160deg,rgba(15,118,110,0.14),rgba(255,255,255,0.94))] shadow-[0_18px_44px_rgba(15,118,110,0.14)] dark:border-[#24d4c2]/60 dark:bg-[linear-gradient(160deg,rgba(36,212,194,0.14),rgba(17,24,39,0.94))]"
-                      : "border-black/10 bg-white/86 hover:-translate-y-0.5 dark:border-white/10 dark:bg-[rgba(13,21,32,0.84)]"
-                  }`}
+                <SelectableCard
+                  isSelected={isSelected}
                   key={comboKey}
-                  onClick={() => {
+                  label={`${toCategoryLabel(card.category)}, ${getModeMeta(card.mode).label}`}
+                  onChange={() => {
                     setSelectedCategory(card.category);
                     setSelectedMode(card.mode);
                   }}
-                  type="button"
+                  padding={4}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex rounded-2xl bg-[linear-gradient(135deg,rgba(15,118,110,0.14),rgba(255,219,112,0.12))] p-2.5 dark:bg-[linear-gradient(135deg,rgba(36,212,194,0.18),rgba(56,189,248,0.12))]">
-                        <CategoryIcon
-                          aria-hidden="true"
-                          className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
-                          strokeWidth={2.1}
-                        />
+                      <span className="inline-flex rounded-2xl bg-accent-muted p-2.5 bg-accent-muted">
+                        <Icon color="primary" icon={CategoryIcon} size="md" />
                       </span>
-                      <span className="inline-flex rounded-2xl bg-white/76 p-2.5 dark:bg-white/8">
-                        <ModeIcon
-                          aria-hidden="true"
-                          className="size-5 text-[#1f1b17] dark:text-[#f5f7fb]"
-                          strokeWidth={2.1}
-                        />
+                      <span className="inline-flex rounded-2xl bg-card p-2.5">
+                        <Icon color="primary" icon={ModeIcon} size="md" />
                       </span>
                     </div>
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                         card.playerStatus.hasPlayed
-                          ? "bg-black/5 text-[#6b6259] dark:bg-white/8 dark:text-[#c7d3e2]"
-                          : "bg-[#0f766e]/10 text-[#115e59] dark:bg-[#24d4c2]/10 dark:text-[#8ff4e7]"
+                          ? "bg-neutral text-secondary"
+                          : "bg-accent-bg/10 text-accent"
                       }`}
                     >
                       {card.playerStatus.hasPlayed ? "Played" : "New"}
                     </span>
                   </div>
                   <div>
-                    <strong className="block font-serif-display text-[1.45rem] tracking-[-0.04em] text-[#1f1b17] dark:text-[#f5f7fb]">
+                    <strong className="block font-heading text-xl tracking-tight text-primary">
                       {toCategoryLabel(card.category)}
                     </strong>
-                    <span className="mt-1 block text-sm text-[#6b6259] dark:text-[#9aa9bb]">
+                    <span className="mt-1 block text-sm text-secondary">
                       {getModeMeta(card.mode).label}
                     </span>
                   </div>
                   {card.playerStatus.hasPlayed ? (
-                    <div className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
+                    <div className="text-sm text-secondary">
                       {card.playerStatus.score} pts
                     </div>
                   ) : (
-                    <div className="text-sm text-[#6b6259] dark:text-[#9aa9bb]">
+                    <div className="text-sm text-secondary">
                       Same puzzle for everyone today.
                     </div>
                   )}
-                </button>
+                </SelectableCard>
               );
             })}
           </div>
-        </div>
-        <aside className={`${surfaceClass} grid gap-4 p-5 sm:p-6`}>...</aside>
+        </Card>
+        <Card className="grid gap-4 p-5 sm:p-6" elevation="low" padding={0}>
+          ...
+        </Card>
       </div>
     </section>
   );

@@ -1,15 +1,24 @@
 "use client";
 
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  captureAnalyticsEvent,
+  isPostHogConfigured,
+} from "@/src/lib/analytics";
+import { measureMapInteraction } from "@/src/lib/map-performance";
 import {
   COUNTRY_DATA,
   getMapCountryNames,
+  getPlayableCountriesByMapName,
 } from "@/src/lib/game/world-map-data";
 import type {
   GuessDirection,
   GuessedCountryMapData,
   SolutionCountryMapData,
 } from "@/src/lib/types";
+import { Button } from "@astryxdesign/core/Button";
+import { HStack } from "@astryxdesign/core/HStack";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { VStack } from "@astryxdesign/core/VStack";
 import { geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import { select } from "d3-selection";
 import {
@@ -27,11 +36,22 @@ import {
   Scan,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+
+export type DuelResultMarkerTone = "challenger" | "opponent" | "both";
+
+export type DuelResultGuessedCountry = GuessedCountryMapData & {
+  markerTone?: DuelResultMarkerTone;
+};
 
 interface WorldMapDialogProps {
+  /** Fill the play surface instead of using the legacy floating map drawer. */
+  embedded?: boolean;
+  countryOptions?: readonly string[];
   drawerState?: "hidden" | "medium" | "expanded";
-  guessedCountries: readonly GuessedCountryMapData[];
+  duelResult?: boolean;
+  guessedCountries: readonly DuelResultGuessedCountry[];
+  isActive?: boolean;
   isExpanded: boolean;
   onDrawerStateChange?: (drawerState: "hidden" | "medium" | "expanded") => void;
   onExpandedChange: (isExpanded: boolean) => void;
@@ -48,6 +68,12 @@ interface MapSize {
 interface MapLocation {
   latitude: number;
   longitude: number;
+}
+
+export function getLastGuessedCountry(
+  guessedCountries: readonly DuelResultGuessedCountry[],
+): GuessedCountryMapData | null {
+  return guessedCountries.at(-1) ?? null;
 }
 
 const DIRECTION_ROTATION: Record<GuessDirection, number> = {
@@ -71,6 +97,12 @@ const DIRECTION_LABEL: Record<GuessDirection, string> = {
   west: "west",
   northwest: "northwest",
 };
+
+// Small-island countries (especially in the Pacific) stay tiny until the map
+// is zoomed well past 20x, so let users zoom in much further on touch screens
+// where the map canvas itself is smaller than on desktop.
+const MIN_MAP_SCALE = 1;
+const MAX_MAP_SCALE = 100;
 
 interface ResizeTransformOptions {
   currentTransform: ZoomTransform;
@@ -159,21 +191,28 @@ function DirectionArrow({ direction }: { direction: GuessDirection }) {
 }
 
 export function WorldMapDialog({
+  embedded = false,
+  countryOptions = [],
   guessedCountries,
+  isActive = false,
   isExpanded,
   drawerState,
   onDrawerStateChange,
   onExpandedChange,
   onCountryGuess,
+  duelResult = false,
   presentation = "game",
   solutionCountry = null,
 }: WorldMapDialogProps) {
+  const helpId = useId();
   const effectiveDrawerState =
     presentation === "game"
       ? (drawerState ?? (isExpanded ? "expanded" : "medium"))
       : "medium";
   const isMapExpanded = effectiveDrawerState === "expanded";
   const isMapHidden = effectiveDrawerState === "hidden";
+  const canInteractWithMap =
+    embedded || presentation === "result" || Boolean(onCountryGuess);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -195,28 +234,21 @@ export function WorldMapDialog({
   const [mapTransform, setMapTransform] = useState<ZoomTransform>(zoomIdentity);
   const [drawerDragOffsetY, setDrawerDragOffsetY] = useState(0);
   const [isDrawerDragging, setIsDrawerDragging] = useState(false);
-  const guessedNames = useMemo(
-    () =>
-      new Set(
-        guessedCountries.flatMap((country) => [
-          ...getMapCountryNames(country.mapNames),
-        ]),
-      ),
-    [guessedCountries],
-  );
   const guessedCountryByName = useMemo(() => {
-    const countriesByName = new Map<string, GuessedCountryMapData>();
+    const countriesByName = new Map<string, DuelResultGuessedCountry>();
 
     for (const country of guessedCountries) {
-      for (const mapName of country.mapNames) {
-        for (const normalizedName of getMapCountryNames([mapName])) {
-          countriesByName.set(normalizedName, country);
-        }
+      for (const normalizedName of getMapCountryNames(country.mapNames)) {
+        countriesByName.set(normalizedName, country);
       }
     }
 
     return countriesByName;
   }, [guessedCountries]);
+  const playableCountryByMapName = useMemo(
+    () => getPlayableCountriesByMapName(countryOptions),
+    [countryOptions],
+  );
   const solutionNames = useMemo(
     () =>
       solutionCountry
@@ -240,6 +272,11 @@ export function WorldMapDialog({
   const path = useMemo(
     () => (projection ? geoPath(projection) : null),
     [projection],
+  );
+  // Geometry changes on resize; pan and zoom only change the group's transform.
+  const countryPaths = useMemo(
+    () => COUNTRY_DATA.features.map((country) => path?.(country) ?? null),
+    [path],
   );
 
   useEffect(() => {
@@ -282,47 +319,101 @@ export function WorldMapDialog({
     };
   }, [isMapHidden]);
 
+  const hasMapSize = mapSize.width > 0 && mapSize.height > 0;
+
+  // Keep one zoom behavior across resizes: d3-zoom keeps per-behavior tap
+  // state, so a double tap that starts on one behavior and ends on a
+  // replacement crashes in its touchend handler.
   useEffect(() => {
     const svg = svgRef.current;
 
-    if (!svg || mapSize.width <= 0 || mapSize.height <= 0) {
+    if (!svg || !canInteractWithMap || !hasMapSize) {
       return;
     }
 
+    let measurement: ReturnType<typeof measureMapInteraction> | null = null;
+    let zoomUpdates = 0;
+    let zoomEnd = 1;
     const behavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 20])
-      .extent([
-        [0, 0],
-        [mapSize.width, mapSize.height],
-      ])
-      .translateExtent([
-        [0, 0],
-        [mapSize.width, mapSize.height],
-      ])
+      .scaleExtent([MIN_MAP_SCALE, MAX_MAP_SCALE])
       .on("start.animation", (event) => {
         if (event.sourceEvent && animationFrameRef.current !== null) {
           window.cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = null;
         }
+        if (
+          event.sourceEvent &&
+          isPostHogConfigured &&
+          document.visibilityState === "visible"
+        ) {
+          measurement?.cancel();
+          zoomUpdates = 0;
+          const zoomStart = event.transform.k;
+          const { width, height } = svg.viewBox.baseVal;
+          const inputType = event.sourceEvent.type;
+          measurement = measureMapInteraction((metrics) => {
+            if (
+              zoomUpdates < 2 ||
+              width !== svg.viewBox.baseVal.width ||
+              height !== svg.viewBox.baseVal.height
+            )
+              return;
+            captureAnalyticsEvent("map_interaction_performance", {
+              ...metrics,
+              measurement_version: 1,
+              app_revision: process.env.NEXT_PUBLIC_APP_REVISION ?? "unknown",
+              input_type: inputType,
+              presentation,
+              embedded,
+              map_width: width,
+              map_height: height,
+              zoom_start: zoomStart,
+              zoom_end: zoomEnd,
+              zoom_updates: zoomUpdates,
+            });
+          });
+        }
       })
       .on("zoom", (event) => {
+        zoomUpdates += 1;
         mapTransformRef.current = event.transform;
         setMapTransform(event.transform);
+      })
+      .on("end.performance", () => {
+        zoomEnd = mapTransformRef.current.k;
+        measurement?.finish();
       });
     const selection = select(svg);
     selection.call(behavior);
-    selection.call(behavior.transform, mapTransformRef.current);
     zoomBehaviorRef.current = behavior;
 
     return () => {
+      measurement?.cancel();
       if (animationFrameRef.current !== null) {
         window.cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
       selection.on(".zoom", null);
+      delete (svg as SVGSVGElement & { __zooming?: unknown }).__zooming;
       zoomBehaviorRef.current = null;
     };
-  }, [mapSize]);
+  }, [canInteractWithMap, hasMapSize, embedded, presentation]);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    const behavior = zoomBehaviorRef.current;
+
+    if (!svg || !behavior || !hasMapSize) {
+      return;
+    }
+
+    const mapExtent: [[number, number], [number, number]] = [
+      [0, 0],
+      [mapSize.width, mapSize.height],
+    ];
+    behavior.extent(mapExtent).translateExtent(mapExtent);
+    select(svg).call(behavior.transform, mapTransformRef.current);
+  }, [canInteractWithMap, hasMapSize, mapSize]);
 
   useEffect(() => {
     const previousMapSize = previousMapSizeRef.current;
@@ -372,7 +463,10 @@ export function WorldMapDialog({
       centerX,
       centerY,
     ]);
-    const scale = Math.min(20, Math.max(1, currentTransform.k * factor));
+    const scale = Math.min(
+      MAX_MAP_SCALE,
+      Math.max(MIN_MAP_SCALE, currentTransform.k * factor),
+    );
     const targetTransform = zoomIdentity
       .translate(centerX, centerY)
       .scale(scale)
@@ -399,11 +493,31 @@ export function WorldMapDialog({
 
     const selection = select(svg);
     const startTransform = mapTransformRef.current;
+    const centerX = mapSize.width / 2;
+    const centerY = mapSize.height / 2;
+    // Interpolate the geographic point under the viewport centre instead of
+    // x/y directly: easing the scale geometrically while x/y moved linearly
+    // made the view swing off-centre and back during zooms.
+    const startCenter = startTransform.invert([centerX, centerY]);
+    const endCenter = targetTransform.invert([centerX, centerY]);
+    const startScale = startTransform.k;
+    const endScale = targetTransform.k;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
     if (reduceMotion) {
+      selection.call(behavior.transform, targetTransform);
+      animationFrameRef.current = null;
+      return;
+    }
+
+    const didReachTarget =
+      Math.abs(startScale - endScale) < 0.0001 &&
+      Math.hypot(startCenter[0] - endCenter[0], startCenter[1] - endCenter[1]) <
+        0.5;
+
+    if (didReachTarget) {
       selection.call(behavior.transform, targetTransform);
       animationFrameRef.current = null;
       return;
@@ -415,16 +529,15 @@ export function WorldMapDialog({
     const updateTransform = (timestamp: number) => {
       const progress = Math.min(1, (timestamp - startedAt) / duration);
       const easedProgress = 1 - Math.pow(1 - progress, 3);
-      const scale =
-        startTransform.k *
-        Math.pow(targetTransform.k / startTransform.k, easedProgress);
-      const x =
-        startTransform.x +
-        (targetTransform.x - startTransform.x) * easedProgress;
-      const y =
-        startTransform.y +
-        (targetTransform.y - startTransform.y) * easedProgress;
-      const interpolatedTransform = zoomIdentity.translate(x, y).scale(scale);
+      const scale = startScale * Math.pow(endScale / startScale, easedProgress);
+      const center = [
+        startCenter[0] + (endCenter[0] - startCenter[0]) * easedProgress,
+        startCenter[1] + (endCenter[1] - startCenter[1]) * easedProgress,
+      ];
+      const interpolatedTransform = zoomIdentity
+        .translate(centerX, centerY)
+        .scale(scale)
+        .translate(-center[0], -center[1]);
 
       selection.call(behavior.transform, interpolatedTransform);
 
@@ -563,16 +676,23 @@ export function WorldMapDialog({
     return focusLocations(guessedCountries, 10, 0.72);
   }
 
-  function focusCountry(country: GuessedCountryMapData) {
+  function focusCountry(country: GuessedCountryMapData): boolean {
     const didFocusCountry = focusCountries(
       getMapCountryNames(country.mapNames),
       7,
       0.56,
     );
 
-    if (!didFocusCountry) {
-      focusLocation(country);
+    if (didFocusCountry) {
+      return true;
     }
+
+    if (!projection || !zoomBehaviorRef.current) {
+      return false;
+    }
+
+    focusLocation(country);
+    return true;
   }
 
   useEffect(() => {
@@ -596,7 +716,9 @@ export function WorldMapDialog({
       return;
     }
 
-    if (fitGuessedCountries()) {
+    const lastGuessedCountry = getLastGuessedCountry(guessedCountries);
+
+    if (lastGuessedCountry && focusCountry(lastGuessedCountry)) {
       focusedGuessedCountryCountRef.current = guessedCountries.length;
     }
   }, [guessedCountries, mapSize, presentation, projection]);
@@ -698,30 +820,34 @@ export function WorldMapDialog({
     }
   }
 
-  if (presentation === "game" && isMapHidden) {
+  if (presentation === "game" && !embedded && isMapHidden) {
     return (
-      <div className="fixed inset-x-0 bottom-0 z-[70] flex justify-center px-2 pb-2 sm:justify-end sm:px-5 sm:pb-5 lg:static lg:px-0 lg:pb-0">
-        <button
+      <HStack justify="center">
+        <Button
+          className="min-h-11 sm:min-h-0"
+          elevation="med"
+          icon={<ChevronUp aria-hidden="true" />}
           aria-label="Show world map"
-          className="inline-flex h-10 items-center gap-2 rounded-full border border-black/12 bg-[#fbf7ef]/96 px-4 text-sm font-semibold text-[#17313a] shadow-[0_8px_28px_rgba(17,24,39,0.2)] backdrop-blur transition hover:-translate-y-0.5 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/14 dark:bg-[#132131]/96 dark:text-[#d7e1ec] dark:hover:text-[#8ff4e7]"
+          label="Show world map"
           onClick={() => setDrawerState("medium")}
-          type="button"
+          variant="secondary"
         >
-          <ChevronUp aria-hidden="true" className="size-4" strokeWidth={2.2} />
-          Show map
-        </button>
-      </div>
+          Show world map
+        </Button>
+      </HStack>
     );
   }
 
   return (
-    <div
+    <VStack
       className={
-        presentation === "result"
-          ? "relative w-full"
-          : isMapExpanded
-            ? "fixed inset-0 z-[80] grid place-items-center bg-[rgba(20,26,28,0.54)] p-2 backdrop-blur-[3px] sm:p-5"
-            : "pointer-events-none fixed inset-0 z-[70] flex items-end justify-center px-2 sm:justify-end sm:px-5 lg:pointer-events-auto lg:static lg:z-auto lg:block lg:px-0"
+        embedded && !isMapExpanded
+          ? "relative min-h-0 flex-1 w-full"
+          : presentation === "result"
+            ? "relative w-full"
+            : isMapExpanded
+              ? "fixed inset-0 z-80 grid place-items-center bg-overlay p-2 backdrop-blur-[3px] sm:p-5"
+              : "pointer-events-none fixed inset-0 z-70 flex items-end justify-center px-2 sm:justify-end sm:px-5 lg:pointer-events-auto lg:static lg:z-auto lg:block lg:px-0"
       }
       onMouseDown={(event) => {
         if (isMapExpanded && event.target === event.currentTarget) {
@@ -729,17 +855,19 @@ export function WorldMapDialog({
         }
       }}
     >
-      <div
-        aria-describedby="world-map-help"
+      <VStack
+        aria-describedby={helpId}
         aria-label="World map"
         aria-modal={isMapExpanded ? true : undefined}
-        className={`pointer-events-auto grid w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden border border-black/16 bg-[#fbf7ef] shadow-[0_18px_60px_rgba(17,24,39,0.3)] outline-none transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:border-white/14 dark:bg-[#101a27] dark:shadow-[0_18px_60px_rgba(0,0,0,0.58)] ${
-          presentation === "result"
-            ? "h-64 rounded-[24px] sm:h-72"
-            : isMapExpanded
-              ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-[28px] sm:h-[min(760px,calc(100dvh-2.5rem))]"
-              : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-[26px] sm:border-b lg:mb-0 lg:h-[clamp(320px,42dvh,460px)] lg:max-w-none"
-        }`}
+        className={`pointer-events-auto w-full overflow-hidden bg-body ${embedded && !isMapExpanded ? "min-h-0 flex-1 lg:min-h-96 lg:rounded-xl lg:border lg:border-border" : "grid grid-rows-[minmax(0,1fr)_auto] border border-border shadow-md"} transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:shadow-md ${
+          embedded && !isMapExpanded
+            ? ""
+            : presentation === "result"
+              ? "h-44 rounded-xl sm:h-48"
+              : isMapExpanded
+                ? "h-[min(780px,calc(100dvh-1rem))] max-w-[1120px] rounded-xl sm:h-[min(760px,calc(100dvh-2.5rem))]"
+                : "h-[clamp(190px,28dvh,270px)] max-w-[720px] rounded-t-[26px] border-b-0 sm:mb-5 sm:h-[clamp(210px,30dvh,300px)] sm:rounded-xl sm:border-b lg:mb-0 lg:h-[clamp(320px,42dvh,460px)] lg:max-w-none"
+        } ${isActive ? "outline-2 outline-offset-2 outline-accent-bg" : "outline-none"}`}
         onKeyDown={handleDialogKeyDown}
         ref={dialogRef}
         role={isMapExpanded ? "dialog" : "region"}
@@ -749,20 +877,24 @@ export function WorldMapDialog({
             : undefined
         }
       >
-        <div
-          aria-label="Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
-          className="map-world-canvas relative min-h-0 overflow-hidden"
+        <VStack
+          aria-label={
+            presentation === "result" && duelResult
+              ? "Interactive duel result map. Each player's guesses use a different color, shared guesses are striped, and the correct answer is highlighted."
+              : "Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
+          }
+          className="map-world-canvas relative min-h-0 flex-1 overflow-hidden"
           ref={mapContainerRef}
           role="application"
         >
-          {presentation === "game" ? (
+          {presentation === "game" && !embedded ? (
             <>
               <button
                 aria-expanded={isMapExpanded}
                 aria-label={
                   isMapExpanded ? "Collapse world map" : "Expand world map"
                 }
-                className="absolute left-1/2 top-2 z-10 flex h-9 w-28 -translate-x-1/2 touch-none items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 lg:hidden"
+                className="absolute left-1/2 top-2 z-10 flex h-11 w-28 -translate-x-1/2 touch-none items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-accent-muted lg:hidden"
                 onClick={() => {
                   if (didDrawerDragRef.current) {
                     didDrawerDragRef.current = false;
@@ -778,57 +910,46 @@ export function WorldMapDialog({
                 ref={expandButtonRef}
                 type="button"
               >
-                <span className="h-1.5 w-12 rounded-full bg-[#718093]/85 shadow-sm" />
+                <span className="h-1.5 w-12 rounded-full bg-muted shadow-sm" />
                 <span className="sr-only">
                   {isMapExpanded ? "Collapse" : "Expand"} world map
                 </span>
               </button>
-              <button
-                aria-label="Hide world map"
-                className="absolute right-3 top-2 z-10 inline-flex size-9 items-center justify-center rounded-full border border-black/10 bg-white/90 text-[#17313a] shadow-lg backdrop-blur transition hover:bg-white hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-[#132131]/90 dark:text-[#d7e1ec] dark:hover:text-[#8ff4e7] lg:hidden"
+              <IconButton
+                className="absolute right-3 top-2 z-10 min-h-11 min-w-11 lg:hidden"
+                elevation="high"
+                icon={<X aria-hidden="true" />}
+                label="Hide world map"
                 onClick={() => setDrawerState("hidden")}
-                type="button"
-              >
-                <X aria-hidden="true" className="size-4" strokeWidth={2.2} />
-              </button>
-              <button
-                aria-label={
-                  isMapExpanded ? "Minimize world map" : "Expand world map"
+                tooltip="Hide world map"
+                variant="secondary"
+              />
+              <Button
+                className="absolute right-4 top-4 z-10 hidden lg:inline-flex"
+                elevation="high"
+                icon={
+                  isMapExpanded ? (
+                    <ChevronDown aria-hidden="true" />
+                  ) : (
+                    <ChevronUp aria-hidden="true" />
+                  )
                 }
-                className="absolute right-4 top-4 z-10 hidden h-10 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-black/10 bg-white/90 px-3 text-sm font-semibold text-[#1f1b17] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-[#0f766e]/30 hover:text-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/12 dark:bg-[#132131]/90 dark:text-[#f5f7fb] dark:hover:border-[#24d4c2]/35 dark:hover:text-[#8ff4e7] lg:inline-flex"
+                label={isMapExpanded ? "Minimize" : "Expand"}
                 onClick={() =>
                   setDrawerState(isMapExpanded ? "medium" : "expanded")
                 }
-                title={
-                  isMapExpanded ? "Minimize world map" : "Expand world map"
-                }
-                type="button"
-              >
-                {isMapExpanded ? (
-                  <ChevronDown
-                    aria-hidden="true"
-                    className="size-5"
-                    strokeWidth={2.2}
-                  />
-                ) : (
-                  <ChevronUp
-                    aria-hidden="true"
-                    className="size-5"
-                    strokeWidth={2.2}
-                  />
-                )}
-                {isMapExpanded ? "Minimize" : "Expand"}
-              </button>
+                variant="secondary"
+              />
             </>
           ) : null}
           {presentation === "game" && onCountryGuess ? (
-            <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-[#0f766e]/20 bg-[#fbf7ef]/92 px-3 py-1.5 text-xs font-semibold text-[#0f766e] shadow-sm backdrop-blur dark:border-[#24d4c2]/24 dark:bg-[#132131]/92 dark:text-[#75e6d7] sm:left-4 sm:top-4">
-              Tap a country · half points
+            <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-accent-bg/20 bg-body px-3 py-1.5 text-xs font-semibold text-accent shadow-sm backdrop-blur  sm:left-4 sm:top-4">
+              Tap a country
             </span>
           ) : null}
           <svg
             aria-hidden="true"
-            className={`size-full touch-none select-none ${onCountryGuess ? "map-world-guessing" : ""}`}
+            className={`size-full touch-none select-none ${canInteractWithMap ? "" : "pointer-events-none"} ${onCountryGuess ? "map-world-guessing" : ""}`}
             ref={svgRef}
             viewBox={`0 0 ${mapSize.width || 1} ${mapSize.height || 1}`}
           >
@@ -838,66 +959,116 @@ export function WorldMapDialog({
               {path
                 ? COUNTRY_DATA.features.map((country, index) => {
                     const name = country.properties.normalizedName;
-                    const countryPath = path(country);
+                    const countryPath = countryPaths[index];
                     const guessedCountry = guessedCountryByName.get(name);
+                    const playableCountry = playableCountryByMapName.get(name);
                     const isSolution = solutionNames.has(name);
+                    const isUnavailable =
+                      Boolean(onCountryGuess) &&
+                      !playableCountry &&
+                      !guessedCountry;
 
                     return countryPath ? (
                       <path
                         className={
                           isSolution
-                            ? "map-country map-country--solution"
+                            ? duelResult
+                              ? "map-country map-country--solution-duel"
+                              : "map-country map-country--solution"
                             : guessedCountry
-                              ? "map-country map-country--guessed"
-                              : "map-country"
+                              ? guessedCountry.markerTone
+                                ? `map-country map-country--guessed-${guessedCountry.markerTone}`
+                                : "map-country map-country--guessed"
+                              : isUnavailable
+                                ? "map-country map-country--unavailable"
+                                : onCountryGuess && playableCountry
+                                  ? "map-country map-country--playable"
+                                  : "map-country"
                         }
                         d={countryPath}
                         key={`${country.id ?? name}-${index}`}
                         onClick={
                           guessedCountry
                             ? () => focusCountry(guessedCountry)
-                            : onCountryGuess
-                              ? () =>
-                                  onCountryGuess(
-                                    country.properties.name ?? name,
-                                  )
+                            : onCountryGuess && playableCountry
+                              ? () => onCountryGuess(playableCountry)
                               : undefined
                         }
                         vectorEffect="non-scaling-stroke"
-                      />
+                      >
+                        {isUnavailable ? (
+                          <title>{`${country.properties.name} is unavailable to guess`}</title>
+                        ) : null}
+                      </path>
                     ) : null;
                   })
                 : null}
+              {/*
+                Render highlighted countries a second time, after the base map.
+                SVG paints later paths on top of earlier ones; without this
+                overlay, a later-rendered neighbour can cover a highlighted
+                country's shared border with its default stroke.
+              */}
+              {path
+                ? COUNTRY_DATA.features.map((country, index) => {
+                    const name = country.properties.normalizedName;
+                    const countryPath = countryPaths[index];
+                    const guessedCountry = guessedCountryByName.get(name);
+                    const isSolution = solutionNames.has(name);
+
+                    if (!countryPath || (!guessedCountry && !isSolution)) {
+                      return null;
+                    }
+
+                    return (
+                      <path
+                        className={
+                          isSolution
+                            ? duelResult
+                              ? "map-country map-country--solution-duel"
+                              : "map-country map-country--solution"
+                            : guessedCountry!.markerTone
+                              ? `map-country map-country--guessed-${guessedCountry!.markerTone}`
+                              : "map-country map-country--guessed"
+                        }
+                        d={countryPath}
+                        key={`highlight-${country.id ?? name}-${index}`}
+                        onClick={
+                          guessedCountry
+                            ? () => focusCountry(guessedCountry)
+                            : undefined
+                        }
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    );
+                  })
+                : null}
             </g>
+            <defs>
+              <pattern
+                height={8}
+                id="map-duel-both-stripes"
+                patternTransform="rotate(45)"
+                patternUnits="userSpaceOnUse"
+                width={8}
+              >
+                <rect
+                  className="map-duel-stripe map-duel-stripe--challenger"
+                  height={8}
+                  width={4}
+                  x={0}
+                  y={0}
+                />
+                <rect
+                  className="map-duel-stripe map-duel-stripe--opponent"
+                  height={8}
+                  width={4}
+                  x={4}
+                  y={0}
+                />
+              </pattern>
+            </defs>
           </svg>
-
-          {projection && solutionCountry
-            ? (() => {
-                const point = projection([
-                  solutionCountry.longitude,
-                  solutionCountry.latitude,
-                ]);
-
-                if (!point) {
-                  return null;
-                }
-
-                const [left, top] = mapTransform.apply(point);
-
-                return (
-                  <button
-                    aria-label={`Focus solution: ${solutionCountry.name}`}
-                    className="map-solution-marker absolute z-5"
-                    onClick={() => focusLocation(solutionCountry)}
-                    style={{ left, top }}
-                    title={`Focus ${solutionCountry.name}`}
-                    type="button"
-                  >
-                    {solutionCountry.name}
-                  </button>
-                );
-              })()
-            : null}
 
           {presentation === "game" && projection
             ? guessedCountries.map((country) => {
@@ -919,7 +1090,9 @@ export function WorldMapDialog({
                     title={`Focus ${country.name}`}
                     type="button"
                   >
-                    <span>{country.name}</span>
+                    <span className="map-guess-marker-label">
+                      {country.name}
+                    </span>
                     <span className="map-guess-marker-arrow">
                       <DirectionArrow direction={country.direction} />
                     </span>
@@ -941,14 +1114,16 @@ export function WorldMapDialog({
                 return (
                   <button
                     aria-label={`Focus guess: ${country.name}. Goal is ${DIRECTION_LABEL[country.direction]}.`}
-                    className="map-guess-marker absolute z-5"
-                    key={country.qid}
+                    className={`map-guess-marker absolute z-5 ${country.markerTone ? `map-guess-marker--${country.markerTone}` : ""}`}
+                    key={`${country.markerTone ?? "guess"}-${country.qid}`}
                     onClick={() => focusCountry(country)}
                     style={{ left, top }}
                     title={`Focus ${country.name}`}
                     type="button"
                   >
-                    <span>{country.name}</span>
+                    <span className="map-guess-marker-label">
+                      {country.name}
+                    </span>
                     <span className="map-guess-marker-arrow">
                       <DirectionArrow direction={country.direction} />
                     </span>
@@ -957,80 +1132,94 @@ export function WorldMapDialog({
               })
             : null}
 
+          {projection && solutionCountry
+            ? (() => {
+                const point = projection([
+                  solutionCountry.longitude,
+                  solutionCountry.latitude,
+                ]);
+
+                if (!point) {
+                  return null;
+                }
+
+                const [left, top] = mapTransform.apply(point);
+
+                return (
+                  <button
+                    aria-label={`Focus solution: ${solutionCountry.name}`}
+                    className={`map-solution-marker absolute z-5 ${duelResult ? "map-solution-marker--duel" : ""}`}
+                    onClick={() => focusLocation(solutionCountry)}
+                    style={{ left, top }}
+                    title={`Focus ${solutionCountry.name}`}
+                    type="button"
+                  >
+                    {solutionCountry.name}
+                  </button>
+                );
+              })()
+            : null}
+
           {presentation === "game" ? (
-            <div className="absolute bottom-3 left-3 z-10 grid gap-1.5 sm:bottom-4 sm:left-4 sm:gap-2">
-              <div className="grid w-9 overflow-hidden rounded-xl border border-black/16 bg-[#fbf7ef]/94 shadow-lg backdrop-blur dark:border-white/14 dark:bg-[#132131]/94 sm:w-11 sm:rounded-2xl">
-                <button
-                  aria-label="Zoom in"
-                  className="inline-flex size-9 items-center justify-center text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:text-[#d7e1ec] dark:hover:bg-white/10 sm:size-11"
-                  onClick={() => changeZoom(1.45)}
-                  title="Zoom in"
-                  type="button"
-                >
-                  <Plus
-                    aria-hidden="true"
-                    className="size-4 sm:size-5"
-                    strokeWidth={2.2}
-                  />
-                </button>
-                <button
-                  aria-label="Zoom out"
-                  className="inline-flex size-9 items-center justify-center border-t border-black/12 text-[#17313a] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#0f766e]/40 dark:border-white/12 dark:text-[#d7e1ec] dark:hover:bg-white/10 sm:size-11"
-                  onClick={() => changeZoom(1 / 1.45)}
-                  title="Zoom out"
-                  type="button"
-                >
-                  <Minus
-                    aria-hidden="true"
-                    className="size-4 sm:size-5"
-                    strokeWidth={2.2}
-                  />
-                </button>
-              </div>
-              <button
-                aria-label="Fit all guessed countries"
-                className="inline-flex size-9 items-center justify-center rounded-xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/14 dark:bg-[#132131]/94 dark:text-[#d7e1ec] dark:hover:bg-[#1a2c3f] sm:size-11 sm:rounded-2xl"
-                disabled={guessedCountries.length === 0}
+            <HStack
+              className="absolute bottom-3 left-3 z-10 flex-nowrap lg:bottom-4 lg:left-4 lg:flex-col"
+              onPointerDown={(event) => event.preventDefault()}
+              gap={2}
+            >
+              <IconButton
+                elevation="high"
+                icon={<Plus aria-hidden="true" />}
+                label="Zoom in"
+                onClick={() => changeZoom(1.45)}
+                size="lg"
+                tooltip="Zoom in"
+                variant="secondary"
+              />
+              <IconButton
+                elevation="high"
+                icon={<Minus aria-hidden="true" />}
+                label="Zoom out"
+                onClick={() => changeZoom(1 / 1.45)}
+                size="lg"
+                tooltip="Zoom out"
+                variant="secondary"
+              />
+              <IconButton
+                elevation="high"
+                icon={<Focus aria-hidden="true" />}
+                isDisabled={guessedCountries.length === 0}
+                label="Fit all guessed countries"
                 onClick={fitGuessedCountries}
-                title="Fit all guessed countries"
-                type="button"
-              >
-                <Focus
-                  aria-hidden="true"
-                  className="size-4 sm:size-5"
-                  strokeWidth={2.2}
-                />
-              </button>
-              <button
-                aria-label="Reset map zoom"
-                className="inline-flex size-9 items-center justify-center rounded-xl border border-black/16 bg-[#fbf7ef]/94 text-[#17313a] shadow-lg backdrop-blur transition hover:-translate-y-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#0f766e]/35 dark:border-white/14 dark:bg-[#132131]/94 dark:text-[#d7e1ec] dark:hover:bg-[#1a2c3f] sm:size-11 sm:rounded-2xl"
+                size="lg"
+                tooltip="Fit all guessed countries"
+                variant="secondary"
+              />
+              <IconButton
+                elevation="high"
+                icon={<Scan aria-hidden="true" />}
+                label="Reset map zoom"
                 onClick={resetWorld}
-                title="Reset map zoom"
-                type="button"
-              >
-                <Scan
-                  aria-hidden="true"
-                  className="size-4 sm:size-5"
-                  strokeWidth={2.2}
-                />
-              </button>
-            </div>
+                size="lg"
+                tooltip="Reset map zoom"
+                variant="secondary"
+              />
+            </HStack>
           ) : null}
 
-          <span className="pointer-events-none absolute bottom-3 right-3 z-10 rounded-full bg-white/72 px-2 py-1 text-[0.62rem] font-medium text-[#53636a] backdrop-blur dark:bg-[#0d1723]/72 dark:text-[#aab8c6]">
+          <span className="pointer-events-none absolute bottom-3 right-3 z-10 hidden rounded-full bg-card px-2 py-1 text-xs font-medium text-secondary backdrop-blur sm:inline-flex">
             Map data: Natural Earth
           </span>
-        </div>
+        </VStack>
 
         <footer
-          className={`border-t border-black/10 bg-white/76 text-center text-sm text-[#5f5a54] dark:border-white/10 dark:bg-white/5 dark:text-[#aab8c6] ${
+          className={`border-t border-border bg-card text-center text-sm text-secondary  ${
             isMapExpanded && presentation === "game" ? "px-4 py-3" : "sr-only"
           }`}
-          id="world-map-help"
+          id={helpId}
         >
           Drag to explore · Scroll or pinch to zoom
         </footer>
-      </div>
-    </div>
+      </VStack>
+    </VStack>
   );
 }

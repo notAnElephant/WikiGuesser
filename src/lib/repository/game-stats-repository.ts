@@ -111,3 +111,70 @@ export type UserCategoryModeStatsSnapshot = Pick<
   | "currentStreak"
   | "bestStreak"
 >;
+
+export interface PlayerStatsPageData {
+  freePlay: Array<{
+    category: EntityCategory;
+    mode: GameMode;
+    roundsPlayed: number;
+    roundsWon: number;
+    totalScore: number;
+    bestScore: number;
+    currentStreak: number;
+    bestStreak: number;
+  }>;
+  daily: Array<{
+    category: EntityCategory;
+    mode: GameMode;
+    roundsPlayed: number;
+    roundsWon: number;
+    totalScore: number;
+    bestScore: number;
+  }>;
+}
+
+export async function getPlayerStatsPageData(
+  clerkUserId: string,
+): Promise<PlayerStatsPageData> {
+  const prisma = getPrismaClient();
+  const profile = await prisma.userProfile.findUnique({
+    where: { clerkUserId },
+    select: {
+      stats: {
+        select: {
+          category: true,
+          mode: true,
+          roundsPlayed: true,
+          roundsWon: true,
+          totalScore: true,
+          bestScore: true,
+          currentStreak: true,
+          bestStreak: true,
+        },
+      },
+      dailyStats: {
+        select: {
+          category: true,
+          mode: true,
+          roundsPlayed: true,
+          roundsWon: true,
+          totalScore: true,
+          bestScore: true,
+        },
+      },
+    },
+  });
+
+  return {
+    freePlay: (profile?.stats ?? []).map((entry) => ({
+      ...entry,
+      category: entry.category as EntityCategory,
+      mode: entry.mode as GameMode,
+    })),
+    daily: (profile?.dailyStats ?? []).map((entry) => ({
+      ...entry,
+      category: entry.category as EntityCategory,
+      mode: entry.mode as GameMode,
+    })),
+  };
+}

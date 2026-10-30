@@ -13,7 +13,10 @@ import {
   isClueLocked,
   toPlayableClues,
 } from "@/src/components/game-shell/utils";
-import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import {
+  findUniqueCountryMatch,
+  normalizeGuess,
+} from "@/src/lib/game/answer-matching";
 import type {
   GameMode,
   GuessRoundResult,
@@ -74,13 +77,14 @@ export function useGameShellController({
   const isCountryRound = (round?.category ?? result?.category) === "countries";
   const hasGuess = guess.trim().length > 0;
   const normalizedGuess = normalizeGuess(guess);
+  const matchedCountry = findUniqueCountryMatch(countryOptions, guess);
   const normalizedGuessedEntities = new Set(
     guessedEntities.map((entry) => normalizeGuess(entry.name)),
   );
-  const isCountryGuessValid =
-    !isCountryRound || validCountryLookup.has(normalizedGuess);
+  const isCountryGuessValid = !isCountryRound || Boolean(matchedCountry);
   const isAlreadyGuessed =
-    hasGuess && normalizedGuessedEntities.has(normalizedGuess);
+    hasGuess &&
+    normalizedGuessedEntities.has(normalizeGuess(matchedCountry ?? guess));
   const availableCountryOptions = countryOptions.filter(
     (option) => !normalizedGuessedEntities.has(normalizeGuess(option)),
   );
@@ -199,13 +203,13 @@ export function useGameShellController({
       }
 
       const data = (await response.json()) as StartRoundResult;
-      setRound(data);
+      setRound({ ...data, playOrigin: "server" });
       setMessage(data.mode === "blurred-lines" ? "Tap a row." : "Round live.");
     });
   }
 
   function revealClue(clueKey: string) {
-    if (!round || isSyncingReveal) {
+    if (!round || round.playOrigin !== "server" || isSyncingReveal) {
       return;
     }
 
@@ -255,7 +259,7 @@ export function useGameShellController({
         }
 
         const data = (await response.json()) as RevealClueResult;
-        setRound(data);
+        setRound({ ...data, playOrigin: "server" });
         setMessage(data.remainingClues === 0 ? "Last clue." : "Clue unlocked.");
       } catch {
         setRound(previousRound);
@@ -274,7 +278,7 @@ export function useGameShellController({
     const isMapGuess = Boolean(mapCountryName);
     const guessValue = mapCountryName ?? guess.trim();
 
-    if (!round || !guessValue) {
+    if (!round || round.playOrigin !== "server" || !guessValue) {
       return;
     }
 
@@ -300,7 +304,9 @@ export function useGameShellController({
     const submittedGuess = isMapGuess
       ? guessValue
       : isCountryRound
-        ? (validCountryLookup.get(normalizedGuess) ?? guess.trim())
+        ? (matchedCountry ??
+          validCountryLookup.get(normalizedGuess) ??
+          guess.trim())
         : guess.trim();
 
     isSubmittingGuessRef.current = true;
@@ -339,9 +345,11 @@ export function useGameShellController({
         if (data.isCorrect) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: "win",
             canonicalAnswer: data.canonicalAnswer ?? "Unknown",
             score: data.score,
+            guessMethod: isMapGuess ? "map" : "text",
             kind: data.kind,
             category: data.category,
             mode: data.mode,
@@ -355,6 +363,7 @@ export function useGameShellController({
         if (data.isComplete) {
           setRound(null);
           setResult({
+            playOrigin: "server",
             status: "loss",
             canonicalAnswer: data.canonicalAnswer ?? "Unknown",
             score: 0,
@@ -369,6 +378,7 @@ export function useGameShellController({
         }
 
         setRound({
+          playOrigin: "server",
           roundId: data.roundId,
           token: data.token!,
           category: data.category,
@@ -405,7 +415,7 @@ export function useGameShellController({
   }
 
   function giveUpRound() {
-    if (!round) {
+    if (!round || round.playOrigin !== "server") {
       return;
     }
 
@@ -431,6 +441,7 @@ export function useGameShellController({
       const data = (await response.json()) as GuessRoundResult;
       setRound(null);
       setResult({
+        playOrigin: "server",
         status: "loss",
         canonicalAnswer: data.canonicalAnswer ?? "Unknown",
         score: 0,
@@ -438,6 +449,7 @@ export function useGameShellController({
         category: data.category,
         mode: data.mode,
         clues: data.clues,
+        solutionCountry: data.solutionCountry,
       });
       setGuess("");
       setMessage(`Answer: ${data.canonicalAnswer ?? "Unknown"}.`);

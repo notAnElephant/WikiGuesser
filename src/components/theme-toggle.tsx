@@ -1,65 +1,81 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
+import type { ReactNode } from "react";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { Popover } from "@astryxdesign/core/Popover";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@astryxdesign/core/SegmentedControl";
+import { Selector } from "@astryxdesign/core/Selector";
+import { Monitor, Moon, Palette, Sun } from "lucide-react";
 
-export function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+import {
+  astryxThemeOptions,
+  colorModeOptions,
+  type ColorMode,
+  type AstryxThemeName,
+  useAstryxTheme,
+} from "@/src/components/theme-provider";
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+const colorModeIcons = {
+  light: <Sun aria-hidden="true" className="size-4" strokeWidth={2} />,
+  dark: <Moon aria-hidden="true" className="size-4" strokeWidth={2} />,
+  system: <Monitor aria-hidden="true" className="size-4" strokeWidth={2} />,
+} satisfies Record<ColorMode, ReactNode>;
 
-  const isDark = mounted ? resolvedTheme !== "light" : true;
-
+export function ThemeSettings({ showStyle = false }: { showStyle?: boolean }) {
+  const { colorMode, setColorMode, themeName, setThemeName } = useAstryxTheme();
   return (
-    <button
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="inline-flex size-10 items-center justify-center rounded-full border border-black/10 bg-white/70 text-[#43525e] transition hover:bg-white dark:border-white/10 dark:bg-white/8 dark:text-[#d9e4ef] dark:hover:bg-white/12"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      type="button"
+    <fieldset className="flex min-w-0 flex-col gap-4">
+      <legend className="sr-only">Style settings</legend>
+      {showStyle ? (
+        <Selector
+          label="Style"
+          onChange={(nextTheme) => setThemeName(nextTheme as AstryxThemeName)}
+          options={astryxThemeOptions.map(({ id, label }) => ({
+            label,
+            value: id,
+          }))}
+          value={themeName}
+          width="100%"
+        />
+      ) : null}
+      <SegmentedControl
+        label="Color mode"
+        layout="fill"
+        onChange={(nextMode) => setColorMode(nextMode as ColorMode)}
+        size="sm"
+        value={colorMode}
+      >
+        {colorModeOptions.map(({ id, label }) => (
+          <SegmentedControlItem
+            icon={colorModeIcons[id]}
+            key={id}
+            label={label}
+            value={id}
+          />
+        ))}
+      </SegmentedControl>
+    </fieldset>
+  );
+}
+
+export function ThemeToggle({ isAdmin = false }: { isAdmin?: boolean }) {
+  return (
+    <Popover
+      alignment="end"
+      content={<ThemeSettings showStyle={isAdmin} />}
+      width="18rem"
+      label="Appearance settings"
+      placement="below"
     >
-      <span className="sr-only">
-        {isDark ? "Switch to light mode" : "Switch to dark mode"}
-      </span>
-      {isDark ? (
-        <svg
-          aria-hidden="true"
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="4"
-            stroke="currentColor"
-            strokeWidth="1.8"
-          />
-          <path
-            d="M12 2.75v2.5M12 18.75v2.5M21.25 12h-2.5M5.25 12h-2.5M18.54 5.46l-1.77 1.77M7.23 16.77l-1.77 1.77M18.54 18.54l-1.77-1.77M7.23 7.23L5.46 5.46"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeWidth="1.8"
-          />
-        </svg>
-      ) : (
-        <svg
-          aria-hidden="true"
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <path
-            d="M20.2 15.38A8.5 8.5 0 1 1 8.62 3.8a7.1 7.1 0 0 0 11.58 11.58Z"
-            stroke="currentColor"
-            strokeLinejoin="round"
-            strokeWidth="1.8"
-          />
-        </svg>
-      )}
-    </button>
+      <IconButton
+        className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0"
+        icon={<Palette aria-hidden="true" className="size-4" strokeWidth={2} />}
+        label="Appearance settings"
+        variant="ghost"
+      />
+    </Popover>
   );
 }

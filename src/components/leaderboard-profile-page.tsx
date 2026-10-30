@@ -1,7 +1,9 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useActionState, useEffect } from "react";
+import { Button } from "@astryxdesign/core/Button";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { useActionState, useEffect, useState } from "react";
 
 import {
   type ProfileNameFormState,
@@ -36,6 +38,11 @@ export function LeaderboardProfilePage() {
     saveProfileNameInline,
     initialState,
   );
+  const [displayName, setDisplayName] = useState("");
+
+  useEffect(() => {
+    if (user) setDisplayName(getDefaultName(user));
+  }, [user]);
 
   useEffect(() => {
     if (state.savedName) {
@@ -48,56 +55,48 @@ export function LeaderboardProfilePage() {
   }
 
   return (
-    <div className="w-full max-w-xl p-1 text-[#1f1b17] dark:text-[#f5f7fb]">
-      <h1 className="m-0 text-2xl font-bold tracking-[-0.025em]">
+    <div className="w-full max-w-xl p-1 text-primary">
+      <h1 className="m-0 text-2xl font-bold tracking-tight">
         Leaderboard name
       </h1>
-      <p className="mb-6 mt-2 text-sm leading-6 text-[#6b6259] dark:text-[#9aa9bb]">
+      <p className="mb-6 mt-2 text-sm leading-6 text-secondary">
         Choose the name other players will see beside your scores.
       </p>
 
       <form action={formAction} className="grid gap-5">
         <div className="grid gap-2">
-          <label className="text-sm font-semibold" htmlFor="leaderboardName">
-            Display name
-          </label>
-          <input
-            aria-describedby="leaderboard-name-help leaderboard-name-status"
-            autoComplete="nickname"
-            className="w-full rounded-xl border border-black/12 bg-white px-3.5 py-2.5 text-sm text-[#1f1b17] outline-none transition focus:border-[#0f766e] focus:ring-3 focus:ring-[#0f766e]/15 dark:border-white/15 dark:bg-white/8 dark:text-[#f5f7fb] dark:focus:border-[#24d4c2]"
-            defaultValue={getDefaultName(user)}
-            id="leaderboardName"
-            maxLength={50}
-            name="profileName"
-            required
-            type="text"
+          <TextInput
+            description="Up to 50 characters. This does not change your Clerk account name."
+            htmlName="profileName"
+            isRequired
+            label="Display name"
+            onChange={(value) => setDisplayName(value.slice(0, 50))}
+            size="lg"
+            status={
+              state.error ? { message: state.error, type: "error" } : undefined
+            }
+            value={displayName}
+            width="100%"
           />
-          <p
-            className="m-0 text-xs leading-5 text-[#6b6259] dark:text-[#9aa9bb]"
-            id="leaderboard-name-help"
-          >
-            Up to 50 characters. This does not change your Clerk account name.
-          </p>
           <div aria-live="polite" id="leaderboard-name-status">
             {state.error ? (
-              <p className="m-0 text-sm font-medium text-red-700 dark:text-red-300">
+              <p className="m-0 text-sm font-medium text-error">
                 {state.error}
               </p>
             ) : state.savedName ? (
-              <p className="m-0 text-sm font-medium text-[#0f766e] dark:text-[#75e6d7]">
+              <p className="m-0 text-sm font-medium text-accent">
                 Leaderboard name saved.
               </p>
             ) : null}
           </div>
         </div>
 
-        <button
-          className="inline-flex min-h-10 w-fit items-center justify-center rounded-lg bg-[#0f766e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-wait disabled:opacity-60 dark:bg-[#24d4c2] dark:text-[#082825] dark:hover:bg-[#75e6d7]"
-          disabled={isPending}
+        <Button
+          isLoading={isPending}
+          label="Save changes"
           type="submit"
-        >
-          {isPending ? "Saving…" : "Save changes"}
-        </button>
+          variant="primary"
+        />
       </form>
     </div>
   );

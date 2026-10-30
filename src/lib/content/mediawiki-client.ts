@@ -21,6 +21,8 @@ interface ParseLinksResponse {
 
 interface PagePropsResponse {
   query?: {
+    normalized?: Array<{ from: string; to: string }>;
+    redirects?: Array<{ from: string; to: string }>;
     pages?: Record<
       string,
       {
@@ -57,6 +59,55 @@ export function resolveCountryQid(
   titleToQid: Record<string, string>,
 ): string | undefined {
   return COUNTRY_TITLE_QID_OVERRIDES[title] ?? titleToQid[title];
+}
+
+export function mapWikibaseItemsToRequestedTitles(
+  titles: readonly string[],
+  query: NonNullable<PagePropsResponse["query"]>,
+): Record<string, string> {
+  const titleToQid: Record<string, string> = {};
+  const qidByPageTitle = new Map(
+    Object.values(query.pages ?? [])
+      .filter((page) => page.title && page.pageprops?.wikibase_item)
+      .map((page) => [page.title!, page.pageprops!.wikibase_item!] as const),
+  );
+  const rewrittenTitle = new Map(
+    [...(query.normalized ?? []), ...(query.redirects ?? [])].map(
+      ({ from, to }) => [from, to],
+    ),
+  );
+
+  for (const title of titles) {
+    let resolvedTitle = title;
+    const visited = new Set<string>();
+
+    while (rewrittenTitle.has(resolvedTitle) && !visited.has(resolvedTitle)) {
+      visited.add(resolvedTitle);
+      resolvedTitle = rewrittenTitle.get(resolvedTitle)!;
+    }
+
+    const qid = qidByPageTitle.get(resolvedTitle);
+    if (qid) titleToQid[title] = qid;
+  }
+
+  return titleToQid;
+}
+
+export function resolveCountryQids(
+  titles: readonly string[],
+  titleToQid: Record<string, string>,
+): string[] {
+  const missingTitles = titles.filter(
+    (title) => !resolveCountryQid(title, titleToQid),
+  );
+
+  if (missingTitles.length > 0) {
+    throw new Error(
+      `Wikipedia country links have no Wikidata item: ${missingTitles.join(", ")}`,
+    );
+  }
+
+  return titles.map((title) => resolveCountryQid(title, titleToQid)!);
 }
 
 async function fetchSectionIndex(
@@ -130,14 +181,10 @@ export async function fetchWikibaseItemsForTitles(
       `https://${wikiHost}/w/api.php?${params.toString()}`,
     );
 
-    Object.entries(data.query?.pages ?? {}).forEach(([, page]) => {
-      const qid = page.pageprops?.wikibase_item;
-      const title = page.title;
-
-      if (qid && title) {
-        titleToQid[title] = qid;
-      }
-    });
+    Object.assign(
+      titleToQid,
+      mapWikibaseItemsToRequestedTitles(chunk, data.query ?? {}),
+    );
   }
 
   return titleToQid;
@@ -158,9 +205,7 @@ export async function fetchSimpleWikipediaCountryQids(
   const scopedTitles = limit ? dedupedTitles.slice(0, limit) : dedupedTitles;
   const titleToQid = await fetchWikibaseItemsForTitles(scopedTitles);
 
-  return scopedTitles
-    .map((title) => resolveCountryQid(title, titleToQid))
-    .filter((qid): qid is string => Boolean(qid));
+  return resolveCountryQids(scopedTitles, titleToQid);
 }
 
 export async function fetchRedirectAliases(title: string): Promise<string[]> {
