@@ -184,13 +184,7 @@ export function GamePlayView({
       : isRevealMode
         ? currentClues
         : visibleClassicClues;
-  const sheetHeight = mobileMap
-    ? compactSheet
-      ? visibleHeight < 500
-        ? "min(64%, calc(var(--spacing-10) * 4))"
-        : "min(46%, calc(var(--spacing-10) * 4))"
-      : "43%"
-    : undefined;
+  const sheetHeight = mobileMap ? (compactSheet ? "auto" : "43%") : undefined;
   // On a short keyboard viewport, reclaim navigation space for the map.
   const compactViewport = mobileMap && isTyping && visibleHeight < 500;
   const latestClue = currentClues
@@ -358,7 +352,7 @@ export function GamePlayView({
           as="section"
           aria-label="Clues and guess"
           height={sheetHeight}
-          className={`relative min-h-0 shrink-0 bg-surface ${isCountryRound ? "rounded-t-3xl border-t border-border lg:absolute lg:right-4 lg:top-4 lg:z-10 lg:max-h-[90%] lg:min-h-56 lg:w-104 lg:rounded-xl lg:border lg:border-accent-bg/20 lg:shadow-xl" : "w-full rounded-xl border border-border"}`}
+          className={`relative min-h-0 max-h-full shrink-0 overflow-y-auto bg-surface lg:overflow-visible ${isCountryRound ? "rounded-t-3xl border-t border-border lg:absolute lg:right-4 lg:top-4 lg:z-10 lg:max-h-[90%] lg:min-h-56 lg:w-104 lg:rounded-xl lg:border lg:border-accent-bg/20 lg:shadow-xl" : "w-full rounded-xl border border-border"}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
@@ -563,7 +557,7 @@ export function GamePlayView({
                           autoCorrect="off"
                           spellCheck={false}
                           enterKeyHint="go"
-                          className="min-h-8 w-full min-w-0 rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-base text-primary outline-none focus:border-accent-bg focus:ring-2 focus:ring-accent-muted"
+                          className="min-h-8 w-full min-w-0 rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-lg text-primary outline-none focus:border-accent-bg focus:ring-2 focus:ring-accent-muted"
                           disabled={isBusy}
                           value={guess}
                           placeholder={

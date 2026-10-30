@@ -20,6 +20,8 @@ export function usePlayViewport(
     const visual = window.visualViewport;
     let frame = 0;
     const measure = () => {
+      // Page zoom must not resize the game like a software keyboard does.
+      if (visual && visual.scale !== 1) return;
       const top = ref.current?.getBoundingClientRect().top ?? 0;
       const bottom = visual
         ? visual.offsetTop + visual.height
