@@ -31,6 +31,9 @@ type AnalyticsEvents = {
     zoom_end: number;
     zoom_updates: number;
   };
+  chunk_load_reload: {
+    boundary: "route" | "global";
+  };
   clue_revealed: GameContext & {
     clue_key: string;
     clues_revealed: number;
@@ -93,6 +96,19 @@ export function captureAnalyticsEvent<Event extends keyof AnalyticsEvents>(
   }
 
   posthog.capture(event, properties);
+}
+
+// Next.js only logs errors that an app error boundary catches, so exception
+// autocapture never sees them.
+export function captureAnalyticsException(
+  error: unknown,
+  properties: Record<string, unknown>,
+) {
+  if (!isPostHogConfigured) {
+    return;
+  }
+
+  posthog.captureException(error, properties);
 }
 
 export function toGameContext(
