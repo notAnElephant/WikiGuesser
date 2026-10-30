@@ -169,7 +169,7 @@ export function GameLauncher({
   }
 
   return (
-    <section className="grid gap-5 pb-3 sm:gap-7">
+    <section className="grid gap-5 sm:gap-7">
       <header className="flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="m-0 font-heading text-4xl sm:text-5xl font-semibold leading-tight tracking-tight text-primary">
           Pick your game
@@ -186,34 +186,6 @@ export function GameLauncher({
           </strong>
         </div>
       </header>
-      <VStack gap={2}>
-        <Text>
-          Guess the country from its clues. Fewer clues earn more points.
-        </Text>
-        <details className="text-sm text-secondary">
-          <summary className="cursor-pointer py-2 font-semibold text-accent">
-            How to play
-          </summary>
-          <VStack gap={2} paddingBlock={2}>
-            <Text>
-              Classic: start with one clue. Each wrong guess reveals the next.
-            </Text>
-            <Text>
-              Choose Clues: reveal an unlocked clue, then make one guess. After
-              a miss, choose another clue.
-            </Text>
-            <Text>
-              A correct map guess earns 50, 40, 30, 20, 10, or 5 points as more
-              clues are revealed. Guess by name for double points. Giving up
-              earns 0.
-            </Text>
-            <Text>
-              Play each daily puzzle once, or practise with unlimited free play.
-            </Text>
-          </VStack>
-        </details>
-      </VStack>
-
       {claimBanner ? (
         <div className="rounded-2xl border border-success bg-success-muted px-4 py-3 text-sm font-medium text-success">
           {claimBanner}
@@ -1484,7 +1456,7 @@ export function SharedLandingShell({
     }
 
     return (
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <OfflinePackStatus />
         <GameLauncher
           claimBanner={claimBanner}
