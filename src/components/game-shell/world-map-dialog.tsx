@@ -227,6 +227,8 @@ export function WorldMapDialog({
   );
   const mapTransformRef = useRef<ZoomTransform>(zoomIdentity);
   const animationFrameRef = useRef<number | null>(null);
+  const animationTargetRef = useRef<ZoomTransform | null>(null);
+  const animationVelocityRef = useRef({ x: 0, y: 0, scale: 0 });
   const focusedGuessedCountryCountRef = useRef(0);
   const previousMapSizeRef = useRef<MapSize | null>(null);
   const previousProjectionRef = useRef<GeoProjection | null>(null);
@@ -340,6 +342,8 @@ export function WorldMapDialog({
         if (event.sourceEvent && animationFrameRef.current !== null) {
           window.cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = null;
+          animationTargetRef.current = null;
+          animationVelocityRef.current = { x: 0, y: 0, scale: 0 };
         }
         if (
           event.sourceEvent &&
@@ -456,7 +460,8 @@ export function WorldMapDialog({
   }, [mapSize, projection]);
 
   function changeZoom(factor: number) {
-    const currentTransform = mapTransformRef.current;
+    const currentTransform =
+      animationTargetRef.current ?? mapTransformRef.current;
     const centerX = mapSize.width / 2;
     const centerY = mapSize.height / 2;
     const [mapCenterX, mapCenterY] = currentTransform.invert([
@@ -487,65 +492,79 @@ export function WorldMapDialog({
       return;
     }
 
+    const selection = select(svg);
+    animationTargetRef.current = targetTransform;
     if (animationFrameRef.current !== null) {
-      window.cancelAnimationFrame(animationFrameRef.current);
+      return;
     }
 
-    const selection = select(svg);
-    const startTransform = mapTransformRef.current;
+    animationVelocityRef.current = { x: 0, y: 0, scale: 0 };
     const centerX = mapSize.width / 2;
     const centerY = mapSize.height / 2;
-    // Interpolate the geographic point under the viewport centre instead of
-    // x/y directly: easing the scale geometrically while x/y moved linearly
-    // made the view swing off-centre and back during zooms.
-    const startCenter = startTransform.invert([centerX, centerY]);
-    const endCenter = targetTransform.invert([centerX, centerY]);
-    const startScale = startTransform.k;
-    const endScale = targetTransform.k;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
     if (reduceMotion) {
       selection.call(behavior.transform, targetTransform);
-      animationFrameRef.current = null;
+      animationTargetRef.current = null;
       return;
     }
 
-    const didReachTarget =
-      Math.abs(startScale - endScale) < 0.0001 &&
-      Math.hypot(startCenter[0] - endCenter[0], startCenter[1] - endCenter[1]) <
-        0.5;
-
-    if (didReachTarget) {
-      selection.call(behavior.transform, targetTransform);
-      animationFrameRef.current = null;
-      return;
-    }
-
-    const duration = 480;
-    const startedAt = performance.now();
+    let previousTime = performance.now();
 
     const updateTransform = (timestamp: number) => {
-      const progress = Math.min(1, (timestamp - startedAt) / duration);
-      const easedProgress = 1 - Math.pow(1 - progress, 3);
-      const scale = startScale * Math.pow(endScale / startScale, easedProgress);
-      const center = [
-        startCenter[0] + (endCenter[0] - startCenter[0]) * easedProgress,
-        startCenter[1] + (endCenter[1] - startCenter[1]) * easedProgress,
-      ];
-      const interpolatedTransform = zoomIdentity
-        .translate(centerX, centerY)
-        .scale(scale)
-        .translate(-center[0], -center[1]);
+      const target = animationTargetRef.current;
+      if (!target) {
+        animationFrameRef.current = null;
+        return;
+      }
 
-      selection.call(behavior.transform, interpolatedTransform);
+      const deltaTime = Math.min((timestamp - previousTime) / 1000, 0.05);
+      previousTime = timestamp;
+      const transform = mapTransformRef.current;
+      const center = transform.invert([centerX, centerY]);
+      const targetCenter = target.invert([centerX, centerY]);
+      const currentScale = Math.log(transform.k);
+      const targetScale = Math.log(target.k);
+      const velocity = animationVelocityRef.current;
+      const stiffness = 180;
+      const damping = 26;
+      velocity.x =
+        (velocity.x + (targetCenter[0] - center[0]) * stiffness * deltaTime) *
+        Math.exp(-damping * deltaTime);
+      velocity.y =
+        (velocity.y + (targetCenter[1] - center[1]) * stiffness * deltaTime) *
+        Math.exp(-damping * deltaTime);
+      velocity.scale =
+        (velocity.scale +
+          (targetScale - currentScale) * stiffness * deltaTime) *
+        Math.exp(-damping * deltaTime);
+      const nextCenterX = center[0] + velocity.x * deltaTime;
+      const nextCenterY = center[1] + velocity.y * deltaTime;
+      const nextScale = Math.exp(currentScale + velocity.scale * deltaTime);
+      const settled =
+        Math.hypot(
+          targetCenter[0] - nextCenterX,
+          targetCenter[1] - nextCenterY,
+        ) < 0.5 &&
+        Math.abs(targetScale - Math.log(nextScale)) < 0.0001 &&
+        Math.hypot(velocity.x, velocity.y, velocity.scale) < 1;
+      const nextTransform = settled
+        ? target
+        : zoomIdentity
+            .translate(centerX, centerY)
+            .scale(nextScale)
+            .translate(-nextCenterX, -nextCenterY);
+      selection.call(behavior.transform, nextTransform);
 
-      if (progress < 1) {
+      if (!settled) {
         animationFrameRef.current =
           window.requestAnimationFrame(updateTransform);
       } else {
         animationFrameRef.current = null;
+        animationTargetRef.current = null;
+        animationVelocityRef.current = { x: 0, y: 0, scale: 0 };
       }
     };
 
