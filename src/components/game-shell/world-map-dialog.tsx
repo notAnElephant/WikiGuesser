@@ -273,6 +273,11 @@ export function WorldMapDialog({
     () => (projection ? geoPath(projection) : null),
     [projection],
   );
+  // Geometry changes on resize; pan and zoom only change the group's transform.
+  const countryPaths = useMemo(
+    () => COUNTRY_DATA.features.map((country) => path?.(country) ?? null),
+    [path],
+  );
 
   useEffect(() => {
     if (!isMapExpanded) {
@@ -954,7 +959,7 @@ export function WorldMapDialog({
               {path
                 ? COUNTRY_DATA.features.map((country, index) => {
                     const name = country.properties.normalizedName;
-                    const countryPath = path(country);
+                    const countryPath = countryPaths[index];
                     const guessedCountry = guessedCountryByName.get(name);
                     const playableCountry = playableCountryByMapName.get(name);
                     const isSolution = solutionNames.has(name);
@@ -1007,7 +1012,7 @@ export function WorldMapDialog({
               {path
                 ? COUNTRY_DATA.features.map((country, index) => {
                     const name = country.properties.normalizedName;
-                    const countryPath = path(country);
+                    const countryPath = countryPaths[index];
                     const guessedCountry = guessedCountryByName.get(name);
                     const isSolution = solutionNames.has(name);
 
