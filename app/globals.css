@@ -198,7 +198,8 @@
       stroke var(--duration-fast) ease;
   }
 
-  .map-world-guessing .map-country--playable:hover {
+  .map-world-guessing:not([data-suppress-touch-highlight])
+    .map-country--playable:hover {
     cursor: pointer;
     fill: var(--color-accent-muted);
   }

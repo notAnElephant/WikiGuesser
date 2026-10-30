@@ -234,6 +234,7 @@ export function WorldMapDialog({
   const previousProjectionRef = useRef<GeoProjection | null>(null);
   const [mapSize, setMapSize] = useState<MapSize>({ width: 0, height: 0 });
   const [mapTransform, setMapTransform] = useState<ZoomTransform>(zoomIdentity);
+  const [suppressTouchHighlight, setSuppressTouchHighlight] = useState(false);
   const [drawerDragOffsetY, setDrawerDragOffsetY] = useState(0);
   const [isDrawerDragging, setIsDrawerDragging] = useState(false);
   const guessedCountryByName = useMemo(() => {
@@ -969,6 +970,11 @@ export function WorldMapDialog({
           <svg
             aria-hidden="true"
             className={`size-full touch-none select-none ${canInteractWithMap ? "" : "pointer-events-none"} ${onCountryGuess ? "map-world-guessing" : ""}`}
+            data-suppress-touch-highlight={suppressTouchHighlight || undefined}
+            onTouchStartCapture={(event) => {
+              // Keep pinch hover suppressed after release until the next single touch.
+              setSuppressTouchHighlight(event.touches.length > 1);
+            }}
             ref={svgRef}
             viewBox={`0 0 ${mapSize.width || 1} ${mapSize.height || 1}`}
           >
