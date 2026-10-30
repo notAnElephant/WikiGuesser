@@ -9,6 +9,7 @@ import { IconButton } from "@astryxdesign/core/IconButton";
 import { VStack } from "@astryxdesign/core/VStack";
 import { Text } from "@astryxdesign/core/Text";
 import { List, ListItem } from "@astryxdesign/core/List";
+import { useScrollLock } from "@astryxdesign/core/hooks";
 import { useAppToast } from "@/src/components/app-toaster";
 import { usePlayViewport } from "@/src/components/game-shell/use-play-viewport";
 import { getScoreForGuess } from "@/src/lib/game/round-rules";
@@ -175,6 +176,7 @@ export function GamePlayView({
       : [];
   const suggestionsOpen = isCountryListOpen && hasCountrySearch;
   const mobileMap = isMobile && isCountryRound;
+  useScrollLock(mobileMap);
   const compactSheet = mobileMap && isTyping;
   const shownClues =
     view === "result"
