@@ -16,7 +16,7 @@ export function WikiGuesserLogo({
       className={className}
       height={size}
       priority
-      src="/icons/wikiguesser-logo.png"
+      src="/icons/icon-blue-20260928.png"
       width={size}
     />
   );
