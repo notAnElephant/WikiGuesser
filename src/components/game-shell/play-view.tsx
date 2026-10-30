@@ -148,6 +148,7 @@ export function GamePlayView({
     isTyping,
   );
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
+  const [isRevealWarningOpen, setIsRevealWarningOpen] = useState(false);
   const [activeOption, setActiveOption] = useState(-1);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -341,12 +342,29 @@ export function GamePlayView({
                     }
                   : undefined
               }
+              onMapClickDuringReveal={
+                isRevealStep && !isBusy
+                  ? () => setIsRevealWarningOpen(true)
+                  : undefined
+              }
               solutionCountry={
                 solutionCountry ?? result?.solutionCountry ?? null
               }
             />
           </VStack>
         ) : null}
+        <Dialog
+          isOpen={isRevealWarningOpen}
+          onOpenChange={setIsRevealWarningOpen}
+          padding={4}
+          width="24rem"
+        >
+          <DialogHeader
+            onOpenChange={setIsRevealWarningOpen}
+            title="Reveal a clue first"
+          />
+          <Text>Reveal the next clue before guessing a country.</Text>
+        </Dialog>
         <VStack
           gap={0}
           as="section"

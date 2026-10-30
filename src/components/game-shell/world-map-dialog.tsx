@@ -56,6 +56,7 @@ interface WorldMapDialogProps {
   onDrawerStateChange?: (drawerState: "hidden" | "medium" | "expanded") => void;
   onExpandedChange: (isExpanded: boolean) => void;
   onCountryGuess?: (countryName: string) => void;
+  onMapClickDuringReveal?: () => void;
   presentation?: "game" | "result";
   solutionCountry?: SolutionCountryMapData | null;
 }
@@ -200,6 +201,7 @@ export function WorldMapDialog({
   onDrawerStateChange,
   onExpandedChange,
   onCountryGuess,
+  onMapClickDuringReveal,
   duelResult = false,
   presentation = "game",
   solutionCountry = null,
@@ -1013,7 +1015,9 @@ export function WorldMapDialog({
                         d={countryPath}
                         key={`${country.id ?? name}-${index}`}
                         onClick={
-                          guessedCountry
+                          onMapClickDuringReveal
+                            ? onMapClickDuringReveal
+                            : guessedCountry
                             ? () => focusCountry(guessedCountry)
                             : onCountryGuess && playableCountry
                               ? () => onCountryGuess(playableCountry)
