@@ -370,7 +370,7 @@ export function GamePlayView({
           as="section"
           aria-label="Clues and guess"
           height={sheetHeight}
-          className={`relative min-h-0 max-h-full shrink-0 overflow-y-auto bg-surface lg:overflow-visible ${isCountryRound ? "rounded-t-3xl border-t border-border lg:absolute lg:right-4 lg:top-4 lg:z-10 lg:max-h-[90%] lg:min-h-56 lg:w-104 lg:rounded-xl lg:border lg:border-accent-bg/20 lg:shadow-xl" : "w-full rounded-xl border border-border"}`}
+          className={`relative min-h-0 max-h-full shrink-0 overflow-y-auto bg-surface lg:overflow-visible ${isCountryRound ? "rounded-t-3xl border-t border-border lg:absolute lg:right-4 lg:top-4 lg:z-10 lg:max-h-[90%] lg:min-h-56 lg:w-104 lg:rounded-xl lg:border lg:border-accent-bg/20 lg:shadow-xl" : "w-full rounded-xl border border-border"} ${isRevealMode && guessedEntities.length > 0 ? "border-accent-bg shadow-md shadow-accent-bg/20" : ""}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
