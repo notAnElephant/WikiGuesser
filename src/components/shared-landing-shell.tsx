@@ -2,6 +2,7 @@
 
 import { GoogleOneTap } from "@clerk/nextjs";
 import { VStack } from "@astryxdesign/core/VStack";
+import { Grid } from "@astryxdesign/core/Grid";
 import { HStack } from "@astryxdesign/core/HStack";
 import { Text } from "@astryxdesign/core/Text";
 import { Button } from "@astryxdesign/core/Button";
@@ -34,6 +35,7 @@ import {
   X,
 } from "lucide-react";
 
+import { PageHeading } from "@/src/components/page-heading";
 import { DuelCreator } from "@/src/components/duel/duel-creator";
 import { OfflinePackStatus } from "@/src/components/offline-pack-status";
 import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
@@ -169,30 +171,28 @@ export function GameLauncher({
   }
 
   return (
-    <section className="grid gap-5 sm:gap-7">
-      <header className="flex flex-col gap-4 px-1 sm:flex-row sm:items-end sm:justify-between">
-        <h1 className="m-0 font-heading text-4xl sm:text-5xl font-semibold leading-tight tracking-tight text-primary">
-          Pick your game
-        </h1>
-        <div className="inline-flex items-center gap-2 pb-1 text-sm font-medium text-secondary">
-          <CalendarDays
-            aria-hidden="true"
-            className="size-4 text-accent"
-            strokeWidth={2.1}
-          />
-          Daily resets in
-          <strong className="font-semibold text-accent">
-            {resetCountdown}
-          </strong>
-        </div>
-      </header>
+    <VStack as="section" gap={5}>
+      <PageHeading
+        title="Pick your game"
+        meta={
+          <HStack align="center" gap={2}>
+            <Icon color="secondary" icon={CalendarDays} size="sm" />
+            <Text color="secondary" type="supporting">
+              Daily resets in{" "}
+              <strong className="font-semibold tabular-nums text-primary">
+                {resetCountdown}
+              </strong>
+            </Text>
+          </HStack>
+        }
+      />
       {claimBanner ? (
-        <div className="rounded-2xl border border-success bg-success-muted px-4 py-3 text-sm font-medium text-success">
+        <Text className="rounded-lg bg-success-muted p-3 text-success">
           {claimBanner}
-        </div>
+        </Text>
       ) : null}
 
-      <div className="grid gap-4">
+      <VStack gap={5}>
         <LauncherBand
           description="Two daily puzzles. One country each."
           isDaily
@@ -268,7 +268,7 @@ export function GameLauncher({
             />
           </LauncherBand>
         ) : null}
-      </div>
+      </VStack>
 
       {pendingFreePlayMode ? (
         <ContinentPickerDialog
@@ -292,7 +292,7 @@ export function GameLauncher({
           }}
         />
       ) : null}
-    </section>
+    </VStack>
   );
 }
 
@@ -429,7 +429,7 @@ export function ContinentPickerDialog({
         }
         content={
           <LayoutContent padding={6} label="Continent choices">
-            <div className="grid gap-3 pt-4 sm:grid-cols-2">
+            <Grid columns={{ minWidth: 220, max: 2 }} gap={3} className="pt-4">
               <SelectableCard
                 isSelected={selectedContinent === null}
                 label="All continents"
@@ -439,9 +439,9 @@ export function ContinentPickerDialog({
                 <strong className="block font-heading text-xl text-primary">
                   All continents
                 </strong>
-                <span className="mt-1 block text-sm text-secondary">
+                <Text color="secondary" type="supporting">
                   {totalCountryCount} countries
-                </span>
+                </Text>
               </SelectableCard>
 
               {continentOptions.map((option) => (
@@ -455,12 +455,12 @@ export function ContinentPickerDialog({
                   <strong className="block font-heading text-xl text-primary">
                     {option.label}
                   </strong>
-                  <span className="mt-1 block text-sm text-secondary">
+                  <Text color="secondary" type="supporting">
                     {option.entityCount} countries
-                  </span>
+                  </Text>
                 </SelectableCard>
               ))}
-            </div>
+            </Grid>
             <p className="m-0 pt-4 text-xs text-secondary">
               {launcherModeCopy[mode].freeTitle} free play
             </p>
@@ -512,26 +512,22 @@ function LauncherBand({
   const BandIcon = isDaily ? CalendarDays : Gamepad2;
 
   return (
-    <Card
-      className="overflow-hidden"
-      elevation={isDaily ? "low" : "none"}
-      padding={0}
-    >
-      <div className="grid lg:grid-cols-[minmax(230px,0.72fr)_minmax(0,1.6fr)]">
-        <div className="flex flex-col justify-center border-b border-border p-4 sm:p-5 lg:border-b-0 lg:border-r">
-          <span className="mb-4 hidden size-12 items-center justify-center text-accent lg:inline-flex">
-            <Icon color="accent" icon={BandIcon} size="lg" />
-          </span>
-          <h2 className="m-0 font-heading text-2xl sm:text-3xl font-semibold tracking-tight text-primary">
-            {title}
-          </h2>
-          <p className="m-0 mt-2 text-base leading-6 text-secondary">
-            {description}
-          </p>
-        </div>
-        <div className="divide-y divide-border px-4 sm:px-6">{children}</div>
-      </div>
-    </Card>
+    <VStack as="section" gap={2}>
+      <HStack align="center" gap={2}>
+        <Icon color="secondary" icon={BandIcon} size="sm" />
+        <h2 className="m-0 font-heading text-xl font-semibold text-primary">
+          {title}
+        </h2>
+        <Text color="secondary" type="supporting" className="hidden sm:block">
+          {description}
+        </Text>
+      </HStack>
+      <Card elevation="none" padding={0}>
+        <VStack className="divide-y divide-border" paddingInline={4}>
+          {children}
+        </VStack>
+      </Card>
+    </VStack>
   );
 }
 
@@ -559,42 +555,39 @@ function LauncherRow({
   variant,
 }: LauncherRowProps) {
   return (
-    <div className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:py-5">
-      <div className="flex min-w-0 items-center gap-4">
-        <span className="inline-flex size-12 shrink-0 items-center justify-center text-accent">
-          <Icon color="accent" icon={ModeIcon} size="lg" />
-        </span>
-        <div className="min-w-0">
-          <h3 className="m-0 font-heading text-xl font-semibold tracking-tight text-primary">
-            {title}
-          </h3>
-          <p className="m-0 mt-1 text-sm leading-6 text-secondary">
-            {description}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
+    <HStack align="center" justify="between" gap={3} paddingBlock={3}>
+      <Icon
+        className="hidden shrink-0 sm:inline-flex"
+        color="secondary"
+        icon={ModeIcon}
+        size="md"
+      />
+      <VStack gap={1} className="min-w-0 flex-1">
+        <h3 className="m-0 font-heading text-lg font-semibold leading-tight text-primary">
+          {title.endsWith(" Daily") ? title.slice(0, -6) : title}
+        </h3>
+        <Text color="secondary" type="supporting">
+          {description}
+        </Text>
         {status ? (
-          <span className="whitespace-nowrap text-sm font-medium text-secondary">
+          <Text color="secondary" type="supporting">
             {status}
-          </span>
+          </Text>
         ) : null}
-        <Button
-          className="min-w-40 whitespace-nowrap"
-          icon={<Play aria-hidden="true" />}
-          isDisabled={disabled}
-          isLoading={isLoading}
-          label={`${actionLabel}: ${title}`}
-          onClick={onClick}
-          size="lg"
-          variant={variant}
-          width="100%"
-        >
-          {actionLabel}
-        </Button>
-      </div>
-    </div>
+      </VStack>
+      <Button
+        className="shrink-0 sm:min-w-32"
+        icon={<Play aria-hidden="true" />}
+        isDisabled={disabled}
+        isLoading={isLoading}
+        label={`${actionLabel}: ${title}`}
+        onClick={onClick}
+        size="lg"
+        variant={variant}
+      >
+        {actionLabel.startsWith("Play ") ? "Play" : actionLabel}
+      </Button>
+    </HStack>
   );
 }
 
@@ -1456,7 +1449,7 @@ export function SharedLandingShell({
     }
 
     return (
-      <div className="grid gap-4">
+      <VStack gap={5}>
         <OfflinePackStatus />
         <GameLauncher
           claimBanner={claimBanner}
@@ -1484,7 +1477,7 @@ export function SharedLandingShell({
           totalCountryCount={countryOptions.length}
         />
         <DuelCreator categories={categories} isSignedIn={isSignedIn} />
-      </div>
+      </VStack>
     );
   }
 

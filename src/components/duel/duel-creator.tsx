@@ -8,6 +8,8 @@ import {
   SegmentedControl,
   SegmentedControlItem,
 } from "@astryxdesign/core/SegmentedControl";
+import { VStack } from "@astryxdesign/core/VStack";
+import { Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Link2, Share2, Swords } from "lucide-react";
@@ -113,26 +115,23 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
       elevation="low"
       padding={0}
     >
-      <section className="grid lg:grid-cols-[minmax(230px,0.72fr)_minmax(0,1.6fr)]">
-        <header className="flex flex-col justify-center border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r">
-          <HStack className="mb-4">
-            <Icon color="accent" icon={Swords} size="lg" />
+      <VStack gap={4} padding={4}>
+        <VStack as="header" gap={1}>
+          <HStack align="center" gap={2}>
+            <Icon color="secondary" icon={Swords} size="sm" />
+            <h2
+              id="duel-creator-title"
+              className="m-0 font-heading text-xl font-semibold text-primary"
+            >
+              Challenge a friend
+            </h2>
           </HStack>
-          <p className="m-0 text-xs font-bold uppercase tracking-wider text-accent">
-            Challenge a friend
-          </p>
-          <h2
-            id="duel-creator-title"
-            className="m-0 mt-1 font-heading text-2xl font-semibold tracking-tight text-primary sm:text-3xl"
-          >
-            Set up a duel
-          </h2>
-          <p className="m-0 mt-2 max-w-prose text-sm leading-6 text-secondary">
-            Pick the mode and number of rounds, then send your friend an invite.
-          </p>
-        </header>
+          <Text color="secondary" type="supporting">
+            Pick the mode and number of rounds, then share an invite.
+          </Text>
+        </VStack>
 
-        <section aria-label="Duel settings" className="grid min-w-0 content-center gap-5 p-5 sm:p-6">
+        <section aria-label="Duel settings" className="grid min-w-0 gap-4">
           <section className="grid gap-4 sm:grid-cols-2">
             <fieldset className="grid min-w-0 gap-2 text-sm font-semibold text-secondary">
               <legend>Game mode</legend>
@@ -226,7 +225,7 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
             </p>
           ) : null}
         </section>
-      </section>
+      </VStack>
     </Card>
   );
 }

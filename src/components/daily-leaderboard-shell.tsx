@@ -11,10 +11,10 @@ import {
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
 import { Icon } from "@astryxdesign/core/Icon";
-import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, CalendarDays, Gauge, Trophy } from "lucide-react";
+import { ArrowLeft, CalendarDays } from "lucide-react";
 
+import { PageHeading } from "@/src/components/page-heading";
 import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
 import { getModeMeta } from "@/src/components/game-shell/utils";
 import { getDailyComboKey } from "@/src/lib/game/daily";
@@ -51,134 +51,130 @@ export function DailyLeaderboardShell({
   const selectedModeMeta = getModeMeta(selectedMode);
 
   return (
-    <section className="grid gap-3 sm:gap-4">
-      <Card className="p-4 sm:p-6" elevation="low" padding={0}>
-        <div className="flex items-center justify-between gap-3">
-          <time
-            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-secondary"
-            dateTime={data.dayKey}
-          >
-            <Icon color="secondary" icon={CalendarDays} size="sm" />
-            {data.dayKey}
-          </time>
-          <Link
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-secondary transition hover:bg-card hover:text-primary dark:hover:bg-surface/8 dark:hover:text-on-accent"
-            href="/"
-          >
-            <Icon icon={ArrowLeft} size="sm" />
-            Back home
-          </Link>
-        </div>
-
-        <h1 className="m-0 mt-3 max-w-3xl font-heading text-3xl sm:text-4xl font-semibold leading-tight tracking-tight text-primary">
-          {period === "today" ? "Today's leaderboard" : "All-time leaderboard"}
-        </h1>
-        <p className="m-0 mt-3 hidden max-w-2xl text-base leading-7 text-secondary sm:block">
-          {period === "today"
+    <VStack gap={5}>
+      <PageHeading
+        hasBackLink
+        title={
+          period === "today" ? "Today's leaderboard" : "All-time leaderboard"
+        }
+        description={
+          period === "today"
             ? "See the top scores from today's challenge."
-            : "See the top players across every completed challenge."}
-        </p>
-      </Card>
+            : "See the top players across every completed challenge."
+        }
+        meta={
+          <HStack gap={2} align="center">
+            <Icon color="secondary" icon={CalendarDays} size="sm" />
+            <time className="text-sm text-secondary" dateTime={data.dayKey}>
+              {data.dayKey}
+            </time>
+          </HStack>
+        }
+      />
+      <Card padding={4} elevation="none">
+        <VStack gap={4}>
+          <VStack gap={2}>
+            <Text color="secondary" type="supporting" weight="semibold">
+              Period
+            </Text>
+            <SegmentedControl
+              layout="fill"
+              label="Leaderboard period"
+              onChange={(value) => setPeriod(value as LeaderboardPeriod)}
+              value={period}
+            >
+              {(["today", "total"] as const).map((entryPeriod) => (
+                <SegmentedControlItem
+                  key={entryPeriod}
+                  label={entryPeriod === "today" ? "Today" : "All time"}
+                  value={entryPeriod}
+                />
+              ))}
+            </SegmentedControl>
+          </VStack>
+          <VStack gap={2}>
+            <Text color="secondary" type="supporting" weight="semibold">
+              Game mode
+            </Text>
+            <SegmentedControl
+              layout="fill"
+              label="Game mode"
+              onChange={(value) => setSelectedMode(value as GameMode)}
+              value={selectedMode}
+            >
+              {GAME_MODE_OPTIONS.map((mode) => (
+                <SegmentedControlItem
+                  key={mode.id}
+                  label={mode.label}
+                  value={mode.id}
+                />
+              ))}
+            </SegmentedControl>
+          </VStack>
 
-      <Card className="grid gap-4 p-4 sm:p-6" elevation="low" padding={0}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-            <Icon color="accent" icon={Trophy} size="sm" />
-            Rankings
-          </div>
-          <SegmentedControl
-            label="Leaderboard period"
-            onChange={(value) => setPeriod(value as LeaderboardPeriod)}
-            value={period}
-          >
-            {(["today", "total"] as const).map((entryPeriod) => (
-              <SegmentedControlItem
-                key={entryPeriod}
-                label={entryPeriod === "today" ? "Today" : "All time"}
-                value={entryPeriod}
-              />
-            ))}
-          </SegmentedControl>
-        </div>
-
-        <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-secondary">
-            <Icon color="secondary" icon={Gauge} size="sm" />
-            Mode
-          </div>
-          <SegmentedControl
-            label="Game mode"
-            onChange={(value) => setSelectedMode(value as GameMode)}
-            value={selectedMode}
-          >
-            {GAME_MODE_OPTIONS.map((mode) => (
-              <SegmentedControlItem
-                key={mode.id}
-                label={mode.label}
-                value={mode.id}
-              />
-            ))}
-          </SegmentedControl>
-        </div>
-
-        <VStack gap={3} paddingBlock={2}>
-          <Text color="secondary" type="supporting" weight="semibold">
-            {selectedModeMeta.label}
-          </Text>
+          <VStack gap={3} paddingBlock={2}>
+            <Text color="secondary" type="supporting" weight="semibold">
+              {selectedModeMeta.label}
+            </Text>
+            {period === "total" ? (
+              <Text color="secondary" type="supporting" weight="semibold">
+                Games · Score
+              </Text>
+            ) : null}
+            <List
+              aria-label={`${selectedModeMeta.label} rankings`}
+              density="balanced"
+              hasDividers
+            >
+              {entries.length === 0 ? (
+                <ListItem label="No scores yet." />
+              ) : (
+                entries.map((entry, index) => (
+                  <ListItem
+                    description={
+                      period === "total"
+                        ? `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`
+                        : undefined
+                    }
+                    endContent={
+                      <HStack gap={2}>
+                        {period === "total" ? (
+                          <Text
+                            aria-label={`${entry.roundsPlayed ?? 0} ${(entry.roundsPlayed ?? 0) === 1 ? "game" : "games"} played`}
+                            color="secondary"
+                            type="supporting"
+                          >
+                            {entry.roundsPlayed ?? 0} games
+                          </Text>
+                        ) : null}
+                        <Text color="accent" weight="semibold">
+                          {entry.score}
+                        </Text>
+                      </HStack>
+                    }
+                    key={`${entry.playerKey}-${index}`}
+                    label={`${PODIUM_RANKS[index]?.medal ?? `${index + 1}.`} ${entry.displayName}`}
+                  />
+                ))
+              )}
+            </List>
+          </VStack>
           {period === "total" ? (
-            <Text color="secondary">
-              A win is a round where the player gets any points by guessing the
+            <Text color="secondary" type="supporting">
+              A win is a round where the player gets points by guessing the
               correct answer.
             </Text>
           ) : null}
-          {period === "total" ? (
-            <Text color="secondary" type="supporting" weight="semibold">
-              Games · Score
-            </Text>
-          ) : null}
-          <List density="balanced" hasDividers>
-            {entries.length === 0 ? (
-              <ListItem label="No scores yet." />
-            ) : (
-              entries.map((entry, index) => (
-                <ListItem
-                  description={
-                    period === "total"
-                      ? `${entry.roundsWon ?? 0} ${(entry.roundsWon ?? 0) === 1 ? "win" : "wins"}`
-                      : undefined
-                  }
-                  endContent={
-                    <HStack gap={2}>
-                      {period === "total" ? (
-                        <Text
-                          aria-label={`${entry.roundsPlayed ?? 0} ${(entry.roundsPlayed ?? 0) === 1 ? "game" : "games"} played`}
-                          color="secondary"
-                          type="supporting"
-                        >
-                          {entry.roundsPlayed ?? 0} games
-                        </Text>
-                      ) : null}
-                      <Text color="accent" weight="semibold">
-                        {entry.score}
-                      </Text>
-                    </HStack>
-                  }
-                  key={`${entry.playerKey}-${index}`}
-                  label={`${PODIUM_RANKS[index]?.medal ?? `${index + 1}.`} ${entry.displayName}`}
-                />
-              ))
-            )}
-          </List>
-        </VStack>
 
-        <Button
-          href="/"
-          icon={<ArrowLeft aria-hidden="true" />}
-          label="Play a round"
-          variant="primary"
-          width="100%"
-        />
+          <Button
+            href="/"
+            icon={<ArrowLeft aria-hidden="true" />}
+            label="Play a round"
+            variant="primary"
+            width="100%"
+          />
+        </VStack>
       </Card>
-    </section>
+    </VStack>
   );
 }

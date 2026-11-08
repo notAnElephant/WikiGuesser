@@ -15,6 +15,7 @@ import type {
 } from "@/src/components/game-shell/types";
 import { getMessageAppearance } from "@/src/components/game-shell/utils";
 import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
+import { PageHeading } from "@/src/components/page-heading";
 import { OfflinePackStatus } from "@/src/components/offline-pack-status";
 import { useOfflinePack } from "@/src/components/offline-pack-provider";
 import { ContinentPickerDialog } from "@/src/components/shared-landing-shell";
@@ -349,14 +350,10 @@ export function OfflineCountriesShell() {
       <OfflineFrame>
         <OfflinePackStatus alwaysVisible />
         <section className="grid gap-4">
-          <header>
-            <h1 className="m-0 font-heading text-4xl font-semibold text-primary sm:text-5xl">
-              Play countries offline
-            </h1>
-            <p className="m-0 mt-2 text-secondary">
-              Both modes, every downloaded country, no connection required.
-            </p>
-          </header>
+          <PageHeading
+            title="Play countries offline"
+            description="Both modes, every downloaded country, no connection required."
+          />
           <section className="grid gap-3 lg:grid-cols-2">
             {GAME_MODE_OPTIONS.map((mode) => (
               <Card className="grid gap-4" key={mode.id} padding={5}>
@@ -366,7 +363,7 @@ export function OfflineCountriesShell() {
                     className="size-6 text-accent"
                   />
                   <section>
-                    <h2 className="m-0 font-heading text-2xl font-semibold text-primary">
+                    <h2 className="m-0 font-heading text-xl font-semibold text-primary">
                       {mode.label}
                     </h2>
                     <p className="m-0 mt-1 text-sm text-secondary">

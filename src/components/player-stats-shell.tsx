@@ -4,8 +4,9 @@ import type { GameMode } from "@/src/lib/types";
 import { Card } from "@astryxdesign/core/Card";
 import { Grid } from "@astryxdesign/core/Grid";
 import { VStack } from "@astryxdesign/core/VStack";
-import { ArrowLeft, Gamepad2, Trophy } from "lucide-react";
-import Link from "next/link";
+import { Gamepad2 } from "lucide-react";
+import { Text } from "@astryxdesign/core/Text";
+import { PageHeading } from "@/src/components/page-heading";
 
 interface PlayerStatsShellProps {
   data: PlayerStatsPageData;
@@ -17,14 +18,14 @@ function percentage(wins: number, played: number) {
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <Card padding={4}>
-      <p className="m-0 text-xs font-semibold uppercase tracking-wider text-secondary">
+    <VStack gap={1}>
+      <Text color="secondary" type="supporting">
         {label}
-      </p>
-      <strong className="mt-1 block text-2xl tabular-nums text-primary">
+      </Text>
+      <Text className="text-2xl" weight="bold" hasTabularNumbers>
         {value}
-      </strong>
-    </Card>
+      </Text>
+    </VStack>
   );
 }
 
@@ -53,9 +54,9 @@ function ModeStats({
   )?.label;
 
   return (
-    <Card className="grid gap-4" elevation="low" padding={5}>
+    <Card className="grid gap-4" elevation="none" padding={4}>
       <section aria-label={`${title} ${modeLabel} statistics`}>
-        <p className="m-0 text-xs font-semibold uppercase tracking-wider text-accent">
+        <p className="m-0 text-xs font-semibold uppercase tracking-wider text-secondary">
           {title}
         </p>
         <h2 className="m-0 mt-1 font-heading text-xl font-semibold text-primary">
@@ -83,37 +84,15 @@ function ModeStats({
 export function PlayerStatsShell({ data }: PlayerStatsShellProps) {
   return (
     <VStack gap={4}>
-      <Card elevation="low" padding={6}>
-        <VStack gap={3}>
-          <Link
-            className="inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-secondary transition hover:bg-card hover:text-primary dark:hover:bg-surface/8 dark:hover:text-on-accent"
-            href="/"
-          >
-            <ArrowLeft
-              aria-hidden="true"
-              className="size-4"
-              strokeWidth={2.2}
-            />
-            Back home
-          </Link>
-          <section>
-            <p className="m-0 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-              <Trophy aria-hidden="true" className="size-4" strokeWidth={2.2} />
-              Your progress
-            </p>
-            <h1 className="m-0 mt-3 font-heading text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
-              My stats
-            </h1>
-            <p className="m-0 mt-3 max-w-2xl text-base leading-7 text-secondary">
-              Your scores across online country rounds and daily challenges.
-            </p>
-            <p className="m-0 mt-2 text-sm text-secondary">
-              A win is a round where you get any points by guessing the correct
-              answer.
-            </p>
-          </section>
-        </VStack>
-      </Card>
+      <PageHeading
+        hasBackLink
+        title="My stats"
+        description="Your scores across online country rounds and daily challenges."
+      />
+      <Text color="secondary" type="supporting">
+        A win is a round where you get any points by guessing the correct
+        answer.
+      </Text>
 
       <section aria-label="Score summaries">
         <Grid columns={{ minWidth: 280, max: 2 }} gap={4}>
