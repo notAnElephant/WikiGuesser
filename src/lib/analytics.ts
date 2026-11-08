@@ -13,7 +13,7 @@ import type {
 type GameContext = {
   category: EntityCategory;
   continent?: ContinentId;
-  game_type: "daily" | "free_play";
+  game_type: "daily" | "free_play" | "challenge";
   mode: GameMode;
   play_origin: "server";
 };
@@ -120,7 +120,7 @@ export function toGameContext(
   return {
     category,
     ...(continent ? { continent } : {}),
-    game_type: kind === "daily" ? "daily" : "free_play",
+    game_type: kind === "standard" ? "free_play" : kind,
     mode,
     play_origin: "server",
   };

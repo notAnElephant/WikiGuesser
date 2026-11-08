@@ -27,16 +27,18 @@ import {
   useTransition,
 } from "react";
 import {
+  ArrowRight,
   CalendarDays,
   Gamepad2,
   Globe2,
   Play,
   ShieldCheck,
+  Send,
+  Swords,
   X,
 } from "lucide-react";
 
 import { PageHeading } from "@/src/components/page-heading";
-import { DuelCreator } from "@/src/components/duel/duel-creator";
 import { OfflinePackStatus } from "@/src/components/offline-pack-status";
 import { GAME_MODE_OPTIONS } from "@/src/components/game-shell/config";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
@@ -249,6 +251,30 @@ export function GameLauncher({
               variant="secondary"
             />
           ))}
+        </LauncherBand>
+
+        <LauncherBand
+          description="Share a game with your friends."
+          title="Play with friends"
+        >
+          <LauncherRow
+            actionLabel="Set up"
+            description="Compete over 3, 5 or 10 random countries."
+            disabled={isBusy}
+            href="/duels/new"
+            icon={Swords}
+            title="Duel"
+            variant="secondary"
+          />
+          <LauncherRow
+            actionLabel="Set up"
+            description="Pick one country for your friends to guess."
+            disabled={isBusy}
+            href="/challenges/new"
+            icon={Send}
+            title="Country challenge"
+            variant="secondary"
+          />
         </LauncherBand>
 
         {isAdmin ? (
@@ -537,7 +563,8 @@ interface LauncherRowProps {
   disabled: boolean;
   icon: (typeof GAME_MODE_OPTIONS)[number]["icon"];
   isLoading?: boolean;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string;
   status?: string;
   title: string;
   variant: "primary" | "secondary";
@@ -549,6 +576,7 @@ function LauncherRow({
   disabled,
   icon: ModeIcon,
   isLoading = false,
+  href,
   onClick,
   status,
   title,
@@ -577,7 +605,10 @@ function LauncherRow({
       </VStack>
       <Button
         className="shrink-0 sm:min-w-32"
-        icon={<Play aria-hidden="true" />}
+        icon={
+          href ? <ArrowRight aria-hidden="true" /> : <Play aria-hidden="true" />
+        }
+        href={href}
         isDisabled={disabled}
         isLoading={isLoading}
         label={`${actionLabel}: ${title}`}
@@ -1476,7 +1507,6 @@ export function SharedLandingShell({
           selectedContinent={selectedContinent}
           totalCountryCount={countryOptions.length}
         />
-        <DuelCreator categories={categories} isSignedIn={isSignedIn} />
       </VStack>
     );
   }

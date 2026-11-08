@@ -42,6 +42,30 @@ export const createDuelSchema = z.object({
   roundCount: z.union([z.literal(3), z.literal(5), z.literal(10)]),
 });
 
+export const createChallengeSchema = z.object({
+  country: z.string().trim().min(1).max(200),
+  mode: z.enum(GAME_MODES),
+});
+
+export const challengeActionSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("start") }),
+  z.object({
+    action: z.literal("guess"),
+    version: z.number().int().nonnegative(),
+    guess: z.string().trim().min(1).max(200),
+    method: z.enum(["text", "map"]).optional(),
+  }),
+  z.object({
+    action: z.literal("reveal"),
+    version: z.number().int().nonnegative(),
+    clueKey: z.string().min(1).max(100),
+  }),
+  z.object({
+    action: z.literal("give-up"),
+    version: z.number().int().nonnegative(),
+  }),
+]);
+
 export const duelMutationSchema = z.object({
   version: z.number().int().nonnegative(),
 });
@@ -58,7 +82,7 @@ export const duelRevealSchema = duelMutationSchema.extend({
 const feedbackContextSchema = z
   .object({
     source: z.enum(["global", "round-result", "clue"]),
-    gameType: z.enum(["daily", "free_play"]).optional(),
+    gameType: z.enum(["daily", "free_play", "challenge"]).optional(),
     category: z.enum(ENTITY_CATEGORIES).optional(),
     mode: z.enum(GAME_MODES).optional(),
     outcome: z.enum(["win", "loss"]).optional(),

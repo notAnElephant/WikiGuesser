@@ -13,7 +13,7 @@ export const DAILY_RESET_TIME_ZONE = "Europe/Budapest";
 export type EntityCategory = (typeof ENTITY_CATEGORIES)[number];
 export type GameMode = (typeof GAME_MODES)[number];
 export type ContinentId = (typeof CONTINENT_IDS)[number];
-export type RoundKind = "standard" | "daily";
+export type RoundKind = "standard" | "daily" | "challenge";
 export type GuessDirection =
   | "north"
   | "northeast"
@@ -326,4 +326,32 @@ export interface DuelGuessInput extends DuelMutationInput {
 
 export interface DuelRevealInput extends DuelMutationInput {
   clueKey: string;
+}
+
+export interface ChallengeGuess {
+  name: string;
+  direction: GuessDirection | null;
+  mapData: GuessedCountryMapData | null;
+}
+
+export interface ChallengeProgress {
+  version: number;
+  clues: RoundClue[];
+  revealedClues: PlayableClue[];
+  remainingClues: number;
+  canGuess: boolean;
+  guesses: ChallengeGuess[];
+  isComplete: boolean;
+  isCorrect: boolean;
+  canonicalAnswer: string | null;
+  score: number;
+  solutionCountry: SolutionCountryMapData | null;
+}
+
+export interface FriendChallengeView {
+  code: string;
+  mode: GameMode;
+  countryOptions: string[];
+  isCreator: boolean;
+  progress: ChallengeProgress | null;
 }

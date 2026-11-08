@@ -37,6 +37,8 @@ function hasRequiredDelegates(
     duelRound?: unknown;
     duelAttempt?: unknown;
     themeRating?: unknown;
+    friendChallenge?: unknown;
+    friendChallengeAttempt?: unknown;
   };
 
   return Boolean(
@@ -46,7 +48,9 @@ function hasRequiredDelegates(
     candidate.duel &&
     candidate.duelRound &&
     candidate.duelAttempt &&
-    candidate.themeRating,
+    candidate.themeRating &&
+    candidate.friendChallenge &&
+    candidate.friendChallengeAttempt,
   );
 }
 

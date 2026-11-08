@@ -222,7 +222,8 @@ export function GameResultDialog({
                   category: result.category,
                   cluesRevealed: result.clues.filter((clue) => clue.isRevealed)
                     .length,
-                  gameType: result.kind === "daily" ? "daily" : "free_play",
+                  gameType:
+                    result.kind === "standard" ? "free_play" : result.kind,
                   mode: result.mode,
                   outcome: result.status,
                   score: result.score,

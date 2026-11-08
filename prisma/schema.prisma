@@ -15,6 +15,33 @@ model SnapshotVersion {
   duels             Duel[]
 }
 
+model FriendChallenge {
+  id                 String   @id @default(cuid())
+  code               String   @unique
+  creatorClerkUserId String
+  mode               String
+  entity             Json
+  createdAt          DateTime @default(now())
+  attempts           FriendChallengeAttempt[]
+}
+
+model FriendChallengeAttempt {
+  id                String          @id @default(cuid())
+  challengeId       String
+  challenge         FriendChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  actorId           String
+  revealedClueKeys   Json            @default("[]")
+  guesses           Json            @default("[]")
+  canGuess          Boolean
+  version           Int             @default(0)
+  score             Int             @default(0)
+  isCorrect         Boolean         @default(false)
+  completedAt       DateTime?
+  createdAt         DateTime        @default(now())
+
+  @@unique([challengeId, actorId])
+}
+
 model SnapshotEntity {
   id                String          @id
   snapshotVersionId String
