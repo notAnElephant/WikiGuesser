@@ -881,7 +881,7 @@ export function WorldMapDialog({
         aria-describedby={helpId}
         aria-label="World map"
         aria-modal={isMapExpanded ? true : undefined}
-        className={`pointer-events-auto w-full overflow-hidden bg-body ${embedded && !isMapExpanded ? "min-h-0 flex-1 lg:min-h-96 lg:rounded-xl lg:border lg:border-border" : "grid grid-rows-[minmax(0,1fr)_auto] border border-border shadow-md"} transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:shadow-md ${
+        className={`pointer-events-auto w-full overflow-hidden bg-body ${embedded && !isMapExpanded ? "min-h-0 flex-1 lg:rounded-xl lg:border lg:border-border" : "grid grid-rows-[minmax(0,1fr)_auto] border border-border shadow-md"} transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:shadow-md ${
           embedded && !isMapExpanded
             ? ""
             : presentation === "result"

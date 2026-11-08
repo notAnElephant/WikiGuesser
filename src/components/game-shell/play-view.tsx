@@ -185,7 +185,14 @@ export function GamePlayView({
       : isRevealMode
         ? currentClues
         : visibleClassicClues;
-  const sheetHeight = mobileMap ? (compactSheet ? "auto" : "43%") : undefined;
+  // Clue selection needs more room than the single-clue Classic view.
+  const sheetHeight = mobileMap
+    ? compactSheet
+      ? "auto"
+      : isRevealMode || view === "result"
+        ? "60%"
+        : "auto"
+    : undefined;
   // On a short keyboard viewport, reclaim navigation space for the map.
   const compactViewport = mobileMap && isTyping && visibleHeight < 500;
   const latestClue = currentClues
@@ -272,7 +279,7 @@ export function GamePlayView({
         </VStack>
         <HStack gap={2} align="center" className="shrink-0">
           <Text
-            color="accent"
+            color="primary"
             weight="semibold"
             textWrap="nowrap"
             hasTabularNumbers
@@ -317,17 +324,19 @@ export function GamePlayView({
       ) : null}
       <VStack
         gap={0}
+        height={
+          isCountryRound && !mobileMap
+            ? "calc(100dvh - var(--spacing-8) * 4)"
+            : undefined
+        }
         className={
           isCountryRound
-            ? "min-h-0 flex-1 bg-muted lg:relative lg:block lg:h-[80dvh] lg:flex-none"
+            ? "min-h-0 flex-1 lg:min-h-80 lg:flex-none lg:flex-row lg:items-start lg:gap-4"
             : "min-h-0 flex-1"
         }
       >
         {isCountryRound ? (
-          <VStack
-            className="min-h-0 flex-1 lg:absolute lg:inset-0 lg:h-full"
-            data-game-map=""
-          >
+          <VStack className="min-h-0 flex-1 lg:h-full" data-game-map="">
             <WorldMapDialog
               countryOptions={availableCountryOptions}
               guessedCountries={guessedCountries}
@@ -370,7 +379,7 @@ export function GamePlayView({
           as="section"
           aria-label="Clues and guess"
           height={sheetHeight}
-          className={`relative min-h-0 max-h-full shrink-0 overflow-y-auto bg-surface lg:overflow-visible ${isCountryRound ? "rounded-t-3xl border-t border-border lg:absolute lg:right-4 lg:top-4 lg:z-10 lg:max-h-[90%] lg:min-h-56 lg:w-104 lg:rounded-xl lg:border lg:border-accent-bg/20 lg:shadow-xl" : "w-full rounded-xl border border-border"} ${isRevealMode && guessedEntities.length > 0 ? "border-accent-bg shadow-md shadow-accent-bg/20" : ""}`}
+          className={`relative min-h-0 shrink-0 overflow-y-auto bg-surface ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealMode && guessedEntities.length > 0 ? "border-accent-bg shadow-md shadow-accent-bg/20" : ""}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
@@ -378,7 +387,7 @@ export function GamePlayView({
             gap={compactSheet ? 0 : 2}
             paddingInline={4}
             paddingBlock={compactSheet ? 1 : 3}
-            className={`shrink-0 border-b border-accent-bg/15 bg-accent-muted ${isCountryRound ? "rounded-t-3xl lg:rounded-t-xl" : "rounded-t-xl"}`}
+            className="shrink-0 rounded-t-xl border-b border-border"
           >
             <HStack justify="between" align="center" gap={2}>
               <Text
@@ -468,7 +477,7 @@ export function GamePlayView({
                     endContent={
                       clue.isRevealed || !round ? (
                         <Text
-                          className="max-w-48 break-words text-right"
+                          className="max-w-40 break-words text-right"
                           weight={clue.isRevealed ? "medium" : undefined}
                           color={
                             view === "result" && !clue.isRevealed
@@ -534,7 +543,7 @@ export function GamePlayView({
                         label="Your guess"
                         isLabelHidden={compactSheet}
                       />
-                      <Text color="accent" type="supporting" weight="semibold">
+                      <Text color="secondary" type="supporting">
                         By name · double points
                       </Text>
                     </HStack>

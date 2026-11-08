@@ -2,15 +2,12 @@ import { promoteToastViewport } from "@/src/components/app-toaster";
 import { FeedbackForm } from "@/src/components/feedback-form";
 import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import type { RoundOutcome } from "@/src/components/game-shell/types";
-import { getCategoryMeta } from "@/src/components/game-shell/utils";
 import { ThemeRatingPrompt } from "@/src/components/theme-rating-prompt";
 import type { GuessedCountryMapData } from "@/src/lib/types";
 import { Button } from "@astryxdesign/core/Button";
-import { Card } from "@astryxdesign/core/Card";
 import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
 import { Grid } from "@astryxdesign/core/Grid";
 import { HStack } from "@astryxdesign/core/HStack";
-import { Icon } from "@astryxdesign/core/Icon";
 import { StackItem } from "@astryxdesign/core/Stack";
 import { Text } from "@astryxdesign/core/Text";
 import { Token } from "@astryxdesign/core/Token";
@@ -59,7 +56,6 @@ interface GameResultDialogProps {
 
 export function GameResultDialog({
   clearForCategoryChoice,
-  currentCategory,
   currentCategoryLabel,
   guessedCountries,
   isBusy,
@@ -81,7 +77,6 @@ export function GameResultDialog({
     promoteToastViewport();
   }, []);
 
-  const CurrentCategoryIcon = getCategoryMeta(currentCategory).icon;
   const flagUrl = result.clues.find(
     (clue) => clue.key === "flag-colors",
   )?.value;
@@ -112,12 +107,7 @@ export function GameResultDialog({
           if (!isOpen) onClose();
         }}
         startContent={
-          flagUrl ? (
-            <CountryFlagPreview
-              countryName={result.canonicalAnswer}
-              src={flagUrl}
-            />
-          ) : result.status === "win" ? (
+          result.status === "win" ? (
             <PartyPopper aria-hidden="true" className="text-accent" />
           ) : (
             <Ban aria-hidden="true" className="text-error" />
@@ -130,55 +120,32 @@ export function GameResultDialog({
 
       <StackItem size="fill" isScrollable>
         <VStack gap={0}>
-          {result.solutionCountry ? (
-            <WorldMapDialog
-              guessedCountries={guessedCountries}
-              isExpanded={false}
-              onExpandedChange={() => undefined}
-              presentation="result"
-              solutionCountry={result.solutionCountry}
-            />
-          ) : null}
-
-          <Grid className="mt-3" columns={{ minWidth: 220, max: 2 }} gap={2}>
-            <Card className="rounded-lg" padding={2}>
-              <HStack align="center" gap={2} justify="between">
-                <HStack align="center" gap={2}>
-                  <Icon color="accent" icon={Trophy} size="md" />
-                  <VStack gap={0}>
-                    <Text
-                      className="uppercase tracking-wider"
-                      color="secondary"
-                      type="supporting"
-                    >
-                      Score
-                    </Text>
-                    <Text weight="semibold">{result.score} pts</Text>
-                  </VStack>
-                </HStack>
+          <HStack align="center" justify="between" gap={3} paddingBlock={3}>
+            <VStack gap={1}>
+              <Text color="secondary" type="supporting">
+                Round score
+              </Text>
+              <HStack align="center" gap={2}>
+                <Text className="text-3xl" weight="bold" hasTabularNumbers>
+                  {result.score} pts
+                </Text>
                 {result.status === "win" && result.guessMethod === "text" ? (
                   <Tooltip content="Guessing by name gives you double points!">
                     <Token color="green" label="2× points" size="sm" />
                   </Tooltip>
                 ) : null}
               </HStack>
-            </Card>
-            <Card className="rounded-lg" padding={2}>
-              <HStack align="center" gap={2}>
-                <Icon color="accent" icon={CurrentCategoryIcon} size="md" />
-                <VStack gap={0}>
-                  <Text
-                    className="uppercase tracking-wider"
-                    color="secondary"
-                    type="supporting"
-                  >
-                    Category
-                  </Text>
-                  <Text weight="semibold">{currentCategoryLabel}</Text>
-                </VStack>
-              </HStack>
-            </Card>
-          </Grid>
+              <Text color="secondary" type="supporting">
+                {currentCategoryLabel}
+              </Text>
+            </VStack>
+            {flagUrl ? (
+              <CountryFlagPreview
+                countryName={result.canonicalAnswer}
+                src={flagUrl}
+              />
+            ) : null}
+          </HStack>
 
           <Grid
             className="mt-4"
@@ -231,6 +198,17 @@ export function GameResultDialog({
               width="100%"
             />
           ) : null}
+          <VStack paddingBlockStart={4}>
+            {result.solutionCountry ? (
+              <WorldMapDialog
+                guessedCountries={guessedCountries}
+                isExpanded={false}
+                onExpandedChange={() => undefined}
+                presentation="result"
+                solutionCountry={result.solutionCountry}
+              />
+            ) : null}
+          </VStack>
           {isRatingPromptVisible ? (
             <ThemeRatingPrompt
               onDismiss={() => setIsRatingPromptVisible(false)}
