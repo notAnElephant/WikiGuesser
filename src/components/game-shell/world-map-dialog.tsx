@@ -10,6 +10,12 @@ import {
   getMapCountryNames,
   getPlayableCountriesByMapName,
 } from "@/src/lib/game/world-map-data";
+import {
+  COUNTRY_TOUCH_TARGET_SIZE,
+  getCountryMarkerOpacity,
+  getCountryTargetGeometry,
+  getOverlappingMapTargets,
+} from "@/src/lib/game/map-country-targets";
 import type {
   GuessDirection,
   GuessedCountryMapData,
@@ -19,7 +25,7 @@ import { Button } from "@astryxdesign/core/Button";
 import { HStack } from "@astryxdesign/core/HStack";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { VStack } from "@astryxdesign/core/VStack";
-import { geoMercator, geoPath, type GeoProjection } from "d3-geo";
+import { geoContains, geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import { select } from "d3-selection";
 import {
   zoom,
@@ -283,6 +289,87 @@ export function WorldMapDialog({
     () => COUNTRY_DATA.features.map((country) => path?.(country) ?? null),
     [path],
   );
+  const countryTargets = useMemo(
+    () =>
+      path && projection
+        ? COUNTRY_DATA.features.flatMap((country) => {
+            const target = getCountryTargetGeometry(country, path, projection);
+            return target ? [{ ...target, country }] : [];
+          })
+        : [],
+    [path, projection],
+  );
+  const smallCountryTargets = countryTargets.flatMap((target) => {
+    const name = target.country.properties.normalizedName;
+    if (
+      !playableCountryByMapName.has(name) &&
+      !guessedCountryByName.has(name) &&
+      !solutionNames.has(name)
+    )
+      return [];
+    const size = target.size * mapTransform.k;
+    const point = mapTransform.apply(target.point);
+    const radius = COUNTRY_TOUCH_TARGET_SIZE / 2;
+    if (
+      size >= COUNTRY_TOUCH_TARGET_SIZE ||
+      point[0] < -radius ||
+      point[0] > mapSize.width + radius ||
+      point[1] < -radius ||
+      point[1] > mapSize.height + radius
+    )
+      return [];
+    return [{ ...target, point, opacity: getCountryMarkerOpacity(size) }];
+  });
+
+  function selectSmallCountry(
+    point: [number, number],
+    targetSize = COUNTRY_TOUCH_TARGET_SIZE,
+  ) {
+    if (!onCountryGuess || !projection) return;
+    const candidates = new Set<string>();
+    const overlappingTargets = getOverlappingMapTargets(
+      targetSize < COUNTRY_TOUCH_TARGET_SIZE
+        ? smallCountryTargets.filter((target) => target.opacity > 0)
+        : smallCountryTargets,
+      point,
+      targetSize,
+    );
+    for (const target of overlappingTargets) {
+      const name = target.country.properties.normalizedName;
+      const playable = playableCountryByMapName.get(name);
+      if (playable && !guessedCountryByName.has(name)) candidates.add(playable);
+    }
+    const location = projection.invert?.(mapTransform.invert(point));
+    const hitsMarker = overlappingTargets.some(
+      (target) =>
+        target.opacity > 0 &&
+        Math.hypot(target.point[0] - point[0], target.point[1] - point[1]) <= 5,
+    );
+    if (location && !hitsMarker) {
+      // An enlarged target must not silently steal a tap on a neighbouring country.
+      for (const country of COUNTRY_DATA.features) {
+        const name = country.properties.normalizedName;
+        const playable = playableCountryByMapName.get(name);
+        if (
+          playable &&
+          !guessedCountryByName.has(name) &&
+          geoContains(country, location)
+        ) {
+          candidates.add(playable);
+        }
+      }
+    }
+    if (candidates.size === 1) onCountryGuess([...candidates][0]);
+    else if (candidates.size > 1 && location) {
+      const transform = getFocusedMapTransform({
+        location: { longitude: location[0], latitude: location[1] },
+        mapSize,
+        projection,
+        scale: Math.min(MAX_MAP_SCALE, mapTransform.k * 3),
+      });
+      if (transform) animateToTransform(transform);
+    }
+  }
 
   useEffect(() => {
     if (!isMapExpanded) {
@@ -970,7 +1057,7 @@ export function WorldMapDialog({
             </span>
           ) : null}
           <svg
-            aria-hidden="true"
+            aria-label="Country outlines and small-country markers"
             className={`size-full touch-none select-none ${canInteractWithMap ? "" : "pointer-events-none"} ${onCountryGuess ? "map-world-guessing" : ""}`}
             data-suppress-touch-highlight={suppressTouchHighlight || undefined}
             onTouchStartCapture={(event) => {
@@ -1018,10 +1105,10 @@ export function WorldMapDialog({
                           onMapClickDuringReveal
                             ? onMapClickDuringReveal
                             : guessedCountry
-                            ? () => focusCountry(guessedCountry)
-                            : onCountryGuess && playableCountry
-                              ? () => onCountryGuess(playableCountry)
-                              : undefined
+                              ? () => focusCountry(guessedCountry)
+                              : onCountryGuess && playableCountry
+                                ? () => onCountryGuess(playableCountry)
+                                : undefined
                         }
                         vectorEffect="non-scaling-stroke"
                       >
@@ -1073,6 +1160,106 @@ export function WorldMapDialog({
                   })
                 : null}
             </g>
+            {smallCountryTargets.map(({ country, point, opacity }) => {
+              const name = country.properties.normalizedName;
+              const guessedCountry = guessedCountryByName.get(name);
+              const playableCountry = playableCountryByMapName.get(name);
+              const isSolution = solutionNames.has(name);
+              const isInteractive = Boolean(
+                guessedCountry ||
+                isSolution ||
+                (playableCountry && (onCountryGuess || onMapClickDuringReveal)),
+              );
+              const activate = () => {
+                if (onMapClickDuringReveal) onMapClickDuringReveal();
+                else if (guessedCountry) focusCountry(guessedCountry);
+                else if (isSolution && solutionCountry)
+                  focusLocation(solutionCountry);
+                else selectSmallCountry(point);
+              };
+              return (
+                <g
+                  aria-label={
+                    isInteractive
+                      ? guessedCountry
+                        ? `Focus guess: ${guessedCountry.name}`
+                        : isSolution && solutionCountry
+                          ? `Focus solution: ${solutionCountry.name}`
+                          : "Select small country"
+                      : undefined
+                  }
+                  className="group outline-none"
+                  data-map-country-target={name}
+                  key={`target-${country.id ?? name}-${name}`}
+                  onClick={
+                    isInteractive
+                      ? (event) => {
+                          const bounds =
+                            svgRef.current!.getBoundingClientRect();
+                          if (
+                            !onMapClickDuringReveal &&
+                            onCountryGuess &&
+                            !guessedCountry &&
+                            !isSolution
+                          ) {
+                            selectSmallCountry(
+                              [
+                                event.clientX - bounds.left,
+                                event.clientY - bounds.top,
+                              ],
+                              "pointerType" in event.nativeEvent &&
+                                event.nativeEvent.pointerType === "mouse"
+                                ? 12
+                                : COUNTRY_TOUCH_TARGET_SIZE,
+                            );
+                          } else activate();
+                        }
+                      : undefined
+                  }
+                  onKeyDown={
+                    isInteractive
+                      ? (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            activate();
+                          }
+                        }
+                      : undefined
+                  }
+                  role={isInteractive ? "button" : undefined}
+                  tabIndex={isInteractive ? 0 : undefined}
+                  transform={`translate(${point[0]} ${point[1]})`}
+                >
+                  {isInteractive ? (
+                    <rect
+                      className="cursor-pointer fill-transparent stroke-transparent pointer-fine:pointer-events-none"
+                      height={COUNTRY_TOUCH_TARGET_SIZE}
+                      width={COUNTRY_TOUCH_TARGET_SIZE}
+                      x={-COUNTRY_TOUCH_TARGET_SIZE / 2}
+                      y={-COUNTRY_TOUCH_TARGET_SIZE / 2}
+                    />
+                  ) : null}
+                  <circle
+                    className={`pointer-events-none ${isInteractive && opacity > 0 ? "pointer-fine:pointer-events-auto cursor-pointer" : ""} ${
+                      isSolution
+                        ? duelResult
+                          ? "map-country map-country--solution-duel"
+                          : "map-country map-country--solution"
+                        : guessedCountry
+                          ? `map-country map-country--guessed${guessedCountry.markerTone ? `-${guessedCountry.markerTone}` : ""}`
+                          : `fill-surface stroke-secondary ${playableCountry && !suppressTouchHighlight ? "group-hover:fill-blue-subtle group-hover:stroke-blue-vivid group-focus-visible:fill-blue-subtle group-focus-visible:stroke-blue-vivid" : ""}`
+                    }`}
+                    opacity={opacity}
+                    r={4}
+                  />
+                  <circle
+                    className="pointer-events-none fill-none stroke-blue-vivid opacity-0 group-focus-visible:opacity-100"
+                    r={7}
+                  />
+                </g>
+              );
+            })}
             <defs>
               <pattern
                 height={8}
