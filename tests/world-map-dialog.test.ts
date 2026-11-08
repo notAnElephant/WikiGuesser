@@ -1,4 +1,5 @@
-import { geoMercator } from "d3-geo";
+import { geoArea, geoMercator } from "d3-geo";
+import type { Feature, Geometry } from "geojson";
 import { zoomIdentity } from "d3-zoom";
 import { describe, expect, it } from "vitest";
 
@@ -14,6 +15,8 @@ import {
   hasMapGeometry,
 } from "@/src/lib/game/world-map-data";
 import type { NormalizedEntity } from "@/src/lib/types";
+import microstateMap from "@/src/lib/game/microstate-map.json";
+import { gzipSync } from "node:zlib";
 
 function country(
   canonicalAnswer: string,
@@ -55,10 +58,24 @@ describe("world map coverage", () => {
     expect(hasMapGeometry(["São Tomé and Príncipe"])).toBe(true);
   });
 
+  it("includes detailed outlines for every microstate without shipping a detailed world map", () => {
+    expect(microstateMap.features).toHaveLength(25);
+    for (const country of microstateMap.features) {
+      expect(hasMapGeometry([country.properties.name])).toBe(true);
+      const area = geoArea(country as Feature<Geometry>);
+      expect(area).toBeGreaterThan(0);
+      expect(area).toBeLessThan(0.001);
+    }
+    expect(hasMapGeometry(["Tuvalu"])).toBe(true);
+    expect(gzipSync(JSON.stringify(microstateMap)).byteLength).toBeLessThan(
+      40_000,
+    );
+  });
+
   it("accepts a coordinate marker when a country has no polygon", () => {
     expect(
       getCountriesWithoutMapCoverage([
-        country("Tuvalu", ["Tuvalu"], {
+        country("Missing geometry", ["Missing geometry"], {
           centroidLatitude: -7.11,
           centroidLongitude: 177.65,
         }),

@@ -4,6 +4,7 @@ import { feature } from "topojson-client";
 import type { FeatureCollection, Geometry } from "geojson";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import worldTopology from "world-atlas/countries-50m.json";
+import microstateMap from "./microstate-map.json";
 
 export interface MapCountryProperties {
   name?: string;
@@ -44,10 +45,23 @@ function buildCountryData(): FeatureCollection<Geometry, MapCountryProperties> {
     name?: string;
   }>;
   const collection = feature(topology, countries);
+  const detailedCountries = new Map(
+    (
+      microstateMap as FeatureCollection<Geometry, { name: string }>
+    ).features.map((country) => [country.id, country]),
+  );
+  const baseIds = new Set(collection.features.map((country) => country.id));
 
   return {
     ...collection,
-    features: collection.features
+    features: [
+      ...collection.features.map(
+        (country) => detailedCountries.get(country.id) ?? country,
+      ),
+      ...[...detailedCountries.values()].filter(
+        (country) => !baseIds.has(country.id),
+      ),
+    ]
       .filter((country) => country.properties?.name !== "Antarctica")
       .map((country) => {
         const name = country.properties?.name ?? "";
