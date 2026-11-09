@@ -6,6 +6,7 @@ Fast Wikipedia-inspired guessing game built with Next.js, Prisma, Clerk, and a W
 
 - Daily challenge: one shared puzzle per category/mode each day
 - Duels: signed-in players can share a 3-, 5-, or 10-round asynchronous challenge
+- Friend challenges: pick a country at `/challenges/new` and share a single puzzle; friends can play as guests in either mode
 - Live categories: `countries`, `cities`
 - Modes: `classic`, `blurred-lines`
 - Theme: dark by default, user-toggleable
@@ -80,6 +81,8 @@ Safe snapshot workflow:
 - Runtime reads from the latest Postgres snapshot only.
 
 ## Gameplay Reference
+
+Friend challenges freeze the answer and clues at creation. Each account or guest browser has one saved attempt per link. Challenge scores are separate from regular stats and daily leaderboards; the creator cannot submit a scored attempt. Guest attempts are tied to the browser cookie, so clearing it permits a fresh attempt. Apply database migrations before using the new challenge routes.
 
 - [Clues by category and mode](./docs/clues-and-modes.md)
 - [Content pipeline](./docs/content-pipeline.md)

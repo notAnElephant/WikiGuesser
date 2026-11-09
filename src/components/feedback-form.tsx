@@ -19,7 +19,7 @@ export type FeedbackKind =
 
 export interface FeedbackContext {
   source: "global" | "round-result" | "clue";
-  gameType?: "daily" | "free_play";
+  gameType?: "daily" | "free_play" | "challenge";
   category?: "countries" | "cities" | "people";
   mode?: "classic" | "blurred-lines";
   outcome?: "win" | "loss";

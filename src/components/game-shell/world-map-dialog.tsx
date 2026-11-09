@@ -610,7 +610,11 @@ export function WorldMapDialog({
         return;
       }
 
-      const deltaTime = Math.min((timestamp - previousTime) / 1000, 0.05);
+      // A frame timestamp can precede the effect that scheduled its callback.
+      const deltaTime = Math.max(
+        0,
+        Math.min((timestamp - previousTime) / 1000, 0.05),
+      );
       previousTime = timestamp;
       const transform = mapTransformRef.current;
       const center = transform.invert([centerX, centerY]);

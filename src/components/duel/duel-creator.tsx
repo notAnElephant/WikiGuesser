@@ -1,8 +1,6 @@
 "use client";
 
 import { Button } from "@astryxdesign/core/Button";
-import { Card } from "@astryxdesign/core/Card";
-import { HStack } from "@astryxdesign/core/HStack";
 import { Icon } from "@astryxdesign/core/Icon";
 import {
   SegmentedControl,
@@ -14,6 +12,7 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Link2, Share2, Swords } from "lucide-react";
 import { useState } from "react";
+import { PageHeading } from "@/src/components/page-heading";
 
 import type {
   CategorySummary,
@@ -50,7 +49,7 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
 
   async function createDuel() {
     if (!isSignedIn) {
-      router.push("/sign-in?redirect_url=/");
+      router.push("/sign-in?redirect_url=/duels/new");
       return;
     }
     setIsCreating(true);
@@ -109,123 +108,108 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
   }
 
   return (
-    <Card
-      className="overflow-hidden"
-      aria-labelledby="duel-creator-title"
-      elevation="low"
-      padding={0}
-    >
-      <VStack gap={4} padding={4}>
-        <VStack as="header" gap={1}>
-          <HStack align="center" gap={2}>
-            <Icon color="secondary" icon={Swords} size="sm" />
-            <h2
-              id="duel-creator-title"
-              className="m-0 font-heading text-xl font-semibold text-primary"
+    <VStack gap={5}>
+      <PageHeading title="Create a duel" />
+      <Text color="secondary">
+        Pick the mode and number of rounds, then share an invite to compete with
+        a friend.
+      </Text>
+
+      <section aria-label="Duel settings" className="grid min-w-0 gap-4">
+        <section className="grid gap-4 sm:grid-cols-2">
+          <fieldset className="grid min-w-0 gap-2 text-sm font-semibold text-secondary">
+            <legend>Game mode</legend>
+            <SegmentedControl
+              label="Game mode"
+              layout="fill"
+              onChange={(value) => setMode(value as GameMode)}
+              value={mode}
             >
-              Challenge a friend
-            </h2>
-          </HStack>
-          <Text color="secondary" type="supporting">
-            Pick the mode and number of rounds, then share an invite.
-          </Text>
-        </VStack>
+              {modeOptions.map((item) => (
+                <SegmentedControlItem
+                  key={item.id}
+                  label={item.label}
+                  value={item.id}
+                />
+              ))}
+            </SegmentedControl>
+          </fieldset>
+          <fieldset className="grid min-w-0 gap-2 text-sm font-semibold text-secondary">
+            <legend>Rounds</legend>
+            <SegmentedControl
+              label="Number of rounds"
+              layout="fill"
+              onChange={(value) => setRounds(Number(value) as typeof rounds)}
+              value={String(rounds)}
+            >
+              {roundOptions.map((count) => (
+                <SegmentedControlItem
+                  key={count}
+                  label={`${count}`}
+                  value={String(count)}
+                />
+              ))}
+            </SegmentedControl>
+          </fieldset>
+        </section>
 
-        <section aria-label="Duel settings" className="grid min-w-0 gap-4">
-          <section className="grid gap-4 sm:grid-cols-2">
-            <fieldset className="grid min-w-0 gap-2 text-sm font-semibold text-secondary">
-              <legend>Game mode</legend>
-              <SegmentedControl
-                label="Game mode"
-                layout="fill"
-                onChange={(value) => setMode(value as GameMode)}
-                value={mode}
-              >
-                {modeOptions.map((item) => (
-                  <SegmentedControlItem
-                    key={item.id}
-                    label={item.label}
-                    value={item.id}
-                  />
-                ))}
-              </SegmentedControl>
-            </fieldset>
-            <fieldset className="grid min-w-0 gap-2 text-sm font-semibold text-secondary">
-              <legend>Rounds</legend>
-              <SegmentedControl
-                label="Number of rounds"
-                layout="fill"
-                onChange={(value) => setRounds(Number(value) as typeof rounds)}
-                value={String(rounds)}
-              >
-                {roundOptions.map((count) => (
-                  <SegmentedControlItem
-                    key={count}
-                    label={`${count}`}
-                    value={String(count)}
-                  />
-                ))}
-              </SegmentedControl>
-            </fieldset>
-          </section>
-
-          {inviteUrl ? (
-            <section className="grid min-w-0 gap-3 border-t border-border pt-5">
-              <p className="m-0 text-sm font-semibold text-primary">
-                Your duel is ready. Send this link to your opponent.
-              </p>
-              <section className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
-                <TextInput
-                  isLabelHidden
-                  isReadOnly
-                  label="Duel invite link"
-                  value={inviteUrl}
-                  width="100%"
-                />
-                <Button
-                  icon={copied ? <Check /> : <Copy />}
-                  label={copied ? "Copied" : "Copy"}
-                  onClick={() => void copyInvite()}
-                  tooltip="Copy invite link"
-                  variant="secondary"
-                />
-                <Button
-                  icon={<Share2 />}
-                  label="Share"
-                  onClick={() => void shareInvite()}
-                  variant="primary"
-                />
-              </section>
-              <a
-                href={inviteUrl}
-                className="inline-flex w-fit items-center gap-1 text-sm font-semibold text-accent"
-              >
-                <Icon color="accent" icon={Link2} size="sm" />
-                Open duel
-              </a>
-            </section>
-          ) : (
-            <footer className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="m-0 text-sm text-secondary">
-                Countries · {rounds} rounds
-              </p>
+        {inviteUrl ? (
+          <section className="grid min-w-0 gap-3 border-t border-border pt-5">
+            <p className="m-0 text-sm font-semibold text-primary">
+              Your duel is ready. Send this link to your opponent.
+            </p>
+            <section className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+              <TextInput
+                isLabelHidden
+                isReadOnly
+                label="Duel invite link"
+                value={inviteUrl}
+                width="100%"
+              />
               <Button
-                className="w-full sm:w-auto"
-                icon={<Swords />}
-                isLoading={isCreating}
-                label="Create invite link"
-                onClick={() => void createDuel()}
+                icon={copied ? <Check /> : <Copy />}
+                label={copied ? "Copied" : "Copy"}
+                onClick={() => void copyInvite()}
+                tooltip="Copy invite link"
+                variant="secondary"
+              />
+              <Button
+                icon={<Share2 />}
+                label="Share"
+                onClick={() => void shareInvite()}
                 variant="primary"
               />
-            </footer>
-          )}
-          {error ? (
-            <p role="alert" className="m-0 text-sm font-medium text-error">
-              {error}
+            </section>
+            <a
+              href={inviteUrl}
+              className="inline-flex w-fit items-center gap-1 text-sm font-semibold text-accent"
+            >
+              <Icon color="accent" icon={Link2} size="sm" />
+              Open duel
+            </a>
+          </section>
+        ) : (
+          <footer className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="m-0 text-sm text-secondary">
+              Countries · {rounds} rounds
             </p>
-          ) : null}
-        </section>
-      </VStack>
-    </Card>
+            <Button
+              className="w-full sm:w-auto"
+              icon={<Swords />}
+              isLoading={isCreating}
+              label="Create invite link"
+              onClick={() => void createDuel()}
+              variant="primary"
+            />
+          </footer>
+        )}
+        {error ? (
+          <p role="alert" className="m-0 text-sm font-medium text-error">
+            {error}
+          </p>
+        ) : null}
+      </section>
+      <Button href="/" label="Back to games" variant="ghost" />
+    </VStack>
   );
 }
