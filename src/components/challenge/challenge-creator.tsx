@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@astryxdesign/core/Button";
+import { Dialog, DialogHeader } from "@astryxdesign/core/Dialog";
+import { HStack } from "@astryxdesign/core/HStack";
 import { Selector } from "@astryxdesign/core/Selector";
 import {
   SegmentedControl,
@@ -8,11 +10,21 @@ import {
 } from "@astryxdesign/core/SegmentedControl";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
+import { Map, Shuffle } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 
 import { PageHeading } from "@/src/components/page-heading";
 import { ShareChallenge } from "@/src/components/challenge/share-challenge";
 import type { GameMode } from "@/src/lib/types";
+
+const WorldMapDialog = dynamic(
+  () =>
+    import("@/src/components/game-shell/world-map-dialog").then(
+      (module) => module.WorldMapDialog,
+    ),
+  { ssr: false },
+);
 
 export function ChallengeCreator({
   countryOptions,
@@ -20,11 +32,18 @@ export function ChallengeCreator({
   countryOptions: string[];
 }) {
   const [country, setCountry] = useState("");
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [mode, setMode] = useState<GameMode>("classic");
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const creating = useRef(false);
+
+  function pickRandomCountry() {
+    const options = countryOptions.filter((option) => option !== country);
+    const randomCountry = options[Math.floor(Math.random() * options.length)];
+    if (randomCountry) setCountry(randomCountry);
+  }
 
   async function create() {
     if (!country || creating.current) return;
@@ -84,15 +103,35 @@ export function ChallengeCreator({
             void create();
           }}
         >
-          <Selector
-            hasSearch
-            label="Answer country"
-            options={countryOptions}
-            value={country}
-            onChange={setCountry}
-            placeholder="Search countries"
-            width="100%"
-          />
+          <VStack gap={2}>
+            <Selector
+              hasSearch
+              label="Answer country"
+              options={countryOptions}
+              value={country}
+              onChange={setCountry}
+              placeholder="Search countries"
+              width="100%"
+            />
+            <HStack gap={2} wrap="wrap">
+              <Button
+                type="button"
+                icon={<Map aria-hidden="true" />}
+                label="Pick from map"
+                isDisabled={isCreating || countryOptions.length === 0}
+                onClick={() => setIsMapOpen(true)}
+                variant="secondary"
+              />
+              <Button
+                type="button"
+                icon={<Shuffle aria-hidden="true" />}
+                label="Random"
+                isDisabled={isCreating || countryOptions.length === 0}
+                onClick={pickRandomCountry}
+                variant="secondary"
+              />
+            </HStack>
+          </VStack>
           <VStack gap={2}>
             <Text weight="semibold">Game mode</Text>
             <SegmentedControl
@@ -126,6 +165,29 @@ export function ChallengeCreator({
           />
         </VStack>
       )}
+      {isMapOpen ? (
+        <Dialog isOpen onOpenChange={setIsMapOpen} padding={4} width="56rem">
+          <DialogHeader
+            title="Pick a country"
+            subtitle="Select a country on the map. Drag to move and zoom in for smaller countries."
+            onOpenChange={setIsMapOpen}
+          />
+          <VStack className="h-80 sm:h-96" paddingBlockStart={3}>
+            <WorldMapDialog
+              countryOptions={countryOptions}
+              embedded
+              guessedCountries={[]}
+              isCountryPicker
+              isExpanded={false}
+              onExpandedChange={() => undefined}
+              onCountryGuess={(selection) => {
+                setCountry(selection);
+                setIsMapOpen(false);
+              }}
+            />
+          </VStack>
+        </Dialog>
+      ) : null}
       {error ? (
         <Text role="alert" className="text-error">
           {error}

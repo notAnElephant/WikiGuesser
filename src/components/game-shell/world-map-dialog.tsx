@@ -58,6 +58,7 @@ interface WorldMapDialogProps {
   duelResult?: boolean;
   guessedCountries: readonly DuelResultGuessedCountry[];
   isActive?: boolean;
+  isCountryPicker?: boolean;
   isExpanded: boolean;
   onDrawerStateChange?: (drawerState: "hidden" | "medium" | "expanded") => void;
   onExpandedChange: (isExpanded: boolean) => void;
@@ -202,6 +203,7 @@ export function WorldMapDialog({
   countryOptions = [],
   guessedCountries,
   isActive = false,
+  isCountryPicker = false,
   isExpanded,
   drawerState,
   onDrawerStateChange,
@@ -992,9 +994,11 @@ export function WorldMapDialog({
       >
         <VStack
           aria-label={
-            presentation === "result" && duelResult
-              ? "Interactive duel result map. Each player's guesses use a different color, shared guesses are striped, and the correct answer is highlighted."
-              : "Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
+            isCountryPicker
+              ? "Interactive map for picking an answer country."
+              : presentation === "result" && duelResult
+                ? "Interactive duel result map. Each player's guesses use a different color, shared guesses are striped, and the correct answer is highlighted."
+                : "Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
           }
           className="map-world-canvas relative min-h-0 flex-1 overflow-hidden"
           ref={mapContainerRef}
@@ -1055,7 +1059,7 @@ export function WorldMapDialog({
               />
             </>
           ) : null}
-          {presentation === "game" && onCountryGuess ? (
+          {presentation === "game" && onCountryGuess && !isCountryPicker ? (
             <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-accent-bg/20 bg-body px-3 py-1.5 text-xs font-semibold text-accent shadow-sm backdrop-blur  sm:left-4 sm:top-4">
               Tap a country
             </span>
@@ -1116,7 +1120,9 @@ export function WorldMapDialog({
                         }
                         vectorEffect="non-scaling-stroke"
                       >
-                        {isUnavailable ? (
+                        {isCountryPicker && playableCountry ? (
+                          <title>{playableCountry}</title>
+                        ) : isUnavailable && !isCountryPicker ? (
                           <title>{`${country.properties.name} is unavailable to guess`}</title>
                         ) : null}
                       </path>
@@ -1179,6 +1185,8 @@ export function WorldMapDialog({
                 else if (guessedCountry) focusCountry(guessedCountry);
                 else if (isSolution && solutionCountry)
                   focusLocation(solutionCountry);
+                else if (isCountryPicker && playableCountry)
+                  onCountryGuess?.(playableCountry);
                 else selectSmallCountry(point);
               };
               return (
@@ -1189,7 +1197,9 @@ export function WorldMapDialog({
                         ? `Focus guess: ${guessedCountry.name}`
                         : isSolution && solutionCountry
                           ? `Focus solution: ${solutionCountry.name}`
-                          : "Select small country"
+                          : isCountryPicker && playableCountry
+                            ? `Select ${playableCountry}`
+                            : "Select small country"
                       : undefined
                   }
                   className="group outline-none"
@@ -1404,16 +1414,18 @@ export function WorldMapDialog({
                 tooltip="Zoom out"
                 variant="secondary"
               />
-              <IconButton
-                elevation="high"
-                icon={<Focus aria-hidden="true" />}
-                isDisabled={guessedCountries.length === 0}
-                label="Fit all guessed countries"
-                onClick={fitGuessedCountries}
-                size="lg"
-                tooltip="Fit all guessed countries"
-                variant="secondary"
-              />
+              {!isCountryPicker ? (
+                <IconButton
+                  elevation="high"
+                  icon={<Focus aria-hidden="true" />}
+                  isDisabled={guessedCountries.length === 0}
+                  label="Fit all guessed countries"
+                  onClick={fitGuessedCountries}
+                  size="lg"
+                  tooltip="Fit all guessed countries"
+                  variant="secondary"
+                />
+              ) : null}
               <IconButton
                 elevation="high"
                 icon={<Scan aria-hidden="true" />}
