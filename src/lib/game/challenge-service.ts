@@ -28,6 +28,7 @@ import {
   getScoreForGuess,
   validateManualClueReveal,
 } from "@/src/lib/game/round-rules";
+import { getCountryFlagSourceUrlFromClues } from "@/src/lib/offline/country-pack";
 import * as repository from "@/src/lib/repository/challenge-repository";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
@@ -68,15 +69,19 @@ export function buildChallengeView(
       })
     : null;
 
-  // Hidden values and currency qualifiers must not reveal the answer in the payload.
+  // Keep unrevealed values, currency qualifiers and original flag URLs private.
   const clues =
     progress?.clues.map((clue) => {
-      const value =
-        !completed && clue.key === "currency" && clue.value
-          ? splitCurrencyRevealSegments(clue.value, clue.currencyRedactionTexts)
-              .map((segment) => (segment.isBlurred ? "???" : segment.text))
-              .join("")
-          : clue.value;
+      let value = clue.value;
+      if (!completed && value) {
+        if (clue.key === "flag-colors") {
+          value = `/api/challenges/${challenge.code}/flag`;
+        } else if (clue.key === "currency") {
+          value = splitCurrencyRevealSegments(value, clue.currencyRedactionTexts)
+            .map((segment) => (segment.isBlurred ? "???" : segment.text))
+            .join("");
+        }
+      }
       return {
         ...clue,
         value,
@@ -162,6 +167,23 @@ export async function getFriendChallenge(code: string, actorId: string | null) {
     ? await repository.findChallengeAttempt(challenge.id, actorId)
     : null;
   return buildChallengeView(challenge, attempt, actorId);
+}
+
+export async function getRevealedChallengeFlagSource(
+  code: string,
+  actorId: string,
+) {
+  const challenge = await repository.findChallenge(code);
+  if (!challenge) return null;
+
+  const attempt = await repository.findChallengeAttempt(challenge.id, actorId);
+  if (
+    !attempt ||
+    !(attempt.revealedClueKeys as string[]).includes("flag-colors")
+  ) {
+    return null;
+  }
+  return getCountryFlagSourceUrlFromClues(storedEntity(challenge).clues);
 }
 
 export async function playFriendChallenge(

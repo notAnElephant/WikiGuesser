@@ -128,11 +128,18 @@ export function ChallengeShell({ code }: { code: string }) {
     busy.current = true;
     setIsBusy(true);
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, version: progress?.version, ...extra }),
-      });
+      const submit = () =>
+        fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, version: progress?.version, ...extra }),
+        });
+      // A second tab must wait for the first Start response to set the guest cookie.
+      // shortcut: browsers without Web Locks can still race, revisit if they become supported targets.
+      const response =
+        action === "start" && navigator.locks
+          ? await navigator.locks.request("wikiguesser-challenge-start", submit)
+          : await submit();
       const payload = await response.json();
       if (!response.ok)
         throw new Error(payload.error ?? "Could not update challenge.");

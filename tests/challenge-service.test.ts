@@ -13,6 +13,7 @@ import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
 import {
   createFriendChallenge,
   getFriendChallenge,
+  getRevealedChallengeFlagSource,
   playFriendChallenge,
 } from "@/src/lib/game/challenge-service";
 
@@ -187,6 +188,45 @@ describe("friend challenges", () => {
     });
     expect(JSON.stringify(view.progress)).not.toMatch(/French|France/);
     expect(view.progress?.revealedClues[0].value).toBe("??? franc");
+  });
+
+  it("publishes only the blurred flag URL during a scored attempt", async () => {
+    challenge.mode = "blurred-lines";
+    const actor = "guest:a";
+    await playFriendChallenge(challenge.code, actor, { action: "start" });
+    expect(
+      await getRevealedChallengeFlagSource(challenge.code, actor),
+    ).toBeNull();
+
+    const keys = ["continent", "area", "population", "flag-colors"];
+    for (const [version, clueKey] of keys.entries()) {
+      await playFriendChallenge(challenge.code, actor, {
+        action: "reveal",
+        version,
+        clueKey,
+      });
+    }
+    const active = await getFriendChallenge(challenge.code, actor);
+    const flagUrl = `/api/challenges/${challenge.code}/flag`;
+    expect(
+      active.progress?.clues.find((clue) => clue.key === "flag-colors"),
+    ).toMatchObject({ value: flagUrl, prefetchedValue: flagUrl });
+    expect(JSON.stringify(active.progress)).not.toMatch(/Flag%20|wikimedia/);
+    expect(
+      await getRevealedChallengeFlagSource(challenge.code, "guest:b"),
+    ).toBeNull();
+    const source = await getRevealedChallengeFlagSource(challenge.code, actor);
+    expect(source?.href).toContain("Flag%20of%20France.svg");
+
+    const finished = await playFriendChallenge(challenge.code, actor, {
+      action: "guess",
+      version: keys.length,
+      guess: "France",
+    });
+    expect(finished.progress?.score).toBe(40);
+    expect(
+      finished.progress?.clues.find((clue) => clue.key === "flag-colors")?.value,
+    ).toBe(source?.href);
   });
 
   it("keeps progress independent and resumes instead of resetting on start", async () => {

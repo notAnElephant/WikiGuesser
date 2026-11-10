@@ -1,7 +1,9 @@
+import sharp from "sharp";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { POST as create } from "@/app/api/challenges/route";
 import { GET, POST } from "@/app/api/challenges/[code]/route";
+import { GET as getFlag } from "@/app/api/challenges/[code]/flag/route";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -10,10 +12,13 @@ const mocks = vi.hoisted(() => ({
   createFriendChallenge: vi.fn(),
   getFriendChallenge: vi.fn(),
   playFriendChallenge: vi.fn(),
+  getRevealedChallengeFlagSource: vi.fn(),
+  fetchWikimediaFlag: vi.fn(),
 }));
 vi.mock("@clerk/nextjs/server", () => ({ auth: mocks.auth }));
 vi.mock("@/src/lib/auth/actor", () => mocks);
 vi.mock("@/src/lib/game/challenge-service", () => mocks);
+vi.mock("@/src/lib/offline/country-pack-server", () => mocks);
 
 const context = { params: Promise.resolve({ code: "opaque" }) };
 const request = (body: unknown) =>
@@ -93,6 +98,40 @@ describe("challenge API routes", () => {
         .status,
     ).toBe(400);
     expect(mocks.playFriendChallenge).toHaveBeenCalledTimes(1);
+  });
+
+  it("serves a private blurred raster instead of the original flag", async () => {
+    const flagRequest = new Request(
+      "http://localhost/api/challenges/opaque/flag",
+    );
+    expect((await getFlag(flagRequest, context)).status).toBe(404);
+    expect(mocks.fetchWikimediaFlag).not.toHaveBeenCalled();
+
+    mocks.getOptionalActorId.mockResolvedValue("guest:browser");
+    mocks.getRevealedChallengeFlagSource.mockResolvedValue(
+      new URL(
+        "https://commons.wikimedia.org/wiki/Special:Redirect/file/Test.svg?width=640",
+      ),
+    );
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="192" height="128">
+      <rect width="96" height="128" fill="red"/>
+      <rect x="96" width="96" height="128" fill="blue"/>
+    </svg>`;
+    mocks.fetchWikimediaFlag.mockResolvedValue(new Response(svg));
+
+    const response = await getFlag(flagRequest, context);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("image/png");
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(response.headers.get("Location")).toBeNull();
+    const { data, info } = await sharp(await response.arrayBuffer())
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    expect([info.width, info.height]).toEqual([96, 64]);
+    const boundary = (32 * info.width + 48) * info.channels;
+    expect(data[boundary]).toBeGreaterThan(0);
+    expect(data[boundary + 2]).toBeGreaterThan(0);
   });
 
   it("reports service failures without returning stored state", async () => {
