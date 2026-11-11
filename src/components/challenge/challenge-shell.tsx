@@ -8,6 +8,7 @@ import { Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { useAppToast } from "@/src/components/app-toaster";
 import { PageHeading } from "@/src/components/page-heading";
 import { ChallengeResults } from "@/src/components/challenge/challenge-results";
 import {
@@ -32,6 +33,7 @@ import type { FriendChallengeView } from "@/src/lib/types";
 
 export function ChallengeShell({ code }: { code: string }) {
   const router = useRouter();
+  const toast = useAppToast();
   const [challenge, setChallenge] = useState<FriendChallengeView | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
@@ -183,8 +185,8 @@ export function ChallengeShell({ code }: { code: string }) {
     try {
       const status = await shareChallenge(shareUrl, resultText!);
       if (status) {
-        setMessage(status);
         setShowResult(false);
+        toast.success(status);
       }
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError")) {

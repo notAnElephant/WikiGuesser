@@ -7,6 +7,7 @@ import { TextInput } from "@astryxdesign/core/TextInput";
 import { VStack } from "@astryxdesign/core/VStack";
 import { Copy, Share2 } from "lucide-react";
 import { useState } from "react";
+import { useAppToast } from "@/src/components/app-toaster";
 
 export async function shareChallenge(url: string, text: string, copy = false) {
   if (!copy && navigator.share) {
@@ -24,11 +25,14 @@ export function ShareChallenge({
   url: string;
   text?: string;
 }) {
+  const toast = useAppToast();
   const [message, setMessage] = useState("");
 
   async function share(copy: boolean) {
     try {
-      setMessage(await shareChallenge(url, text, copy));
+      const status = await shareChallenge(url, text, copy);
+      setMessage("");
+      if (status) toast.success(status);
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError")) {
         setMessage(
