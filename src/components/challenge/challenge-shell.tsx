@@ -3,6 +3,7 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
+import { Show } from "@clerk/nextjs";
 import { Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -230,11 +231,13 @@ export function ChallengeShell({ code }: { code: string }) {
             <Text color="secondary">
               The sender can watch your guesses after you finish.
             </Text>
-            <Text color="secondary">
-              No sign-in needed. Your progress is saved for this account or
-              browser, and challenge scores stay separate from daily
-              leaderboards and regular stats.
-            </Text>
+            <Show when="signed-out">
+              <Text color="secondary">
+                No sign-in needed. Your progress is saved for this account or
+                browser, and challenge scores stay separate from daily
+                leaderboards and regular stats.
+              </Text>
+            </Show>
             <Button
               label="Start challenge"
               isLoading={isBusy}

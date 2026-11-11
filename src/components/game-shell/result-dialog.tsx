@@ -120,7 +120,7 @@ export function GameResultDialog({
         title={result.canonicalAnswer}
       />
 
-      <StackItem size="fill" isScrollable>
+      <StackItem className="scrollbar-hidden" size="fill" isScrollable>
         <VStack gap={0}>
           <HStack align="center" justify="between" gap={3} paddingBlock={3}>
             <VStack gap={1}>
