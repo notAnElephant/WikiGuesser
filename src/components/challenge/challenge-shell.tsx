@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { PageHeading } from "@/src/components/page-heading";
+import { ChallengeResults } from "@/src/components/challenge/challenge-results";
 import {
   ShareChallenge,
   shareChallenge,
@@ -132,7 +133,11 @@ export function ChallengeShell({ code }: { code: string }) {
         fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, version: progress?.version, ...extra }),
+          body: JSON.stringify(
+            action === "start"
+              ? { action, replayNoticeShown: true }
+              : { action, version: progress?.version, ...extra },
+          ),
         });
       // A second tab must wait for the first Start response to set the guest cookie.
       // shortcut: browsers without Web Locks can still race, revisit if they become supported targets.
@@ -205,9 +210,15 @@ export function ChallengeShell({ code }: { code: string }) {
               attempt
             </Text>
             {challenge.isCreator ? (
-              <ShareChallenge url={shareUrl} />
+              <>
+                <ShareChallenge url={shareUrl} />
+                <ChallengeResults key={code} endpoint={`${endpoint}/results`} />
+              </>
             ) : (
               <>
+                <Text color="secondary">
+                  The sender can watch your guesses after you finish.
+                </Text>
                 <Text color="secondary">
                   No sign-in needed. Your progress is saved for this account or
                   browser, and challenge scores stay separate from daily

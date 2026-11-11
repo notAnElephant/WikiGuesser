@@ -85,6 +85,7 @@ export function ChallengeCreator({
             Your challenge is ready. The shared link keeps the answer a secret.
           </Text>
           <ShareChallenge url={url} />
+          <Button label="View results" href={url} variant="secondary" />
           <Button
             label="Create another challenge"
             onClick={() => {

@@ -10,7 +10,10 @@ import type {
   challengeActionSchema,
   createChallengeSchema,
 } from "@/src/lib/api-schemas";
-import { getClerkUserIdFromActorId } from "@/src/lib/auth/actor";
+import {
+  getClerkUserIdFromActorId,
+  isGuestActorId,
+} from "@/src/lib/auth/actor";
 import {
   matchesEntityGuess,
   normalizeGuess,
@@ -33,6 +36,8 @@ import * as repository from "@/src/lib/repository/challenge-repository";
 import { getLatestSnapshot } from "@/src/lib/repository/snapshot-repository";
 import type {
   ChallengeGuess,
+  ChallengeReplay,
+  ChallengeReplaySummary,
   FriendChallengeView,
   GameMode,
   NormalizedEntity,
@@ -77,7 +82,10 @@ export function buildChallengeView(
         if (clue.key === "flag-colors") {
           value = `/api/challenges/${challenge.code}/flag`;
         } else if (clue.key === "currency") {
-          value = splitCurrencyRevealSegments(value, clue.currencyRedactionTexts)
+          value = splitCurrencyRevealSegments(
+            value,
+            clue.currencyRedactionTexts,
+          )
             .map((segment) => (segment.isBlurred ? "???" : segment.text))
             .join("");
         }
@@ -169,6 +177,54 @@ export async function getFriendChallenge(code: string, actorId: string | null) {
   return buildChallengeView(challenge, attempt, actorId);
 }
 
+export async function getChallengeReplays(
+  code: string,
+  actorId: string | null,
+  attemptId?: string,
+): Promise<ChallengeReplaySummary[] | ChallengeReplay | null> {
+  const userId = actorId && getClerkUserIdFromActorId(actorId);
+  if (!userId) return null;
+  const challenge = await repository.findChallenge(code);
+  if (!challenge || challenge.creatorClerkUserId !== userId) return null;
+
+  const attempts = await repository.findCompletedChallengeReplays(
+    challenge.id,
+    attemptId,
+  );
+  if (attemptId !== undefined) {
+    const attempt = attempts[0];
+    if (!attempt?.replayStatus || attempt.replayStatus === "PENDING")
+      return null;
+    const entity = storedEntity(challenge);
+    return {
+      guesses: attempt.guesses as unknown as ChallengeGuess[],
+      outcome: attempt.replayStatus,
+      score: attempt.score,
+      answer: entity.canonicalAnswer,
+      solutionCountry: getSolutionCountryMapData(entity),
+    };
+  }
+
+  let guests = 0;
+  let players = 0;
+  return attempts.flatMap((attempt) => {
+    const { id, actorId, completedAt, replayStatus, score, guesses } = attempt;
+    if (!completedAt || !replayStatus || replayStatus === "PENDING") return [];
+    return [
+      {
+        id,
+        playerLabel: isGuestActorId(actorId)
+          ? `Guest ${++guests}`
+          : `Player ${++players}`,
+        outcome: replayStatus,
+        score,
+        guessCount: (guesses as unknown as ChallengeGuess[]).length,
+        completedAt: completedAt.toISOString(),
+      },
+    ];
+  });
+}
+
 export async function getRevealedChallengeFlagSource(
   code: string,
   actorId: string,
@@ -207,6 +263,7 @@ export async function playFriendChallenge(
       actorId,
       mode === "classic" && clues[0] ? [clues[0].key] : [],
       mode === "classic",
+      input.replayNoticeShown === true,
     );
     return buildChallengeView(challenge, attempt, actorId);
   }
@@ -287,6 +344,14 @@ export async function playFriendChallenge(
     score,
     isCorrect,
     completedAt,
+    replayStatus:
+      completedAt && attempt.replayStatus === "PENDING"
+        ? isCorrect
+          ? ("SOLVED" as const)
+          : input.action === "give-up"
+            ? ("GAVE_UP" as const)
+            : ("OUT_OF_CLUES" as const)
+        : attempt.replayStatus,
   };
   await repository.updateChallengeAttempt(attempt, data);
   return buildChallengeView(

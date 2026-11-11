@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST as create } from "@/app/api/challenges/route";
 import { GET, POST } from "@/app/api/challenges/[code]/route";
 import { GET as getFlag } from "@/app/api/challenges/[code]/flag/route";
+import { GET as getResults } from "@/app/api/challenges/[code]/results/route";
 
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   getOptionalActorId: vi.fn(),
   createFriendChallenge: vi.fn(),
   getFriendChallenge: vi.fn(),
+  getChallengeReplays: vi.fn(),
   playFriendChallenge: vi.fn(),
   getRevealedChallengeFlagSource: vi.fn(),
   fetchWikimediaFlag: vi.fn(),
@@ -98,6 +100,32 @@ describe("challenge API routes", () => {
         .status,
     ).toBe(400);
     expect(mocks.playFriendChallenge).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps replay responses private and uses the server-resolved viewer", async () => {
+    const replayRequest = new Request(
+      "http://localhost/api/challenges/opaque/results?attempt=attempt-1",
+    );
+    mocks.getChallengeReplays.mockResolvedValue(null);
+    const denied = await getResults(replayRequest, context);
+    expect(denied.status).toBe(404);
+    expect(denied.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(mocks.getChallengeReplays).toHaveBeenCalledWith(
+      "opaque",
+      null,
+      "attempt-1",
+    );
+
+    mocks.getOptionalActorId.mockResolvedValue("user:creator");
+    mocks.getChallengeReplays.mockResolvedValue({ guesses: [] });
+    const allowed = await getResults(replayRequest, context);
+    expect(allowed.status).toBe(200);
+    expect(allowed.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(mocks.getChallengeReplays).toHaveBeenLastCalledWith(
+      "opaque",
+      "user:creator",
+      "attempt-1",
+    );
   });
 
   it("serves a private blurred raster instead of the original flag", async () => {

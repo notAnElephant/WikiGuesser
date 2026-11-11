@@ -21,21 +21,48 @@ export function startChallengeAttempt(
   actorId: string,
   revealedClueKeys: string[],
   canGuess: boolean,
+  replayNoticeShown: boolean,
 ) {
   return getPrismaClient().friendChallengeAttempt.upsert({
     where: { challengeId_actorId: { challengeId, actorId } },
     update: {},
-    create: { challengeId, actorId, revealedClueKeys, canGuess },
+    create: {
+      challengeId,
+      actorId,
+      revealedClueKeys,
+      canGuess,
+      replayStatus: replayNoticeShown ? "PENDING" : null,
+    },
   });
 }
 
 export type ChallengeAttemptUpdate = Pick<
   FriendChallengeAttempt,
-  "canGuess" | "score" | "isCorrect" | "completedAt"
+  "canGuess" | "score" | "isCorrect" | "completedAt" | "replayStatus"
 > & {
   revealedClueKeys: string[];
   guesses: Prisma.InputJsonValue;
 };
+
+export function findCompletedChallengeReplays(challengeId: string, id?: string) {
+  return getPrismaClient().friendChallengeAttempt.findMany({
+    where: {
+      challengeId,
+      id,
+      completedAt: { not: null },
+      replayStatus: { in: ["SOLVED", "GAVE_UP", "OUT_OF_CLUES"] },
+    },
+    orderBy: [{ completedAt: "asc" }, { id: "asc" }],
+    select: {
+      id: true,
+      actorId: true,
+      completedAt: true,
+      score: true,
+      replayStatus: true,
+      guesses: true,
+    },
+  });
+}
 
 export async function updateChallengeAttempt(
   attempt: FriendChallengeAttempt,

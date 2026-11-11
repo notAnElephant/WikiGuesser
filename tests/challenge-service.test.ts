@@ -12,6 +12,7 @@ import {
 import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
 import {
   createFriendChallenge,
+  getChallengeReplays,
   getFriendChallenge,
   getRevealedChallengeFlagSource,
   playFriendChallenge,
@@ -22,6 +23,7 @@ const { db, getLatestSnapshot } = vi.hoisted(() => ({
     friendChallenge: { create: vi.fn(), findUnique: vi.fn() },
     friendChallengeAttempt: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       upsert: vi.fn(),
       updateMany: vi.fn(),
     },
@@ -65,6 +67,19 @@ describe("friend challenges", () => {
     }));
     db.friendChallengeAttempt.findUnique.mockImplementation(async ({ where }) =>
       structuredClone(attempts.get(where.challengeId_actorId.actorId) ?? null),
+    );
+    db.friendChallengeAttempt.findMany.mockImplementation(async ({ where }) =>
+      structuredClone(
+        [...attempts.values()].filter(
+          (attempt) =>
+            attempt.challengeId === where.challengeId &&
+            (!("id" in where) ||
+              where.id === undefined ||
+              attempt.id === where.id) &&
+            attempt.completedAt &&
+            where.replayStatus.in.includes(attempt.replayStatus),
+        ),
+      ),
     );
     db.friendChallengeAttempt.upsert.mockImplementation(async ({ create }) => {
       if (!attempts.has(create.actorId))
@@ -225,7 +240,8 @@ describe("friend challenges", () => {
     });
     expect(finished.progress?.score).toBe(40);
     expect(
-      finished.progress?.clues.find((clue) => clue.key === "flag-colors")?.value,
+      finished.progress?.clues.find((clue) => clue.key === "flag-colors")
+        ?.value,
     ).toBe(source?.href);
   });
 
@@ -252,6 +268,114 @@ describe("friend challenges", () => {
     expect(await getFriendChallenge(challenge.code, "guest:a")).toEqual(
       resumed,
     );
+  });
+
+  it.each(["classic", "blurred-lines"] as const)(
+    "shares only disclosed, completed attempts with the sender in %s",
+    async (mode) => {
+      challenge.mode = mode;
+      const code = challenge.code;
+      const owner = "user:creator";
+      const guest = "guest:one";
+      const other = "user:friend";
+      const start = { action: "start", replayNoticeShown: true } as const;
+      await playFriendChallenge(code, guest, start);
+      await playFriendChallenge(code, other, start);
+      await playFriendChallenge(code, "guest:legacy", { action: "start" });
+      await playFriendChallenge(code, "guest:legacy", start);
+      await playFriendChallenge(code, "guest:legacy", {
+        action: "give-up",
+        version: 0,
+      });
+      expect(await getChallengeReplays(code, owner)).toEqual([]);
+      expect(
+        await getChallengeReplays(code, owner, attempts.get(guest)!.id),
+      ).toBeNull();
+      expect(
+        await getChallengeReplays(
+          code,
+          owner,
+          attempts.get("guest:legacy")!.id,
+        ),
+      ).toBeNull();
+
+      let version = 0;
+      if (mode === "blurred-lines") {
+        await playFriendChallenge(code, guest, {
+          action: "reveal",
+          version: version++,
+          clueKey: "continent",
+        });
+      }
+      await playFriendChallenge(code, guest, {
+        action: "guess",
+        version: version++,
+        guess: "Japan",
+      });
+      if (mode === "blurred-lines") {
+        await playFriendChallenge(code, guest, {
+          action: "reveal",
+          version: version++,
+          clueKey: "area",
+        });
+      }
+      await playFriendChallenge(code, guest, {
+        action: "guess",
+        version,
+        guess: "France",
+      });
+      await playFriendChallenge(code, other, { action: "give-up", version: 0 });
+
+      const id = attempts.get(guest)!.id;
+      const summaries = await getChallengeReplays(code, owner);
+      expect(summaries).toMatchObject([
+        { id, playerLabel: "Guest 1", guessCount: 2, outcome: "SOLVED" },
+        { playerLabel: "Player 1", guessCount: 0, outcome: "GAVE_UP" },
+      ]);
+      expect(JSON.stringify(summaries)).not.toMatch(
+        /"actorId"|"guesses"|France/,
+      );
+      expect(await getChallengeReplays(code, owner, id)).toMatchObject({
+        answer: "France",
+        guesses: [
+          { name: "Japan", mapData: expect.any(Object) },
+          { name: "France" },
+        ],
+      });
+      expect(
+        await getChallengeReplays(code, owner, attempts.get(other)!.id),
+      ).toMatchObject({
+        guesses: [],
+        outcome: "GAVE_UP",
+      });
+      db.friendChallengeAttempt.findMany.mockClear();
+      for (const actor of [null, guest, other]) {
+        expect(await getChallengeReplays(code, actor, id)).toBeNull();
+        expect(await getChallengeReplays(code, actor)).toBeNull();
+      }
+      expect(db.friendChallengeAttempt.findMany).not.toHaveBeenCalled();
+
+      challenge.id = "different-challenge";
+      expect(await getChallengeReplays(code, owner, id)).toBeNull();
+    },
+  );
+
+  it("records an exhausted attempt distinctly from giving up", async () => {
+    const entity =
+      challenge.entity as unknown as (typeof demoSnapshot.entities)[0];
+    entity.clues = entity.clues.slice(0, 1);
+    await playFriendChallenge(challenge.code, "guest:a", {
+      action: "start",
+      replayNoticeShown: true,
+    });
+    await playFriendChallenge(challenge.code, "guest:a", {
+      action: "guess",
+      version: 0,
+      guess: "Japan",
+    });
+    expect(
+      await getChallengeReplays(challenge.code, "user:creator"),
+    ).toMatchObject([{ outcome: "OUT_OF_CLUES", guessCount: 1 }]);
   });
 
   it.each(["classic", "blurred-lines"] as const)(

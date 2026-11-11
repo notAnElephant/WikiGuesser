@@ -334,6 +334,25 @@ export interface ChallengeGuess {
   mapData: GuessedCountryMapData | null;
 }
 
+export type ChallengeReplayOutcome = "SOLVED" | "GAVE_UP" | "OUT_OF_CLUES";
+
+export interface ChallengeReplaySummary {
+  id: string;
+  playerLabel: string;
+  outcome: ChallengeReplayOutcome;
+  score: number;
+  guessCount: number;
+  completedAt: string;
+}
+
+export interface ChallengeReplay {
+  guesses: ChallengeGuess[];
+  outcome: ChallengeReplayOutcome;
+  score: number;
+  answer: string;
+  solutionCountry: SolutionCountryMapData | null;
+}
+
 export interface ChallengeProgress {
   version: number;
   clues: RoundClue[];
