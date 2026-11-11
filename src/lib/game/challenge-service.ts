@@ -196,7 +196,21 @@ export async function getChallengeReplays(
     if (!attempt?.replayStatus || attempt.replayStatus === "PENDING")
       return null;
     const entity = storedEntity(challenge);
+    const mode = challenge.mode as GameMode;
+    const revealedClueKeys = attempt.revealedClueKeys as string[];
+    const { clues } = buildRoundProgress(entity, {
+      kind: "challenge",
+      mode,
+      revealedClueKeys,
+      canGuess: false,
+    });
     return {
+      mode,
+      clues: clues.map((clue) => ({
+        ...clue,
+        prefetchedValue: clue.value ?? "",
+      })),
+      revealedClueKeys,
       guesses: attempt.guesses as unknown as ChallengeGuess[],
       outcome: attempt.replayStatus,
       score: attempt.score,
@@ -319,7 +333,12 @@ export async function playFriendChallenge(
       : getGuessedCountryMapData(name, entity, snapshot.entities);
     nextGuesses = [
       ...guesses,
-      { name, direction: mapData?.direction ?? null, mapData },
+      {
+        name,
+        direction: mapData?.direction ?? null,
+        mapData,
+        revealedClueCount: state.revealedClueKeys.length,
+      },
     ];
     if (isCorrect) {
       score = getScoreForGuess(state.revealedClueKeys.length, input.method);

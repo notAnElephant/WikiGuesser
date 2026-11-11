@@ -44,7 +44,10 @@ export type ChallengeAttemptUpdate = Pick<
   guesses: Prisma.InputJsonValue;
 };
 
-export function findCompletedChallengeReplays(challengeId: string, id?: string) {
+export function findCompletedChallengeReplays(
+  challengeId: string,
+  id?: string,
+) {
   return getPrismaClient().friendChallengeAttempt.findMany({
     where: {
       challengeId,
@@ -60,6 +63,7 @@ export function findCompletedChallengeReplays(challengeId: string, id?: string) 
       score: true,
       replayStatus: true,
       guesses: true,
+      ...(id !== undefined ? { revealedClueKeys: true } : {}),
     },
   });
 }

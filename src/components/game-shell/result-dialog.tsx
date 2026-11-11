@@ -41,6 +41,7 @@ interface GameResultDialogProps {
   currentCategoryLabel: string;
   guessedCountries: readonly GuessedCountryMapData[];
   isBusy: boolean;
+  isPrimaryActionIconOnly?: boolean;
   onClose: () => void;
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
@@ -59,6 +60,7 @@ export function GameResultDialog({
   currentCategoryLabel,
   guessedCountries,
   isBusy,
+  isPrimaryActionIconOnly = false,
   onClose,
   onPrimaryAction,
   onSecondaryAction,
@@ -155,10 +157,12 @@ export function GameResultDialog({
             <Button
               icon={<PrimaryActionIcon aria-hidden="true" />}
               isDisabled={isBusy}
+              isIconOnly={isPrimaryActionIconOnly}
               label={primaryActionLabel}
               onClick={handlePrimaryAction}
+              tooltip={isPrimaryActionIconOnly ? primaryActionLabel : undefined}
               variant="primary"
-              width="100%"
+              width={isPrimaryActionIconOnly ? undefined : "100%"}
             />
             {secondaryActionLabel ? (
               <Button

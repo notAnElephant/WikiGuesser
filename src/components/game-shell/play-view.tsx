@@ -29,6 +29,7 @@ import type {
 } from "@/src/components/game-shell/types";
 import type {
   GameMode,
+  GuessedCountryMapData,
   RoundClue,
   SolutionCountryMapData,
 } from "@/src/lib/types";
@@ -82,6 +83,10 @@ interface GamePlayViewProps {
   message: string;
   messageRevision: number;
   result: RoundOutcome | null;
+  replay?: {
+    focusedGuess: GuessedCountryMapData | null;
+    latestClueKey?: string;
+  };
   revealClue: (clueKey: string) => void;
   revealedCount: number;
   restartButtonLabel?: string;
@@ -120,6 +125,7 @@ export function GamePlayView({
   message,
   messageRevision,
   result,
+  replay,
   revealClue,
   revealedCount,
   restartButtonLabel = "New round",
@@ -221,12 +227,16 @@ export function GamePlayView({
 
   useEffect(() => {
     // Keep the newly revealed classic clue in view without scrolling the map away.
-    if (!isRevealMode) {
+    if (replay) {
+      clueScrollRef.current
+        ?.querySelector("[data-replay-latest]")
+        ?.scrollIntoView({ block: "nearest" });
+    } else if (!isRevealMode) {
       clueScrollRef.current?.scrollTo({
         top: clueScrollRef.current.scrollHeight,
       });
     }
-  }, [revealedCount, isRevealMode]);
+  }, [revealedCount, isRevealMode, replay?.latestClueKey]);
 
   useEffect(() => {
     if (isMobile) setIsMapExpanded(false);
@@ -250,7 +260,8 @@ export function GamePlayView({
     <VStack
       gap={0}
       ref={frameRef}
-      height={mobileMap ? height : undefined}
+      height={mobileMap || replay ? height : undefined}
+      paddingBlockEnd={replay && !mobileMap ? 3 : undefined}
       className={
         compactViewport
           ? "fixed inset-x-0 top-0 z-20 min-h-0 overflow-hidden bg-surface"
@@ -277,26 +288,28 @@ export function GamePlayView({
             {currentCategoryLabel} · {getModeMeta(currentMode).label}
           </Text>
         </VStack>
-        <HStack gap={2} align="center" className="shrink-0">
-          <Text
-            color="primary"
-            weight="semibold"
-            textWrap="nowrap"
-            hasTabularNumbers
-          >
-            {potentialScore} pts
-          </Text>
-          <IconButton
-            label="Game options"
-            tooltip="Game options"
-            icon={<MoreHorizontal />}
-            variant="ghost"
-            size="lg"
-            onClick={() => setActionsOpen(true)}
-          />
-        </HStack>
+        {replay ? null : (
+          <HStack gap={2} align="center" className="shrink-0">
+            <Text
+              color="primary"
+              weight="semibold"
+              textWrap="nowrap"
+              hasTabularNumbers
+            >
+              {potentialScore} pts
+            </Text>
+            <IconButton
+              label="Game options"
+              tooltip="Game options"
+              icon={<MoreHorizontal />}
+              variant="ghost"
+              size="lg"
+              onClick={() => setActionsOpen(true)}
+            />
+          </HStack>
+        )}
       </HStack>
-      {header ? (
+      {header && (!replay || mobileMap) ? (
         <VStack
           className={compactViewport ? "hidden" : "shrink-0"}
           paddingInline={4}
@@ -325,20 +338,23 @@ export function GamePlayView({
       <VStack
         gap={0}
         height={
-          isCountryRound && !mobileMap
+          isCountryRound && !mobileMap && !replay
             ? "calc(100dvh - var(--spacing-8) * 4)"
             : undefined
         }
         className={
-          isCountryRound
-            ? "min-h-0 flex-1 lg:min-h-80 lg:flex-none lg:flex-row lg:items-start lg:gap-4"
-            : "min-h-0 flex-1"
+          replay
+            ? "min-h-0 flex-1 lg:flex-row lg:items-start lg:gap-4"
+            : isCountryRound
+              ? "min-h-0 flex-1 lg:min-h-80 lg:flex-none lg:flex-row lg:items-start lg:gap-4"
+              : "min-h-0 flex-1"
         }
       >
         {isCountryRound ? (
           <VStack className="min-h-0 flex-1 lg:h-full" data-game-map="">
             <WorldMapDialog
               countryOptions={availableCountryOptions}
+              focusedGuess={replay?.focusedGuess}
               guessedCountries={guessedCountries}
               embedded
               isExpanded={isMapExpanded}
@@ -383,6 +399,14 @@ export function GamePlayView({
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
+          {replay && !mobileMap && header ? (
+            <VStack
+              paddingInline={4}
+              className="shrink-0 border-b border-border"
+            >
+              {header}
+            </VStack>
+          ) : null}
           <VStack
             gap={compactSheet ? 0 : 2}
             paddingInline={4}
@@ -453,6 +477,9 @@ export function GamePlayView({
                 return (
                   <ListItem
                     key={clue.key}
+                    data-replay-latest={
+                      replay?.latestClueKey === clue.key || undefined
+                    }
                     label={clue.label}
                     className={
                       isRevealMode && index === shownClues.length - 1

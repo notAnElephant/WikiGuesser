@@ -194,45 +194,54 @@ export function ChallengeShell({ code }: { code: string }) {
   }
 
   if (isLoading) return <Text role="status">Loading challenge…</Text>;
-  if (!challenge || !progress || challenge.isCreator) {
+  if (challenge?.isCreator) {
     return (
-      <VStack className="mx-auto w-full max-w-2xl" gap={5}>
-        <PageHeading title="A country challenge for you" />
-        {challenge ? (
+      <ChallengeResults
+        key={code}
+        endpoint={`${endpoint}/results`}
+        overview={
           <>
+            <PageHeading title="A country challenge for you" />
             <Text>
-              {challenge.isCreator
-                ? "You chose this answer. Send the challenge to your friends."
-                : "A friend picked a mystery country. Can you guess it?"}
+              You chose this answer. Send the challenge to your friends.
             </Text>
             <Text color="secondary">
               {getModeMeta(challenge.mode).label} · One country · One scored
               attempt
             </Text>
-            {challenge.isCreator ? (
-              <>
-                <ShareChallenge url={shareUrl} />
-                <ChallengeResults key={code} endpoint={`${endpoint}/results`} />
-              </>
-            ) : (
-              <>
-                <Text color="secondary">
-                  The sender can watch your guesses after you finish.
-                </Text>
-                <Text color="secondary">
-                  No sign-in needed. Your progress is saved for this account or
-                  browser, and challenge scores stay separate from daily
-                  leaderboards and regular stats.
-                </Text>
-                <Button
-                  label="Start challenge"
-                  isLoading={isBusy}
-                  isDisabled={isBusy}
-                  onClick={() => void act("start")}
-                  variant="primary"
-                />
-              </>
-            )}
+            <ShareChallenge url={shareUrl} />
+            <Button href="/" label="Back to games" variant="ghost" />
+          </>
+        }
+      />
+    );
+  }
+  if (!challenge || !progress) {
+    return (
+      <VStack className="mx-auto w-full max-w-2xl" gap={5}>
+        <PageHeading title="A country challenge for you" />
+        {challenge ? (
+          <>
+            <Text>A friend picked a mystery country. Can you guess it?</Text>
+            <Text color="secondary">
+              {getModeMeta(challenge.mode).label} · One country · One scored
+              attempt
+            </Text>
+            <Text color="secondary">
+              The sender can watch your guesses after you finish.
+            </Text>
+            <Text color="secondary">
+              No sign-in needed. Your progress is saved for this account or
+              browser, and challenge scores stay separate from daily
+              leaderboards and regular stats.
+            </Text>
+            <Button
+              label="Start challenge"
+              isLoading={isBusy}
+              isDisabled={isBusy}
+              onClick={() => void act("start")}
+              variant="primary"
+            />
           </>
         ) : (
           <Button
@@ -320,6 +329,7 @@ export function ChallengeShell({ code }: { code: string }) {
             attempt.mapData ? [attempt.mapData] : [],
           )}
           isBusy={isBusy}
+          isPrimaryActionIconOnly
           onClose={() => setShowResult(false)}
           onPrimaryAction={() => void shareResult()}
           primaryActionIcon={Share2}

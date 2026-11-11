@@ -3,6 +3,7 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack } from "@astryxdesign/core/HStack";
+import { IconButton } from "@astryxdesign/core/IconButton";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
@@ -548,10 +549,13 @@ function WaitingState({
             {duel.shareUrl ?? `wikiguesser.com/duel/${duel.inviteCode}`}
           </span>
         </div>
-        <Button
-          icon={copied ? <Check /> : <Copy />}
-          label={copied ? "Copied" : "Copy link"}
+        <IconButton
+          icon={
+            copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />
+          }
+          label={copied ? "Invite link copied" : "Copy invite link"}
           onClick={onCopy}
+          tooltip={copied ? "Invite link copied" : "Copy invite link"}
           variant="secondary"
         />
       </div>
@@ -944,19 +948,27 @@ function Scoreboard({
               variant="primary"
             />
           ) : null}
-          <Button
-            icon={shareStatus === "copied" ? <Check /> : <Share2 />}
-            label={
-              shareStatus === "copied"
-                ? "Result copied"
-                : shareStatus === "failed"
-                  ? "Try sharing again"
-                  : "Share result"
+          <IconButton
+            icon={
+              shareStatus === "copied" ? (
+                <Check aria-hidden="true" />
+              ) : (
+                <Share2 aria-hidden="true" />
+              )
             }
+            label="Share result"
             onClick={() => void shareResult()}
+            tooltip="Share result"
             variant="secondary"
           />
         </div>
+        {shareStatus !== "idle" ? (
+          <Text role="status">
+            {shareStatus === "copied"
+              ? "Result copied."
+              : "Sharing failed. Try again."}
+          </Text>
+        ) : null}
       </div>
       <DuelRoundResults rounds={duel.rounds} />
     </Card>

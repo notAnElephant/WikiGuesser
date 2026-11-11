@@ -2,6 +2,7 @@
 
 import { Button } from "@astryxdesign/core/Button";
 import { Icon } from "@astryxdesign/core/Icon";
+import { IconButton } from "@astryxdesign/core/IconButton";
 import {
   SegmentedControl,
   SegmentedControlItem,
@@ -166,16 +167,23 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
                 value={inviteUrl}
                 width="100%"
               />
-              <Button
-                icon={copied ? <Check /> : <Copy />}
-                label={copied ? "Copied" : "Copy"}
+              <IconButton
+                icon={
+                  copied ? (
+                    <Check aria-hidden="true" />
+                  ) : (
+                    <Copy aria-hidden="true" />
+                  )
+                }
+                label={copied ? "Invite link copied" : "Copy invite link"}
                 onClick={() => void copyInvite()}
-                tooltip="Copy invite link"
+                tooltip={copied ? "Invite link copied" : "Copy invite link"}
                 variant="secondary"
               />
-              <Button
-                icon={<Share2 />}
-                label="Share"
+              <IconButton
+                icon={<Share2 aria-hidden="true" />}
+                label="Share invite"
+                tooltip="Share invite"
                 onClick={() => void shareInvite()}
                 variant="primary"
               />

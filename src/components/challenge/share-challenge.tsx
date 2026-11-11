@@ -1,10 +1,11 @@
 "use client";
 
-import { Button } from "@astryxdesign/core/Button";
 import { HStack } from "@astryxdesign/core/HStack";
+import { IconButton } from "@astryxdesign/core/IconButton";
 import { Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { VStack } from "@astryxdesign/core/VStack";
+import { Copy, Share2 } from "lucide-react";
 import { useState } from "react";
 
 export async function shareChallenge(url: string, text: string, copy = false) {
@@ -41,13 +42,17 @@ export function ShareChallenge({
     <VStack gap={2}>
       <TextInput isReadOnly label="Challenge link" value={url} width="100%" />
       <HStack gap={2} wrap="wrap">
-        <Button
-          label="Share"
+        <IconButton
+          icon={<Share2 aria-hidden="true" />}
+          label="Share challenge"
+          tooltip="Share challenge"
           onClick={() => void share(false)}
           variant="primary"
         />
-        <Button
-          label="Copy"
+        <IconButton
+          icon={<Copy aria-hidden="true" />}
+          label="Copy challenge link"
+          tooltip="Copy challenge link"
           onClick={() => void share(true)}
           variant="secondary"
         />

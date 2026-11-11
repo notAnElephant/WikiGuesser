@@ -10,6 +10,7 @@ import {
   createChallengeSchema,
 } from "@/src/lib/api-schemas";
 import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
+import { getChallengeReplaySteps } from "@/src/lib/game/challenge-replay";
 import {
   createFriendChallenge,
   getChallengeReplays,
@@ -306,6 +307,11 @@ describe("friend challenges", () => {
           version: version++,
           clueKey: "continent",
         });
+        await playFriendChallenge(code, guest, {
+          action: "reveal",
+          version: version++,
+          clueKey: "population",
+        });
       }
       await playFriendChallenge(code, guest, {
         action: "guess",
@@ -335,13 +341,43 @@ describe("friend challenges", () => {
       expect(JSON.stringify(summaries)).not.toMatch(
         /"actorId"|"guesses"|France/,
       );
-      expect(await getChallengeReplays(code, owner, id)).toMatchObject({
+      const replay = await getChallengeReplays(code, owner, id);
+      expect(replay).toMatchObject({
         answer: "France",
         guesses: [
-          { name: "Japan", mapData: expect.any(Object) },
-          { name: "France" },
+          {
+            name: "Japan",
+            mapData: expect.any(Object),
+            revealedClueCount: mode === "classic" ? 1 : 2,
+          },
+          { name: "France", revealedClueCount: mode === "classic" ? 2 : 3 },
         ],
       });
+      if (!replay || Array.isArray(replay))
+        throw new Error("Expected replay details");
+      const timeline = getChallengeReplaySteps(replay);
+      expect(timeline.approximate).toBe(false);
+      expect(timeline.steps.map(({ kind }) => kind)).toEqual(
+        mode === "classic"
+          ? ["clue", "guess", "clue", "guess", "finish"]
+          : ["clue", "clue", "guess", "clue", "guess", "finish"],
+      );
+      if (mode === "blurred-lines") {
+        expect(replay.revealedClueKeys).toEqual([
+          "continent",
+          "population",
+          "area",
+        ]);
+        expect(
+          getChallengeReplaySteps({
+            ...replay,
+            guesses: replay.guesses.map((guess) => ({
+              ...guess,
+              revealedClueCount: undefined,
+            })),
+          }).approximate,
+        ).toBe(true);
+      }
       expect(
         await getChallengeReplays(code, owner, attempts.get(other)!.id),
       ).toMatchObject({

@@ -813,7 +813,7 @@ export function WorldMapDialog({
   }
 
   useEffect(() => {
-    if (presentation !== "result") return;
+    if (presentation !== "result" && focusedGuess === undefined) return;
     if (solutionCountry) focusLocation(solutionCountry);
     else if (focusedGuess) focusCountry(focusedGuess);
     else if (focusedGuess === null) resetWorld();
@@ -827,6 +827,7 @@ export function WorldMapDialog({
 
     if (
       presentation !== "game" ||
+      focusedGuess !== undefined ||
       guessedCountries.length <= focusedGuessedCountryCountRef.current
     ) {
       return;
@@ -837,7 +838,7 @@ export function WorldMapDialog({
     if (lastGuessedCountry && focusCountry(lastGuessedCountry)) {
       focusedGuessedCountryCountRef.current = guessedCountries.length;
     }
-  }, [guessedCountries, mapSize, presentation, projection]);
+  }, [focusedGuess, guessedCountries, mapSize, presentation, projection]);
 
   useEffect(
     () => () => {
