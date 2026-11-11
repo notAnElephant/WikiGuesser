@@ -1,11 +1,13 @@
 "use client";
 
-import { Button } from "@astryxdesign/core/Button";
 import { HStack } from "@astryxdesign/core/HStack";
+import { IconButton } from "@astryxdesign/core/IconButton";
 import { Text } from "@astryxdesign/core/Text";
 import { TextInput } from "@astryxdesign/core/TextInput";
 import { VStack } from "@astryxdesign/core/VStack";
+import { Copy, Share2 } from "lucide-react";
 import { useState } from "react";
+import { useAppToast } from "@/src/components/app-toaster";
 
 export async function shareChallenge(url: string, text: string, copy = false) {
   if (!copy && navigator.share) {
@@ -23,11 +25,14 @@ export function ShareChallenge({
   url: string;
   text?: string;
 }) {
+  const toast = useAppToast();
   const [message, setMessage] = useState("");
 
   async function share(copy: boolean) {
     try {
-      setMessage(await shareChallenge(url, text, copy));
+      const status = await shareChallenge(url, text, copy);
+      setMessage("");
+      if (status) toast.success(status);
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError")) {
         setMessage(
@@ -41,13 +46,17 @@ export function ShareChallenge({
     <VStack gap={2}>
       <TextInput isReadOnly label="Challenge link" value={url} width="100%" />
       <HStack gap={2} wrap="wrap">
-        <Button
-          label="Share"
+        <IconButton
+          icon={<Share2 aria-hidden="true" />}
+          label="Share challenge"
+          tooltip="Share challenge"
           onClick={() => void share(false)}
           variant="primary"
         />
-        <Button
-          label="Copy"
+        <IconButton
+          icon={<Copy aria-hidden="true" />}
+          label="Copy challenge link"
+          tooltip="Copy challenge link"
           onClick={() => void share(true)}
           variant="secondary"
         />

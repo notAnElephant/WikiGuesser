@@ -56,6 +56,7 @@ interface WorldMapDialogProps {
   countryOptions?: readonly string[];
   drawerState?: "hidden" | "medium" | "expanded";
   duelResult?: boolean;
+  focusedGuess?: GuessedCountryMapData | null;
   guessedCountries: readonly DuelResultGuessedCountry[];
   isActive?: boolean;
   isCountryPicker?: boolean;
@@ -201,6 +202,7 @@ function DirectionArrow({ direction }: { direction: GuessDirection }) {
 export function WorldMapDialog({
   embedded = false,
   countryOptions = [],
+  focusedGuess,
   guessedCountries,
   isActive = false,
   isCountryPicker = false,
@@ -811,12 +813,11 @@ export function WorldMapDialog({
   }
 
   useEffect(() => {
-    if (presentation !== "result" || !solutionCountry) {
-      return;
-    }
-
-    focusLocation(solutionCountry);
-  }, [mapSize, presentation, projection, solutionCountry]);
+    if (presentation !== "result" && focusedGuess === undefined) return;
+    if (solutionCountry) focusLocation(solutionCountry);
+    else if (focusedGuess) focusCountry(focusedGuess);
+    else if (focusedGuess === null) resetWorld();
+  }, [focusedGuess, mapSize, presentation, projection, solutionCountry]);
 
   useEffect(() => {
     if (guessedCountries.length === 0) {
@@ -826,6 +827,7 @@ export function WorldMapDialog({
 
     if (
       presentation !== "game" ||
+      focusedGuess !== undefined ||
       guessedCountries.length <= focusedGuessedCountryCountRef.current
     ) {
       return;
@@ -836,7 +838,7 @@ export function WorldMapDialog({
     if (lastGuessedCountry && focusCountry(lastGuessedCountry)) {
       focusedGuessedCountryCountRef.current = guessedCountries.length;
     }
-  }, [guessedCountries, mapSize, presentation, projection]);
+  }, [focusedGuess, guessedCountries, mapSize, presentation, projection]);
 
   useEffect(
     () => () => {

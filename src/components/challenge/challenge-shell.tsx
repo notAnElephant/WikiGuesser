@@ -3,11 +3,14 @@
 import { Button } from "@astryxdesign/core/Button";
 import { Text } from "@astryxdesign/core/Text";
 import { VStack } from "@astryxdesign/core/VStack";
+import { Show } from "@clerk/nextjs";
 import { Share2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { useAppToast } from "@/src/components/app-toaster";
 import { PageHeading } from "@/src/components/page-heading";
+import { ChallengeResults } from "@/src/components/challenge/challenge-results";
 import {
   ShareChallenge,
   shareChallenge,
@@ -30,6 +33,7 @@ import type { FriendChallengeView } from "@/src/lib/types";
 
 export function ChallengeShell({ code }: { code: string }) {
   const router = useRouter();
+  const toast = useAppToast();
   const [challenge, setChallenge] = useState<FriendChallengeView | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
@@ -132,7 +136,11 @@ export function ChallengeShell({ code }: { code: string }) {
         fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, version: progress?.version, ...extra }),
+          body: JSON.stringify(
+            action === "start"
+              ? { action, replayNoticeShown: true }
+              : { action, version: progress?.version, ...extra },
+          ),
         });
       // A second tab must wait for the first Start response to set the guest cookie.
       // shortcut: browsers without Web Locks can still race, revisit if they become supported targets.
@@ -177,8 +185,8 @@ export function ChallengeShell({ code }: { code: string }) {
     try {
       const status = await shareChallenge(shareUrl, resultText!);
       if (status) {
-        setMessage(status);
         setShowResult(false);
+        toast.success(status);
       }
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError")) {
@@ -189,39 +197,56 @@ export function ChallengeShell({ code }: { code: string }) {
   }
 
   if (isLoading) return <Text role="status">Loading challenge…</Text>;
-  if (!challenge || !progress || challenge.isCreator) {
+  if (challenge?.isCreator) {
     return (
-      <VStack className="mx-auto w-full max-w-2xl" gap={5}>
-        <PageHeading title="A country challenge for you" />
-        {challenge ? (
+      <ChallengeResults
+        key={code}
+        endpoint={`${endpoint}/results`}
+        overview={
           <>
+            <PageHeading title="A country challenge for you" />
             <Text>
-              {challenge.isCreator
-                ? "You chose this answer. Send the challenge to your friends."
-                : "A friend picked a mystery country. Can you guess it?"}
+              You chose this answer. Send the challenge to your friends.
             </Text>
             <Text color="secondary">
               {getModeMeta(challenge.mode).label} · One country · One scored
               attempt
             </Text>
-            {challenge.isCreator ? (
-              <ShareChallenge url={shareUrl} />
-            ) : (
-              <>
-                <Text color="secondary">
-                  No sign-in needed. Your progress is saved for this account or
-                  browser, and challenge scores stay separate from daily
-                  leaderboards and regular stats.
-                </Text>
-                <Button
-                  label="Start challenge"
-                  isLoading={isBusy}
-                  isDisabled={isBusy}
-                  onClick={() => void act("start")}
-                  variant="primary"
-                />
-              </>
-            )}
+            <ShareChallenge url={shareUrl} />
+            <Button href="/" label="Back to games" variant="ghost" />
+          </>
+        }
+      />
+    );
+  }
+  if (!challenge || !progress) {
+    return (
+      <VStack className="mx-auto w-full max-w-2xl" gap={5}>
+        <PageHeading title="A country challenge for you" />
+        {challenge ? (
+          <>
+            <Text>A friend picked a mystery country. Can you guess it?</Text>
+            <Text color="secondary">
+              {getModeMeta(challenge.mode).label} · One country · One scored
+              attempt
+            </Text>
+            <Text color="secondary">
+              The sender can watch your guesses after you finish.
+            </Text>
+            <Show when="signed-out">
+              <Text color="secondary">
+                No sign-in needed. Your progress is saved for this account or
+                browser, and challenge scores stay separate from daily
+                leaderboards and regular stats.
+              </Text>
+            </Show>
+            <Button
+              label="Start challenge"
+              isLoading={isBusy}
+              isDisabled={isBusy}
+              onClick={() => void act("start")}
+              variant="primary"
+            />
           </>
         ) : (
           <Button
@@ -309,6 +334,7 @@ export function ChallengeShell({ code }: { code: string }) {
             attempt.mapData ? [attempt.mapData] : [],
           )}
           isBusy={isBusy}
+          isPrimaryActionIconOnly
           onClose={() => setShowResult(false)}
           onPrimaryAction={() => void shareResult()}
           primaryActionIcon={Share2}

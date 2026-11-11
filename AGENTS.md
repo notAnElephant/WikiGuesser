@@ -8,6 +8,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+## Language-agnostic UI
+
+Use familiar icon buttons for actions that are clear from the icon and context, such as previous, next, play, pause, share, and copy. Give each icon button an accessible name and a tooltip. Use visible text when an icon alone would leave the action or destination unclear.
+
 <!-- ASTRYX:START -->
 Astryx v0.5.2 · 163 components
 CLI: run every command as `pnpm exec astryx <cmd>` (shown below as `astryx ...`).

@@ -25,6 +25,13 @@ model FriendChallenge {
   attempts           FriendChallengeAttempt[]
 }
 
+enum ChallengeReplayStatus {
+  PENDING
+  SOLVED
+  GAVE_UP
+  OUT_OF_CLUES
+}
+
 model FriendChallengeAttempt {
   id                String          @id @default(cuid())
   challengeId       String
@@ -37,6 +44,7 @@ model FriendChallengeAttempt {
   score             Int             @default(0)
   isCorrect         Boolean         @default(false)
   completedAt       DateTime?
+  replayStatus      ChallengeReplayStatus?
   createdAt         DateTime        @default(now())
 
   @@unique([challengeId, actorId])

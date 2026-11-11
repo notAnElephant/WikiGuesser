@@ -48,7 +48,10 @@ export const createChallengeSchema = z.object({
 });
 
 export const challengeActionSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("start") }),
+  z.object({
+    action: z.literal("start"),
+    replayNoticeShown: z.literal(true).optional(),
+  }),
   z.object({
     action: z.literal("guess"),
     version: z.number().int().nonnegative(),
