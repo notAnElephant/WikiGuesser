@@ -708,8 +708,17 @@ export function GamePlayView({
                           size="lg"
                           variant="secondary"
                           icon={<Eye />}
-                          isDisabled={isBusy || !isRevealStep}
-                          onClick={() => revealClue(clue.key)}
+                          isDisabled={isBusy || !isRevealMode}
+                          className={isRevealStep ? undefined : "opacity-50"}
+                          onClick={() => {
+                            if (isRevealStep) {
+                              revealClue(clue.key);
+                            } else {
+                              toast.info("Make a guess first.", {
+                                id: "make-a-guess-first",
+                              });
+                            }
+                          }}
                         >
                           Reveal
                         </Button>
