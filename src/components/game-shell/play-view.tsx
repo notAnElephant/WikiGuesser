@@ -202,8 +202,9 @@ export function GamePlayView({
           ? "40%"
           : "auto"
     : undefined;
-  // On a short keyboard viewport, reclaim navigation space for the map.
+  // On a short keyboard viewport, prioritize the clue and guess controls.
   const compactViewport = mobileMap && isTyping && visibleHeight < 500;
+  const prioritizeGuess = compactViewport && isRevealMode;
   const latestClue = currentClues
     .filter((clue) => clue.isRevealed && clue.key !== "flag-colors")
     .at(-1);
@@ -350,7 +351,7 @@ export function GamePlayView({
                 autoCorrect="off"
                 spellCheck={false}
                 enterKeyHint="go"
-                className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-card py-1.5 pl-9 pr-3 text-base text-primary outline-none focus:border-accent-bg focus:ring-2 focus:ring-accent-muted"
+                className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-card py-1.5 pl-9 pr-3 text-lg text-primary outline-none focus:border-accent-bg focus:ring-2 focus:ring-accent-muted lg:text-base"
                 disabled={isBusy}
                 value={guess}
                 placeholder={isCountryRound ? "Search country" : "Type answer"}
@@ -415,7 +416,7 @@ export function GamePlayView({
               className="shrink-0"
               isDisabled={!canSubmitGuess}
               isLoading={isBusy}
-              onMouseDown={(event) => event.preventDefault()}
+              onPointerDown={(event) => event.preventDefault()}
             />
           </HStack>
           {validationMessage && !suggestionsOpen ? (
@@ -560,7 +561,7 @@ export function GamePlayView({
           as="section"
           aria-label="Clues and guess"
           height={sheetHeight}
-          className={`relative min-h-0 shrink-0 overflow-y-auto bg-surface ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealStep ? "game-phase-cue" : ""} ${compactViewport ? "max-h-full" : ""}`}
+          className={`relative shrink-0 overflow-y-auto bg-surface ${prioritizeGuess ? "min-h-1/2" : "min-h-0"} ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealStep ? "game-phase-cue" : ""} ${compactViewport ? "max-h-full" : ""}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
@@ -570,6 +571,13 @@ export function GamePlayView({
               className="shrink-0 border-b border-border"
             >
               {header}
+            </VStack>
+          ) : null}
+          {prioritizeGuess && latestClue ? (
+            <VStack paddingInline={3} paddingBlock={1} className="shrink-0">
+              <Text type="supporting" color="secondary">
+                {latestClue.label}: {renderClueValue(latestClue, false)}
+              </Text>
             </VStack>
           ) : null}
           <VStack
