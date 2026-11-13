@@ -2,6 +2,7 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 
+import { deriveDisplayName } from "@/src/lib/auth/user-profile";
 import { getPrismaClient } from "@/src/lib/repository/prisma";
 
 export async function syncLeaderboardUsername(expectedUsername: string) {
@@ -13,13 +14,13 @@ export async function syncLeaderboardUsername(expectedUsername: string) {
     where: { clerkUserId: userId },
     select: { displayName: true },
   });
-  if (!profile || profile.displayName === expectedUsername) return;
+  if (!profile || profile.displayName?.toLowerCase() === expectedUsername) return;
 
   const user = await currentUser();
   if (user?.username !== expectedUsername) return;
 
   await profiles.updateMany({
     where: { clerkUserId: userId, displayName: profile.displayName },
-    data: { displayName: user.username },
+    data: { displayName: deriveDisplayName(user) },
   });
 }

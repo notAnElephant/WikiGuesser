@@ -49,11 +49,12 @@ export function deriveLeaderboardNameDefault(user: ClerkProfileLike) {
 }
 
 export function deriveDisplayName(user: ClerkProfileLike) {
-  return (
-    user.username?.trim() ||
-    getLeaderboardNameFromMetadata(user.publicMetadata) ||
-    deriveLeaderboardNameDefault(user)
-  );
+  const username = user.username?.trim();
+  const legacyName = getLeaderboardNameFromMetadata(user.publicMetadata);
+  if (legacyName && (!username || legacyName.toLowerCase() === username)) {
+    return legacyName;
+  }
+  return username || deriveLeaderboardNameDefault(user);
 }
 
 export async function getClerkProfileSnapshot(

@@ -31,6 +31,15 @@ describe("user profile names", () => {
     ).toBe("ada_lovelace");
   });
 
+  it.each(["XIII.Julien", "#1Tester"])("preserves the original casing of %s", (name) => {
+    expect(
+      deriveDisplayName({
+        username: name.toLowerCase(),
+        publicMetadata: { leaderboardName: name },
+      }),
+    ).toBe(name);
+  });
+
   it("uses the chosen leaderboard name for score snapshots", () => {
     expect(
       deriveDisplayName({
