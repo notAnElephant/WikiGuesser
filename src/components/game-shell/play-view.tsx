@@ -41,6 +41,7 @@ import {
   MoreHorizontal,
   RotateCcw,
   Search,
+  Send,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import {
@@ -215,8 +216,12 @@ export function GamePlayView({
       toast.dismiss("game-status");
       return;
     }
-    toast[statusAppearance.tone](message, { id: "game-status" });
-  }, [message, messageRevision, statusAppearance.tone, toast]);
+    const statusMessage =
+      message === "Clue unlocked." || message === "Last clue."
+        ? `${message} ${isCountryRound ? "Guess a country now." : "Make a guess now."}`
+        : message;
+    toast[statusAppearance.tone](statusMessage, { id: "game-status" });
+  }, [isCountryRound, message, messageRevision, statusAppearance.tone, toast]);
 
   useEffect(() => {
     setIsCountryListOpen(false);
@@ -261,26 +266,14 @@ export function GamePlayView({
   const guessForm =
     round && !isRevealStep ? (
       <form
-        className={
-          isCountryRound
-            ? "pointer-events-auto flex min-h-0 w-full max-w-sm flex-col"
-            : undefined
-        }
+        className="flex min-h-0 flex-col"
         onSubmit={(event) => {
           if (canSubmitGuess) inputRef.current?.blur();
           setIsCountryListOpen(false);
           handleGuessSubmit(event);
         }}
       >
-        <VStack
-          gap={2}
-          padding={isCountryRound ? 2 : undefined}
-          className={
-            isCountryRound
-              ? "min-h-0 rounded-xl border border-border bg-surface shadow-md"
-              : undefined
-          }
-        >
+        <VStack gap={2} className="min-h-0">
           <HStack gap={2} align="center" justify="between">
             <FieldLabel
               inputID={inputId}
@@ -294,8 +287,42 @@ export function GamePlayView({
               </Text>
             ) : null}
           </HStack>
+          {isCountryRound && suggestionsOpen ? (
+            matchingCountries.length ? (
+              <VStack
+                id={optionsId}
+                role="listbox"
+                aria-label="Country suggestions"
+                gap={1}
+                className={`min-h-0 overflow-y-auto overscroll-contain touch-pan-y ${compactViewport ? "max-h-20" : "max-h-32"}`}
+              >
+                {matchingCountries.map((country, index) => (
+                  <button
+                    key={country}
+                    id={`${optionsId}-${index}`}
+                    role="option"
+                    aria-selected={activeOption === index}
+                    tabIndex={-1}
+                    type="button"
+                    className="min-h-11 shrink-0 rounded-lg bg-muted px-3 py-1 text-left text-sm text-primary hover:bg-accent-muted aria-selected:bg-accent-muted"
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={() => selectCountry(country)}
+                  >
+                    {country}
+                  </button>
+                ))}
+              </VStack>
+            ) : (
+              <Text type="supporting" role="status" className="px-1">
+                No matching countries. Try another name.
+              </Text>
+            )
+          ) : null}
           <HStack gap={2} align="center">
-            <HStack align="center" className="relative min-w-0 flex-1">
+            <HStack
+              align="center"
+              className="game-phase-cue min-w-0 flex-1 rounded-lg"
+            >
               <Search
                 aria-hidden="true"
                 className="pointer-events-none absolute left-3 size-4 text-secondary"
@@ -323,7 +350,7 @@ export function GamePlayView({
                 autoCorrect="off"
                 spellCheck={false}
                 enterKeyHint="go"
-                className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-lg text-primary outline-none focus:border-accent-bg focus:ring-2 focus:ring-accent-muted"
+                className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-card py-1.5 pl-9 pr-3 text-base text-primary outline-none focus:border-accent-bg focus:ring-2 focus:ring-accent-muted"
                 disabled={isBusy}
                 value={guess}
                 placeholder={isCountryRound ? "Search country" : "Type answer"}
@@ -378,8 +405,10 @@ export function GamePlayView({
                 }}
               />
             </HStack>
-            <Button
+            <IconButton
               label="Guess"
+              tooltip="Submit guess"
+              icon={<Send aria-hidden="true" />}
               size="lg"
               type="submit"
               variant="primary"
@@ -389,42 +418,6 @@ export function GamePlayView({
               onMouseDown={(event) => event.preventDefault()}
             />
           </HStack>
-          {isCountryRound && !isTyping ? (
-            <Text color="secondary" type="supporting">
-              Type a name or tap a country on the map.
-            </Text>
-          ) : null}
-          {isCountryRound && suggestionsOpen ? (
-            matchingCountries.length ? (
-              <VStack
-                id={optionsId}
-                role="listbox"
-                aria-label="Country suggestions"
-                gap={1}
-                className="min-h-0 max-h-40 overflow-y-auto overscroll-contain touch-pan-y"
-              >
-                {matchingCountries.map((country, index) => (
-                  <button
-                    key={country}
-                    id={`${optionsId}-${index}`}
-                    role="option"
-                    aria-selected={activeOption === index}
-                    tabIndex={-1}
-                    type="button"
-                    className="min-h-11 shrink-0 rounded-lg bg-muted px-3 py-1 text-left text-sm text-primary hover:bg-accent-muted aria-selected:bg-accent-muted"
-                    onPointerDown={(event) => event.preventDefault()}
-                    onClick={() => selectCountry(country)}
-                  >
-                    {country}
-                  </button>
-                ))}
-              </VStack>
-            ) : (
-              <Text type="supporting" role="status" className="px-1">
-                No matching countries. Try another name.
-              </Text>
-            )
-          ) : null}
           {validationMessage && !suggestionsOpen ? (
             <Text id={validationId} role="status" className="text-warning">
               {validationMessage}
@@ -560,23 +553,14 @@ export function GamePlayView({
                 solutionCountry ?? result?.solutionCountry ?? null
               }
             />
-            {guessForm ? (
-              <VStack
-                align="center"
-                padding={2}
-                className="pointer-events-none absolute inset-0 z-20 sm:p-3"
-              >
-                {guessForm}
-              </VStack>
-            ) : null}
           </VStack>
         ) : null}
         <VStack
           gap={0}
           as="section"
-          aria-label={isCountryRound ? "Clues" : "Clues and guess"}
+          aria-label="Clues and guess"
           height={sheetHeight}
-          className={`relative min-h-0 shrink-0 overflow-y-auto bg-surface ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealStep ? "game-phase-cue" : ""}`}
+          className={`relative min-h-0 shrink-0 overflow-y-auto bg-surface ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealStep ? "game-phase-cue" : ""} ${compactViewport ? "max-h-full" : ""}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
@@ -592,7 +576,11 @@ export function GamePlayView({
             gap={compactSheet ? 0 : 2}
             paddingInline={4}
             paddingBlock={compactSheet ? 1 : 3}
-            className="shrink-0 rounded-t-xl border-b border-border"
+            className={
+              compactViewport
+                ? "hidden"
+                : "shrink-0 rounded-t-xl border-b border-border"
+            }
           >
             <HStack justify="between" align="center" gap={2}>
               <Text
@@ -737,11 +725,11 @@ export function GamePlayView({
             {boardAction}
             {sideFooter ? <VStack paddingBlock={3}>{sideFooter}</VStack> : null}
           </VStack>
-          {guessForm && !isCountryRound ? (
+          {guessForm ? (
             <VStack
               paddingInline={3}
               paddingBlock={2}
-              className="shrink-0 border-t border-border"
+              className="min-h-0 border-t border-border"
             >
               {guessForm}
             </VStack>

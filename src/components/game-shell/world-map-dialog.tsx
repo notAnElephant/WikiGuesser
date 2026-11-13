@@ -329,7 +329,7 @@ export function WorldMapDialog({
     point: [number, number],
     targetSize = COUNTRY_TOUCH_TARGET_SIZE,
   ) {
-    if (!onCountryGuess || !projection) return;
+    if (!projection || (!onCountryGuess && !onMapClickDuringReveal)) return;
     const candidates = new Set<string>();
     const overlappingTargets = getOverlappingMapTargets(
       targetSize < COUNTRY_TOUCH_TARGET_SIZE
@@ -363,7 +363,7 @@ export function WorldMapDialog({
         }
       }
     }
-    if (candidates.size === 1) onCountryGuess([...candidates][0]);
+    if (candidates.size === 1) onCountryGuess?.([...candidates][0]);
     else if (candidates.size > 1 && location) {
       const transform = getFocusedMapTransform({
         location: { longitude: location[0], latitude: location[1] },
@@ -1061,7 +1061,7 @@ export function WorldMapDialog({
               />
             </>
           ) : null}
-          {presentation === "game" && !embedded && onCountryGuess && !isCountryPicker ? (
+          {presentation === "game" && onCountryGuess && !isCountryPicker ? (
             <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-accent-bg/20 bg-body px-3 py-1.5 text-xs font-semibold text-accent shadow-sm backdrop-blur  sm:left-4 sm:top-4">
               Tap a country
             </span>
@@ -1070,6 +1070,7 @@ export function WorldMapDialog({
             aria-label="Country outlines and small-country markers"
             className={`size-full touch-none select-none ${canInteractWithMap ? "" : "pointer-events-none"} ${onCountryGuess ? "map-world-guessing" : ""}`}
             data-suppress-touch-highlight={suppressTouchHighlight || undefined}
+            onClick={onMapClickDuringReveal}
             onTouchStartCapture={(event) => {
               // Keep pinch hover suppressed after release until the next single touch.
               setSuppressTouchHighlight(event.touches.length > 1);
@@ -1112,13 +1113,11 @@ export function WorldMapDialog({
                         d={countryPath}
                         key={`${country.id ?? name}-${index}`}
                         onClick={
-                          onMapClickDuringReveal
-                            ? onMapClickDuringReveal
-                            : guessedCountry
-                              ? () => focusCountry(guessedCountry)
-                              : onCountryGuess && playableCountry
-                                ? () => onCountryGuess(playableCountry)
-                                : undefined
+                          guessedCountry
+                            ? () => focusCountry(guessedCountry)
+                            : onCountryGuess && playableCountry
+                              ? () => onCountryGuess(playableCountry)
+                              : undefined
                         }
                         vectorEffect="non-scaling-stroke"
                       >
@@ -1183,8 +1182,7 @@ export function WorldMapDialog({
                 (playableCountry && (onCountryGuess || onMapClickDuringReveal)),
               );
               const activate = () => {
-                if (onMapClickDuringReveal) onMapClickDuringReveal();
-                else if (guessedCountry) focusCountry(guessedCountry);
+                if (guessedCountry) focusCountry(guessedCountry);
                 else if (isSolution && solutionCountry)
                   focusLocation(solutionCountry);
                 else if (isCountryPicker && playableCountry)
@@ -1213,8 +1211,7 @@ export function WorldMapDialog({
                           const bounds =
                             svgRef.current!.getBoundingClientRect();
                           if (
-                            !onMapClickDuringReveal &&
-                            onCountryGuess &&
+                            (onCountryGuess || onMapClickDuringReveal) &&
                             !guessedCountry &&
                             !isSolution
                           ) {
@@ -1239,6 +1236,7 @@ export function WorldMapDialog({
                             event.preventDefault();
                             event.stopPropagation();
                             activate();
+                            onMapClickDuringReveal?.();
                           }
                         }
                       : undefined
@@ -1317,7 +1315,10 @@ export function WorldMapDialog({
                     aria-label={`${country.name}. Goal is ${DIRECTION_LABEL[country.direction]}.`}
                     className="map-guess-marker absolute z-5"
                     key={country.qid}
-                    onClick={() => focusCountry(country)}
+                    onClick={() => {
+                      focusCountry(country);
+                      onMapClickDuringReveal?.();
+                    }}
                     style={{ left, top }}
                     title={`Focus ${country.name}`}
                     type="button"
