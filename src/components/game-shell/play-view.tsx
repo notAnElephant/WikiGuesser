@@ -181,6 +181,7 @@ export function GamePlayView({
         )
       : [];
   const suggestionsOpen = isCountryListOpen && hasCountrySearch;
+  const hasSuggestions = suggestionsOpen && matchingCountries.length > 0;
   const mobileMap = isMobile && isCountryRound;
   useScrollLock(mobileMap);
   const compactSheet = mobileMap && isTyping;
@@ -194,9 +195,11 @@ export function GamePlayView({
   const sheetHeight = mobileMap
     ? compactSheet
       ? "auto"
-      : isRevealMode || view === "result"
+      : isRevealStep || view === "result"
         ? "60%"
-        : "auto"
+        : isRevealMode
+          ? "40%"
+          : "auto"
     : undefined;
   // On a short keyboard viewport, reclaim navigation space for the map.
   const compactViewport = mobileMap && isTyping && visibleHeight < 500;
@@ -254,6 +257,182 @@ export function GamePlayView({
     setActiveOption(-1);
     inputRef.current?.focus({ preventScroll: true });
   }
+
+  const guessForm =
+    round && !isRevealStep ? (
+      <form
+        className={
+          isCountryRound
+            ? "pointer-events-auto flex min-h-0 w-full max-w-sm flex-col"
+            : undefined
+        }
+        onSubmit={(event) => {
+          if (canSubmitGuess) inputRef.current?.blur();
+          setIsCountryListOpen(false);
+          handleGuessSubmit(event);
+        }}
+      >
+        <VStack
+          gap={2}
+          padding={isCountryRound ? 2 : undefined}
+          className={
+            isCountryRound
+              ? "min-h-0 rounded-xl border border-border bg-surface shadow-md"
+              : undefined
+          }
+        >
+          <HStack gap={2} align="center" justify="between">
+            <FieldLabel
+              inputID={inputId}
+              label={isCountryRound ? "Guess the country" : "Your guess"}
+            />
+            {!compactViewport ? (
+              <Text color="secondary" type="supporting">
+                {isCountryRound
+                  ? "Name earns 2× points"
+                  : "By name · double points"}
+              </Text>
+            ) : null}
+          </HStack>
+          <HStack gap={2} align="center">
+            <HStack align="center" className="relative min-w-0 flex-1">
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 size-4 text-secondary"
+              />
+              <input
+                id={inputId}
+                ref={inputRef}
+                type="text"
+                role={isCountryRound ? "combobox" : undefined}
+                aria-autocomplete={isCountryRound ? "list" : undefined}
+                aria-controls={hasSuggestions ? optionsId : undefined}
+                aria-expanded={isCountryRound ? hasSuggestions : undefined}
+                aria-activedescendant={
+                  hasSuggestions && activeOption >= 0
+                    ? `${optionsId}-${activeOption}`
+                    : undefined
+                }
+                aria-invalid={validationMessage ? true : undefined}
+                aria-describedby={
+                  validationMessage && !suggestionsOpen
+                    ? validationId
+                    : undefined
+                }
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="go"
+                className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-lg text-primary outline-none focus:border-accent-bg focus:ring-2 focus:ring-accent-muted"
+                disabled={isBusy}
+                value={guess}
+                placeholder={isCountryRound ? "Search country" : "Type answer"}
+                onFocus={() => {
+                  setIsTyping(true);
+                  setIsCountryListOpen(hasCountrySearch);
+                }}
+                onBlur={() => {
+                  setIsTyping(false);
+                  setIsCountryListOpen(false);
+                  setActiveOption(-1);
+                }}
+                onChange={(event) => {
+                  setGuess(event.target.value);
+                  setActiveOption(-1);
+                  setIsCountryListOpen(
+                    normalizeGuess(event.target.value).length > 0,
+                  );
+                }}
+                onKeyDown={(event) => {
+                  if (!isCountryRound || event.nativeEvent.isComposing) return;
+                  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                    event.preventDefault();
+                    if (!hasCountrySearch) return;
+                    setIsCountryListOpen(true);
+                    const count = matchingCountries.length;
+                    const next = count
+                      ? event.key === "ArrowDown"
+                        ? (activeOption + 1) % count
+                        : activeOption <= 0
+                          ? count - 1
+                          : activeOption - 1
+                      : -1;
+                    setActiveOption(next);
+                    requestAnimationFrame(() =>
+                      document
+                        .getElementById(`${optionsId}-${next}`)
+                        ?.scrollIntoView({ block: "nearest" }),
+                    );
+                  } else if (event.key === "Escape") {
+                    setIsCountryListOpen(false);
+                    setActiveOption(-1);
+                  } else if (
+                    event.key === "Enter" &&
+                    suggestionsOpen &&
+                    activeOption >= 0 &&
+                    matchingCountries[activeOption]
+                  ) {
+                    event.preventDefault();
+                    selectCountry(matchingCountries[activeOption]);
+                  }
+                }}
+              />
+            </HStack>
+            <Button
+              label="Guess"
+              size="lg"
+              type="submit"
+              variant="primary"
+              className="shrink-0"
+              isDisabled={!canSubmitGuess}
+              isLoading={isBusy}
+              onMouseDown={(event) => event.preventDefault()}
+            />
+          </HStack>
+          {isCountryRound && !isTyping ? (
+            <Text color="secondary" type="supporting">
+              Type a name or tap a country on the map.
+            </Text>
+          ) : null}
+          {isCountryRound && suggestionsOpen ? (
+            matchingCountries.length ? (
+              <VStack
+                id={optionsId}
+                role="listbox"
+                aria-label="Country suggestions"
+                gap={1}
+                className="min-h-0 max-h-40 overflow-y-auto overscroll-contain touch-pan-y"
+              >
+                {matchingCountries.map((country, index) => (
+                  <button
+                    key={country}
+                    id={`${optionsId}-${index}`}
+                    role="option"
+                    aria-selected={activeOption === index}
+                    tabIndex={-1}
+                    type="button"
+                    className="min-h-11 shrink-0 rounded-lg bg-muted px-3 py-1 text-left text-sm text-primary hover:bg-accent-muted aria-selected:bg-accent-muted"
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={() => selectCountry(country)}
+                  >
+                    {country}
+                  </button>
+                ))}
+              </VStack>
+            ) : (
+              <Text type="supporting" role="status" className="px-1">
+                No matching countries. Try another name.
+              </Text>
+            )
+          ) : null}
+          {validationMessage && !suggestionsOpen ? (
+            <Text id={validationId} role="status" className="text-warning">
+              {validationMessage}
+            </Text>
+          ) : null}
+        </VStack>
+      </form>
+    ) : null;
 
   return (
     <VStack
@@ -350,7 +529,10 @@ export function GamePlayView({
         }
       >
         {isCountryRound ? (
-          <VStack className="min-h-0 flex-1 lg:h-full" data-game-map="">
+          <VStack
+            className={`relative min-h-0 flex-1 lg:h-full lg:rounded-xl ${guessForm ? "game-phase-cue" : ""}`}
+            data-game-map=""
+          >
             <WorldMapDialog
               countryOptions={availableCountryOptions}
               focusedGuess={replay?.focusedGuess}
@@ -378,14 +560,23 @@ export function GamePlayView({
                 solutionCountry ?? result?.solutionCountry ?? null
               }
             />
+            {guessForm ? (
+              <VStack
+                align="center"
+                padding={2}
+                className="pointer-events-none absolute inset-0 z-20 sm:p-3"
+              >
+                {guessForm}
+              </VStack>
+            ) : null}
           </VStack>
         ) : null}
         <VStack
           gap={0}
           as="section"
-          aria-label="Clues and guess"
+          aria-label={isCountryRound ? "Clues" : "Clues and guess"}
           height={sheetHeight}
-          className={`relative min-h-0 shrink-0 overflow-y-auto bg-surface ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"}`}
+          className={`relative min-h-0 shrink-0 overflow-y-auto bg-surface ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealStep ? "game-phase-cue" : ""}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
@@ -424,6 +615,20 @@ export function GamePlayView({
                 </Text>
               )}
             </HStack>
+            {isRevealMode ? (
+              <Text
+                role="status"
+                weight="semibold"
+                color="accent"
+                className={isRevealStep ? undefined : "sr-only"}
+              >
+                {isRevealStep
+                  ? "Reveal a clue to unlock your guess"
+                  : round
+                    ? "Guess the country by name or on the map"
+                    : ""}
+              </Text>
+            ) : null}
             {!compactSheet && currentClues.length > 0 ? (
               <HStack
                 gap={1.5}
@@ -511,11 +716,6 @@ export function GamePlayView({
                         </Text>
                       ) : (
                         <Button
-                          className={
-                            isRevealStep && !isBusy
-                              ? "reveal-clue-cue"
-                              : undefined
-                          }
                           label={`Reveal ${clue.label}`}
                           size="lg"
                           variant="secondary"
@@ -523,7 +723,7 @@ export function GamePlayView({
                           isDisabled={isBusy || !isRevealStep}
                           onClick={() => revealClue(clue.key)}
                         >
-                          {isRevealStep ? "Reveal" : "Guess first"}
+                          Reveal
                         </Button>
                       )
                     }
@@ -537,206 +737,13 @@ export function GamePlayView({
             {boardAction}
             {sideFooter ? <VStack paddingBlock={3}>{sideFooter}</VStack> : null}
           </VStack>
-          {round ? (
+          {guessForm && !isCountryRound ? (
             <VStack
               paddingInline={3}
               paddingBlock={2}
-              gap={2}
-              className={
-                isRevealMode ? "shrink-0" : "shrink-0 border-t border-border"
-              }
+              className="shrink-0 border-t border-border"
             >
-              {isRevealStep ? (
-                <Text color="secondary">
-                  Choose an unlocked clue, then make a guess.
-                </Text>
-              ) : (
-                <form
-                  onSubmit={(event) => {
-                    if (canSubmitGuess) inputRef.current?.blur();
-                    setIsCountryListOpen(false);
-                    handleGuessSubmit(event);
-                  }}
-                >
-                  <VStack gap={compactSheet ? 1 : 2} className="relative">
-                    <HStack gap={2} align="center" justify="between">
-                      <FieldLabel
-                        inputID={inputId}
-                        label="Your guess"
-                        isLabelHidden={compactSheet}
-                      />
-                      <Text color="secondary" type="supporting">
-                        By name · double points
-                      </Text>
-                    </HStack>
-                    <HStack gap={2} align="center">
-                      <HStack
-                        align="center"
-                        className="relative min-w-0 flex-1"
-                      >
-                        <Search
-                          aria-hidden="true"
-                          className="pointer-events-none absolute left-3 size-4 text-secondary"
-                        />
-                        <input
-                          id={inputId}
-                          ref={inputRef}
-                          type="text"
-                          role={isCountryRound ? "combobox" : undefined}
-                          aria-autocomplete={
-                            isCountryRound ? "list" : undefined
-                          }
-                          aria-controls={isCountryRound ? optionsId : undefined}
-                          aria-expanded={
-                            isCountryRound ? suggestionsOpen : undefined
-                          }
-                          aria-activedescendant={
-                            suggestionsOpen && activeOption >= 0
-                              ? `${optionsId}-${activeOption}`
-                              : undefined
-                          }
-                          aria-invalid={validationMessage ? true : undefined}
-                          aria-describedby={
-                            validationMessage ? validationId : undefined
-                          }
-                          aria-label={
-                            isCountryRound ? "Search country" : "Type answer"
-                          }
-                          autoComplete="off"
-                          autoCorrect="off"
-                          spellCheck={false}
-                          enterKeyHint="go"
-                          className="min-h-8 w-full min-w-0 rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-lg text-primary outline-none focus:border-accent-bg focus:ring-2 focus:ring-accent-muted"
-                          disabled={isBusy}
-                          value={guess}
-                          placeholder={
-                            isCountryRound ? "Search country" : "Type answer"
-                          }
-                          onFocus={() => {
-                            setIsTyping(true);
-                            setIsCountryListOpen(hasCountrySearch);
-                          }}
-                          onBlur={() => {
-                            setIsTyping(false);
-                            setIsCountryListOpen(false);
-                            setActiveOption(-1);
-                          }}
-                          onChange={(event) => {
-                            setGuess(event.target.value);
-                            setActiveOption(-1);
-                            setIsCountryListOpen(
-                              normalizeGuess(event.target.value).length > 0,
-                            );
-                          }}
-                          onKeyDown={(event) => {
-                            if (
-                              !isCountryRound ||
-                              event.nativeEvent.isComposing
-                            )
-                              return;
-                            if (
-                              event.key === "ArrowDown" ||
-                              event.key === "ArrowUp"
-                            ) {
-                              event.preventDefault();
-                              if (!hasCountrySearch) return;
-                              setIsCountryListOpen(true);
-                              const count = matchingCountries.length;
-                              const next = count
-                                ? event.key === "ArrowDown"
-                                  ? (activeOption + 1) % count
-                                  : activeOption <= 0
-                                    ? count - 1
-                                    : activeOption - 1
-                                : -1;
-                              setActiveOption(next);
-                              requestAnimationFrame(() =>
-                                document
-                                  .getElementById(`${optionsId}-${next}`)
-                                  ?.scrollIntoView({ block: "nearest" }),
-                              );
-                            } else if (event.key === "Escape") {
-                              setIsCountryListOpen(false);
-                              setActiveOption(-1);
-                            } else if (
-                              event.key === "Enter" &&
-                              suggestionsOpen &&
-                              activeOption >= 0 &&
-                              matchingCountries[activeOption]
-                            ) {
-                              event.preventDefault();
-                              selectCountry(matchingCountries[activeOption]);
-                            }
-                          }}
-                        />
-                      </HStack>
-                      <Button
-                        label="Guess"
-                        size="lg"
-                        type="submit"
-                        variant="primary"
-                        className="shrink-0"
-                        isDisabled={!canSubmitGuess}
-                        isLoading={isBusy}
-                        onMouseDown={(event) => event.preventDefault()}
-                      />
-                    </HStack>
-                    {isCountryRound && suggestionsOpen ? (
-                      matchingCountries.length ? (
-                        <HStack
-                          id={optionsId}
-                          role="listbox"
-                          aria-label="Country suggestions"
-                          gap={1}
-                          className={
-                            compactSheet
-                              ? "max-h-24 overflow-y-auto overscroll-contain rounded-lg bg-surface p-1"
-                              : "absolute inset-x-0 bottom-full z-30 max-h-32 overflow-y-auto overscroll-contain rounded-lg border border-border bg-surface p-2 shadow-lg"
-                          }
-                          wrap="wrap"
-                        >
-                          {matchingCountries.map((country, index) => (
-                            <button
-                              key={country}
-                              id={`${optionsId}-${index}`}
-                              role="option"
-                              aria-selected={activeOption === index}
-                              tabIndex={-1}
-                              type="button"
-                              className="min-h-8 rounded-lg bg-muted px-2 py-1 text-left text-sm text-primary hover:bg-accent-muted aria-selected:bg-accent-muted"
-                              onPointerDown={(event) => event.preventDefault()}
-                              onClick={() => selectCountry(country)}
-                            >
-                              {country}
-                            </button>
-                          ))}
-                        </HStack>
-                      ) : (
-                        <Text
-                          type="supporting"
-                          role="status"
-                          className={
-                            compactSheet
-                              ? "p-1"
-                              : "absolute inset-x-0 bottom-full z-30 rounded-lg border border-border bg-surface p-2 shadow-lg"
-                          }
-                        >
-                          No matching countries. Try another name.
-                        </Text>
-                      )
-                    ) : null}
-                    {validationMessage && !suggestionsOpen ? (
-                      <Text
-                        id={validationId}
-                        role="status"
-                        className="text-warning"
-                      >
-                        {validationMessage}
-                      </Text>
-                    ) : null}
-                  </VStack>
-                </form>
-              )}
+              {guessForm}
             </VStack>
           ) : null}
           {mobileMap ? (

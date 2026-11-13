@@ -8,19 +8,19 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 @custom-variant dark (&:where(.dark, .dark *));
 
-@property --reveal-clue-angle {
+@property --game-phase-angle {
   syntax: "<angle>";
   inherits: false;
   initial-value: 0turn;
 }
 
-@keyframes reveal-clue-sweep {
+@keyframes game-phase-sweep {
   85% {
     opacity: 1;
   }
 
   to {
-    --reveal-clue-angle: 2turn;
+    --game-phase-angle: 2turn;
     opacity: 0;
   }
 }
@@ -63,32 +63,33 @@
 }
 
 @layer utilities {
-  .reveal-clue-cue {
+  .game-phase-cue {
     position: relative;
   }
 
-  .reveal-clue-cue::after {
+  .game-phase-cue::after {
     content: "";
     position: absolute;
     inset: 0;
-    padding: var(--border-width);
+    z-index: 25;
+    padding: var(--spacing-0-5);
     border-radius: inherit;
     pointer-events: none;
     background: conic-gradient(
-      from var(--reveal-clue-angle),
+      from var(--game-phase-angle),
       transparent 72%,
       var(--color-accent) 94%,
       transparent
     );
     mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
     mask-composite: exclude;
-    animation: reveal-clue-sweep calc(var(--duration-slow) * 4) linear forwards;
+    animation: game-phase-sweep calc(var(--duration-slow) * 4) linear forwards;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .reveal-clue-cue::after {
+    .game-phase-cue::after {
       animation: none;
-      background: var(--color-accent-muted);
+      background: var(--color-accent);
     }
   }
 

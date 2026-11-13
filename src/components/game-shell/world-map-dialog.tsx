@@ -1061,7 +1061,7 @@ export function WorldMapDialog({
               />
             </>
           ) : null}
-          {presentation === "game" && onCountryGuess && !isCountryPicker ? (
+          {presentation === "game" && !embedded && onCountryGuess && !isCountryPicker ? (
             <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full border border-accent-bg/20 bg-body px-3 py-1.5 text-xs font-semibold text-accent shadow-sm backdrop-blur  sm:left-4 sm:top-4">
               Tap a country
             </span>
