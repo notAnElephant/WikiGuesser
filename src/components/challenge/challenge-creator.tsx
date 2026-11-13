@@ -16,6 +16,7 @@ import { useRef, useState } from "react";
 
 import { PageHeading } from "@/src/components/page-heading";
 import { ShareChallenge } from "@/src/components/challenge/share-challenge";
+import { captureAnalyticsEvent } from "@/src/lib/analytics";
 import type { GameMode } from "@/src/lib/types";
 
 const WorldMapDialog = dynamic(
@@ -59,6 +60,7 @@ export function ChallengeCreator({
       const data = (await response.json()) as { path?: string; error?: string };
       if (!response.ok || !data.path)
         throw new Error(data.error ?? "Could not create challenge.");
+      captureAnalyticsEvent("challenge_created", { mode });
       setUrl(new URL(data.path, window.location.origin).href);
     } catch (caught) {
       setError(

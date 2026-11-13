@@ -21,6 +21,7 @@ const STORE_PACKS = "packs";
 const STORE_DOWNLOADS = "downloads";
 const STORE_ROUNDS = "rounds";
 const STORE_STATS = "stats";
+const STORE_ANALYTICS = "analytics";
 const PACK_STATE_KEY = "pack-state";
 const ACTIVE_ROUND_KEY = "active";
 
@@ -78,6 +79,50 @@ async function withDatabase<T>(
   } finally {
     database.close();
   }
+}
+
+type OfflineAnalyticsEvent = {
+  uuid: string;
+  event: string;
+  timestamp: string;
+  distinct_id: string;
+  properties: Record<string, unknown>;
+};
+
+async function withAnalyticsStore<T>(
+  mode: IDBTransactionMode,
+  work: (store: IDBObjectStore) => IDBRequest<T> | void,
+) {
+  const request = requireIndexedDb().open("wikiguesser-offline-analytics", 1);
+  request.onupgradeneeded = () => {
+    request.result.createObjectStore(STORE_ANALYTICS, { keyPath: "uuid" });
+  };
+  const database = await requestResult(request);
+  try {
+    const transaction = database.transaction(STORE_ANALYTICS, mode);
+    const done = transactionDone(transaction);
+    const result = work(transaction.objectStore(STORE_ANALYTICS));
+    const [value] = await Promise.all([result ? requestResult(result) : undefined, done]);
+    return value;
+  } finally {
+    database.close();
+  }
+}
+
+export async function saveOfflineAnalyticsEvent(event: OfflineAnalyticsEvent) {
+  await withAnalyticsStore("readwrite", (store) => store.put(event));
+}
+
+export async function getOfflineAnalyticsEvents() {
+  return (await withAnalyticsStore("readonly", (store) =>
+    store.getAll(undefined, 50),
+  )) as OfflineAnalyticsEvent[];
+}
+
+export async function removeOfflineAnalyticsEvents(events: OfflineAnalyticsEvent[]) {
+  await withAnalyticsStore("readwrite", (store) => {
+    for (const event of events) store.delete(event.uuid);
+  });
 }
 
 export function getOfflineCountryCacheName(snapshotKey: string): string {

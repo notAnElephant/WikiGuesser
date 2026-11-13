@@ -358,6 +358,7 @@ export interface ChallengeReplay {
 }
 
 export interface ChallengeProgress {
+  attemptId: string;
   version: number;
   clues: RoundClue[];
   revealedClues: PlayableClue[];
@@ -376,5 +377,6 @@ export interface FriendChallengeView {
   mode: GameMode;
   countryOptions: string[];
   isCreator: boolean;
+  attemptStarted?: boolean;
   progress: ChallengeProgress | null;
 }

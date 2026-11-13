@@ -109,6 +109,7 @@ export function buildChallengeView(
     progress:
       attempt && progress
         ? {
+            attemptId: attempt.id,
             version: attempt.version,
             clues,
             revealedClues: clues
@@ -272,14 +273,17 @@ export async function playFriendChallenge(
   const clues = getEffectiveRoundClues(entity, mode);
 
   if (input.action === "start") {
-    const attempt = await repository.startChallengeAttempt(
+    const { attempt, created } = await repository.startChallengeAttempt(
       challenge.id,
       actorId,
       mode === "classic" && clues[0] ? [clues[0].key] : [],
       mode === "classic",
       input.replayNoticeShown === true,
     );
-    return buildChallengeView(challenge, attempt, actorId);
+    return {
+      ...buildChallengeView(challenge, attempt, actorId),
+      ...(created ? { attemptStarted: true } : {}),
+    };
   }
 
   const attempt = await repository.findChallengeAttempt(challenge.id, actorId);

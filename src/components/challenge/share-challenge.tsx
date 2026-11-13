@@ -8,19 +8,27 @@ import { VStack } from "@astryxdesign/core/VStack";
 import { Copy, Share2 } from "lucide-react";
 import { useState } from "react";
 import { useAppToast } from "@/src/components/app-toaster";
+import { captureAnalyticsEvent } from "@/src/lib/analytics";
 
-export async function shareChallenge(url: string, text: string, copy = false) {
+export async function shareChallenge(
+  url: string,
+  text: string,
+  content: "invite" | "result",
+  copy = false,
+) {
   if (!copy && navigator.share) {
     await navigator.share({ title: "WikiGuesser challenge", text, url });
+    captureAnalyticsEvent("challenge_shared", { method: "native", content });
     return "";
   }
   await navigator.clipboard.writeText(`${text}\n${url}`);
+  captureAnalyticsEvent("challenge_shared", { method: "copy", content });
   return "Copied. Ready to send.";
 }
 
 export function ShareChallenge({
   url,
-  text = "A country challenge for you. Can you guess it?",
+  text,
 }: {
   url: string;
   text?: string;
@@ -30,7 +38,12 @@ export function ShareChallenge({
 
   async function share(copy: boolean) {
     try {
-      const status = await shareChallenge(url, text, copy);
+      const status = await shareChallenge(
+        url,
+        text ?? "A country challenge for you. Can you guess it?",
+        text ? "result" : "invite",
+        copy,
+      );
       setMessage("");
       if (status) toast.success(status);
     } catch (error) {

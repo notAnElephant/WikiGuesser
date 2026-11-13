@@ -126,6 +126,11 @@ describe("duel service", () => {
     const view = buildDuelView(current, "challenger", "https://example.test");
     const round = view.rounds[0];
 
+    expect(round).toMatchObject({
+      attemptId: "challenger-attempt",
+      cluesRevealed: 1,
+      isCorrect: false,
+    });
     expect(round.clues.find((clue) => clue.key === "continent")).toMatchObject({
       value: "Europe",
       isRevealed: true,

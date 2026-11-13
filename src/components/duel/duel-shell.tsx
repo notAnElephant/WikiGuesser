@@ -10,6 +10,7 @@ import { Text } from "@astryxdesign/core/Text";
 import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { useAppToast } from "@/src/components/app-toaster";
+import { captureGameAction, toGameContext } from "@/src/lib/analytics";
 import {
   findUniqueCountryMatch,
   normalizeGuess,
@@ -71,6 +72,9 @@ export interface DuelGuess {
 }
 
 export interface DuelRound {
+  attemptId: string | null;
+  cluesRevealed: number;
+  isCorrect: boolean;
   position: number;
   version: number;
   status: "available" | "in-progress" | "completed" | "waiting";
@@ -97,6 +101,7 @@ export interface DuelRoundAttempt {
 }
 
 export interface DuelResponse {
+  attemptStarted?: boolean;
   id: string;
   inviteCode: string;
   status: DuelStatus;
@@ -220,13 +225,45 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
           );
         }
         const nextDuel = unwrapDuel(payload);
+        const played = nextDuel.rounds.find((round) => round.position === position);
+        if (played?.attemptId) {
+          const context = toGameContext({
+            kind: "duel",
+            category: nextDuel.settings.category,
+            mode: nextDuel.settings.mode,
+            roundId: played.attemptId,
+          });
+          const completed = played.status === "completed";
+          if (action === "start" && nextDuel.attemptStarted) {
+            captureGameAction(context, { type: "start" });
+          } else if (action === "reveal" && typeof body?.clueKey === "string") {
+            captureGameAction(context, {
+              type: "reveal",
+              clueKey: body.clueKey,
+              cluesRevealed: played.cluesRevealed,
+            });
+          } else if (action === "guess") {
+            captureGameAction(context, {
+              type: "guess",
+              method: body?.method === "map" ? "map" : "text",
+              correct: played.isCorrect,
+              completed,
+              guesses: played.guesses.length,
+              cluesRevealed: played.cluesRevealed,
+              score: played.score ?? 0,
+            });
+          } else if (action === "give-up") {
+            captureGameAction(context, {
+              type: "give-up",
+              guesses: played.guesses.length,
+              cluesRevealed: played.cluesRevealed,
+            });
+          }
+        }
         setDuel(nextDuel);
         if (action === "guess" && position) {
-          const completedRound = nextDuel.rounds.find(
-            (round) => round.position === position,
-          );
-          if (completedRound?.status === "completed") {
-            const score = completedRound.score ?? 0;
+          if (played?.status === "completed") {
+            const score = played.score ?? 0;
             toast.success(
               `Round ${position} solved: ${score} ${score === 1 ? "point" : "points"}.`,
               { id: "duel-round-result" },

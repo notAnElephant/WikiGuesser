@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { FriendChallengeAttempt, Prisma } from "@prisma/client";
 
 import { getPrismaClient } from "@/src/lib/repository/prisma";
@@ -16,17 +17,19 @@ export function findChallengeAttempt(challengeId: string, actorId: string) {
   });
 }
 
-export function startChallengeAttempt(
+export async function startChallengeAttempt(
   challengeId: string,
   actorId: string,
   revealedClueKeys: string[],
   canGuess: boolean,
   replayNoticeShown: boolean,
 ) {
-  return getPrismaClient().friendChallengeAttempt.upsert({
+  const id = randomUUID();
+  const attempt = await getPrismaClient().friendChallengeAttempt.upsert({
     where: { challengeId_actorId: { challengeId, actorId } },
     update: {},
     create: {
+      id,
       challengeId,
       actorId,
       revealedClueKeys,
@@ -34,6 +37,7 @@ export function startChallengeAttempt(
       replayStatus: replayNoticeShown ? "PENDING" : null,
     },
   });
+  return { attempt, created: attempt.id === id };
 }
 
 export type ChallengeAttemptUpdate = Pick<

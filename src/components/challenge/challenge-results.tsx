@@ -19,6 +19,7 @@ import { type ReactNode, useEffect, useState } from "react";
 
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { getMessageAppearance } from "@/src/components/game-shell/utils";
+import { captureAnalyticsEvent } from "@/src/lib/analytics";
 import { getChallengeReplaySteps } from "@/src/lib/game/challenge-replay";
 
 import type {
@@ -210,7 +211,13 @@ export function ChallengeResults({
         });
         if (!response.ok) throw new Error("Could not load challenge results.");
         const result = await response.json();
-        if (!controller.signal.aborted) setData(result);
+        if (controller.signal.aborted) return;
+        if (selected && !Array.isArray(result)) {
+          captureAnalyticsEvent("challenge_replay_viewed", {
+            mode: (result as ChallengeReplay).mode,
+          });
+        }
+        setData(result);
       } catch {
         if (!controller.signal.aborted) setError(true);
       }

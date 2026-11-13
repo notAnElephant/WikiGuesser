@@ -21,6 +21,7 @@ import { useOfflinePack } from "@/src/components/offline-pack-provider";
 import { ContinentPickerDialog } from "@/src/components/shared-landing-shell";
 import { ThemeToggle } from "@/src/components/theme-toggle";
 import { WikiGuesserLogo } from "@/src/components/wikiguesser-logo";
+import { captureGameAction, toGameContext } from "@/src/lib/analytics";
 import { CONTINENT_LABELS, isContinentId } from "@/src/lib/content/continents";
 import {
   findUniqueCountryMatch,
@@ -216,6 +217,7 @@ export function OfflineCountriesShell() {
     setGuess("");
     setMessage(mode === "blurred-lines" ? "Tap a row." : "Round live.");
     void saveActiveOfflineRound(started.state);
+    captureGameAction(toGameContext(started), { type: "start" });
   }
 
   function startSelectedRound() {
@@ -232,6 +234,11 @@ export function OfflineCountriesShell() {
         revealed.remainingClues === 0 ? "Last clue." : "Clue unlocked.",
       );
       void saveActiveOfflineRound(revealed.state);
+      captureGameAction(toGameContext(revealed), {
+        type: "reveal",
+        clueKey,
+        cluesRevealed: revealed.revealedClues.length,
+      });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Reveal failed.");
     }
@@ -244,16 +251,21 @@ export function OfflineCountriesShell() {
 
     setIsBusy(true);
     try {
-      const outcome = submitOfflineGuess(
-        pack,
-        roundState,
-        submittedGuess,
-        countryName ? "map" : "text",
-      );
+      const method = countryName ? "map" : "text";
+      const outcome = submitOfflineGuess(pack, roundState, submittedGuess, method);
+      captureGameAction(toGameContext(outcome), {
+        type: "guess",
+        method,
+        correct: outcome.isCorrect,
+        completed: outcome.isComplete,
+        guesses: roundState.guesses.length + 1,
+        cluesRevealed: outcome.revealedClues.length,
+        score: outcome.score,
+      });
       setGuess("");
 
       if (outcome.isComplete) {
-        await finishRound(outcome, countryName ? "map" : "text");
+        await finishRound(outcome, method);
         return;
       }
 
@@ -309,7 +321,13 @@ export function OfflineCountriesShell() {
     if (!pack || !roundState || isBusy) return;
     setIsBusy(true);
     try {
-      await finishRound(giveUpOfflineRound(pack, roundState));
+      const outcome = giveUpOfflineRound(pack, roundState);
+      captureGameAction(toGameContext(outcome), {
+        type: "give-up",
+        guesses: outcome.guesses.length,
+        cluesRevealed: outcome.revealedClues.length,
+      });
+      await finishRound(outcome);
     } finally {
       setIsBusy(false);
     }

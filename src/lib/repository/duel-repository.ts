@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { Prisma, type DuelAttempt, type DuelStatus } from "@prisma/client";
 
 import { getClerkProfileSnapshot } from "@/src/lib/auth/user-profile";
@@ -191,11 +192,13 @@ export async function getOrCreateDuelAttempt(
   duelRoundId: string,
   userProfileId: string,
   initial?: Pick<UpdateDuelAttemptInput, "revealedClueKeys" | "canGuess">,
-): Promise<DuelAttempt> {
+) {
   const prisma = getPrismaClient();
-  return prisma.duelAttempt.upsert({
+  const id = randomUUID();
+  const attempt = await prisma.duelAttempt.upsert({
     where: { duelRoundId_userProfileId: { duelRoundId, userProfileId } },
     create: {
+      id,
       duelRoundId,
       userProfileId,
       revealedClueKeys: initial?.revealedClueKeys ?? [],
@@ -203,6 +206,7 @@ export async function getOrCreateDuelAttempt(
     },
     update: {},
   });
+  return attempt.id === id;
 }
 
 /** Updates an attempt only when its version still matches the caller's version. */

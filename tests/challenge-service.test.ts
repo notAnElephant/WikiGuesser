@@ -86,7 +86,6 @@ describe("friend challenges", () => {
       if (!attempts.has(create.actorId))
         attempts.set(create.actorId, {
           ...create,
-          id: `attempt-${create.actorId}`,
           version: 0,
           guesses: [],
           score: 0,
@@ -247,7 +246,9 @@ describe("friend challenges", () => {
   });
 
   it("keeps progress independent and resumes instead of resetting on start", async () => {
-    await playFriendChallenge(challenge.code, "guest:a", { action: "start" });
+    const started = await playFriendChallenge(challenge.code, "guest:a", {
+      action: "start",
+    });
     await playFriendChallenge(challenge.code, "guest:a", {
       action: "guess",
       version: 0,
@@ -259,6 +260,10 @@ describe("friend challenges", () => {
     const other = await playFriendChallenge(challenge.code, "guest:b", {
       action: "start",
     });
+    expect(started.attemptStarted).toBe(true);
+    expect(resumed.attemptStarted).toBeUndefined();
+    expect(resumed.progress?.attemptId).toBe(started.progress?.attemptId);
+    expect(other.progress?.attemptId).not.toBe(started.progress?.attemptId);
     expect(resumed.progress).toMatchObject({
       version: 1,
       guesses: [{ name: "Japan" }],
@@ -602,7 +607,7 @@ describe("friend challenges", () => {
     expect(db.friendChallengeAttempt.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          id: "attempt-guest:a",
+          id: attempts.get("guest:a")?.id,
           actorId: "guest:a",
           version: 0,
           completedAt: null,

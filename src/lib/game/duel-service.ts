@@ -197,6 +197,9 @@ function roundView(
 
   return {
     position: round.position,
+    attemptId: ownAttempt?.id ?? null,
+    cluesRevealed: ownAttempt ? asStrings(ownAttempt.revealedClueKeys).length : 0,
+    isCorrect: ownAttempt?.isCorrect ?? false,
     version: ownAttempt?.version ?? 0,
     status: completed
       ? ("completed" as const)
@@ -491,11 +494,11 @@ export async function startDuelRound(
     clerkUserId,
   );
   const clues = effectiveClues(round, duel.mode as GameMode);
-  await getOrCreateDuelAttempt(round.id, profile.id, {
+  const attemptStarted = await getOrCreateDuelAttempt(round.id, profile.id, {
     revealedClueKeys: duel.mode === "classic" && clues[0] ? [clues[0].key] : [],
     canGuess: duel.mode === "classic",
   });
-  return refreshView(inviteCode, profile.id, origin);
+  return { ...(await refreshView(inviteCode, profile.id, origin)), attemptStarted };
 }
 
 export async function revealDuelClue(

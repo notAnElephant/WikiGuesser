@@ -1,12 +1,15 @@
 import posthog from "posthog-js";
 
 import { isOpaqueCrossOriginException } from "@/src/lib/error-tracking";
-import { postHogProjectToken } from "@/src/lib/analytics";
+import {
+  flushOfflineAnalytics,
+  postHogHost,
+  postHogProjectToken,
+} from "@/src/lib/analytics";
 
 if (postHogProjectToken) {
   posthog.init(postHogProjectToken, {
-    api_host:
-      process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
+    api_host: postHogHost,
     autocapture: false,
     before_send: (event) =>
       isOpaqueCrossOriginException(event) ? null : event,
@@ -19,4 +22,6 @@ if (postHogProjectToken) {
       maskAllInputs: true,
     },
   });
+  window.addEventListener("online", flushOfflineAnalytics);
+  void flushOfflineAnalytics();
 }

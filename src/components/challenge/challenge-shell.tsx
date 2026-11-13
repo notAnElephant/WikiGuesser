@@ -30,6 +30,7 @@ import {
   normalizeGuess,
 } from "@/src/lib/game/answer-matching";
 import type { FriendChallengeView } from "@/src/lib/types";
+import { captureGameAction, toGameContext } from "@/src/lib/analytics";
 
 export function ChallengeShell({ code }: { code: string }) {
   const router = useRouter();
@@ -102,7 +103,7 @@ export function ChallengeShell({ code }: { code: string }) {
           category: "countries",
           continent: null,
           mode: challenge.mode,
-          roundId: code,
+          roundId: progress.attemptId,
           token: "",
         }
       : null;
@@ -152,6 +153,41 @@ export function ChallengeShell({ code }: { code: string }) {
       if (!response.ok)
         throw new Error(payload.error ?? "Could not update challenge.");
       const next = payload as FriendChallengeView;
+      const updated = next.progress;
+      if (updated) {
+        const context = toGameContext({
+          kind: "challenge",
+          category: "countries",
+          mode: next.mode,
+          roundId: updated.attemptId,
+        });
+        const cluesRevealed = updated.revealedClues.length;
+        if (action === "start" && next.attemptStarted) {
+          captureGameAction(context, { type: "start" });
+        } else if (action === "reveal") {
+          captureGameAction(context, {
+            type: "reveal",
+            clueKey: extra.clueKey,
+            cluesRevealed,
+          });
+        } else if (action === "guess") {
+          captureGameAction(context, {
+            type: "guess",
+            method: extra.method === "map" ? "map" : "text",
+            correct: updated.isCorrect,
+            completed: updated.isComplete,
+            guesses: updated.guesses.length,
+            cluesRevealed,
+            score: updated.score,
+          });
+        } else if (action === "give-up") {
+          captureGameAction(context, {
+            type: "give-up",
+            guesses: updated.guesses.length,
+            cluesRevealed,
+          });
+        }
+      }
       setChallenge(next);
       setGuess("");
       setShowResult(true);
@@ -183,7 +219,7 @@ export function ChallengeShell({ code }: { code: string }) {
 
   async function shareResult() {
     try {
-      const status = await shareChallenge(shareUrl, resultText!);
+      const status = await shareChallenge(shareUrl, resultText!, "result");
       if (status) {
         setShowResult(false);
         toast.success(status);
