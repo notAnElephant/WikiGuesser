@@ -50,6 +50,7 @@ export function deriveLeaderboardNameDefault(user: ClerkProfileLike) {
 
 export function deriveDisplayName(user: ClerkProfileLike) {
   return (
+    user.username?.trim() ||
     getLeaderboardNameFromMetadata(user.publicMetadata) ||
     deriveLeaderboardNameDefault(user)
   );

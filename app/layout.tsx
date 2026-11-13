@@ -98,7 +98,7 @@ export default async function RootLayout({
         <WikiGuesserSerwistProvider>
           <OfflinePackProvider>
             <ThemeProvider>
-              <ClerkProvider dynamic signUpForceRedirectUrl="/profile-name">
+              <ClerkProvider dynamic>
                 <PostHogIdentity />
                 <AppToaster>
                   <AppShell

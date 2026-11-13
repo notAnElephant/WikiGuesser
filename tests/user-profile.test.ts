@@ -22,6 +22,15 @@ describe("user profile names", () => {
     ).toBe("analytical_engine");
   });
 
+  it("prefers the Clerk username over a migrated nickname", () => {
+    expect(
+      deriveDisplayName({
+        username: "ada_lovelace",
+        publicMetadata: { leaderboardName: "Countess of Computing" },
+      }),
+    ).toBe("ada_lovelace");
+  });
+
   it("uses the chosen leaderboard name for score snapshots", () => {
     expect(
       deriveDisplayName({

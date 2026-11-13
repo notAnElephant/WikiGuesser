@@ -1,9 +1,10 @@
 "use client";
 
-import { LeaderboardProfilePage } from "@/src/components/leaderboard-profile-page";
-import { UserButton } from "@clerk/nextjs";
-import { ChartNoAxesCombined, Shield, Trophy } from "lucide-react";
-import type { ReactNode } from "react";
+import { UserButton, useUser } from "@clerk/nextjs";
+import { ChartNoAxesCombined, Shield } from "lucide-react";
+import { useEffect, type ReactNode } from "react";
+
+import { syncLeaderboardUsername } from "@/src/lib/auth/sync-leaderboard-username";
 
 interface AccountUserButtonProps {
   adminDailyAnswersPage?: ReactNode;
@@ -14,10 +15,21 @@ export function AccountUserButton({
   adminDailyAnswersPage,
   isAdmin,
 }: AccountUserButtonProps) {
-  const icon = <Trophy aria-hidden="true" className="size-4" />;
-  const adminIcon = <Shield aria-hidden="true" className="size-4" />;
+  const { user } = useUser();
+  const username = user?.username;
+  const userId = user?.id;
+
+  useEffect(() => {
+    if (username && userId) {
+      void syncLeaderboardUsername(username).catch((error) =>
+        console.error("Could not sync the leaderboard username", error),
+      );
+    }
+  }, [username, userId]);
+
+  const adminIcon = <Shield aria-hidden="true" size="0.75rem" />;
   const statsIcon = (
-    <ChartNoAxesCombined aria-hidden="true" className="size-4" />
+    <ChartNoAxesCombined aria-hidden="true" size="0.75rem" />
   );
 
   return (
@@ -28,11 +40,6 @@ export function AccountUserButton({
           labelIcon={statsIcon}
           href="/stats"
         />
-        <UserButton.Action
-          label="Leaderboard name"
-          labelIcon={icon}
-          open="leaderboard-name"
-        />
         {isAdmin ? (
           <UserButton.Action
             label="Daily answers"
@@ -41,13 +48,6 @@ export function AccountUserButton({
           />
         ) : null}
       </UserButton.MenuItems>
-      <UserButton.UserProfilePage
-        label="Leaderboard name"
-        labelIcon={icon}
-        url="leaderboard-name"
-      >
-        <LeaderboardProfilePage />
-      </UserButton.UserProfilePage>
       {isAdmin ? (
         <UserButton.UserProfilePage
           label="Daily answers"

@@ -1528,7 +1528,7 @@ export function SharedLandingShell({
             {result.kind === "daily" && !isSignedIn ? (
               <GoogleOneTap
                 signInForceRedirectUrl="/"
-                signUpForceRedirectUrl="/profile-name"
+                signUpForceRedirectUrl="/"
               />
             ) : null}
             <GameResultDialog
