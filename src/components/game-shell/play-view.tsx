@@ -290,12 +290,13 @@ export function GamePlayView({
           </HStack>
           {isCountryRound && suggestionsOpen ? (
             matchingCountries.length ? (
-              <VStack
+              <HStack
                 id={optionsId}
                 role="listbox"
                 aria-label="Country suggestions"
+                aria-orientation="horizontal"
                 gap={1}
-                className={`min-h-0 overflow-y-auto overscroll-contain touch-pan-y ${compactViewport ? "max-h-20" : "max-h-32"}`}
+                className="min-w-0 shrink-0 touch-pan-x overflow-x-auto overscroll-x-contain"
               >
                 {matchingCountries.map((country, index) => (
                   <button
@@ -305,19 +306,25 @@ export function GamePlayView({
                     aria-selected={activeOption === index}
                     tabIndex={-1}
                     type="button"
-                    className="min-h-11 shrink-0 rounded-lg bg-muted px-3 py-1 text-left text-sm text-primary hover:bg-accent-muted aria-selected:bg-accent-muted"
+                    className="min-h-11 shrink-0 whitespace-nowrap rounded-full bg-muted px-3 py-1 text-sm text-primary hover:bg-accent-muted aria-selected:bg-accent-muted"
                     onPointerDown={(event) => event.preventDefault()}
                     onClick={() => selectCountry(country)}
                   >
                     {country}
                   </button>
                 ))}
-              </VStack>
+              </HStack>
             ) : (
-              <Text type="supporting" role="status" className="px-1">
+              <Text
+                type="supporting"
+                role="status"
+                className="px-1 max-lg:flex max-lg:min-h-11 max-lg:items-center"
+              >
                 No matching countries. Try another name.
               </Text>
             )
+          ) : compactSheet ? (
+            <VStack aria-hidden="true" className="h-11 shrink-0" />
           ) : null}
           <HStack gap={2} align="center">
             <HStack
@@ -389,7 +396,7 @@ export function GamePlayView({
                     requestAnimationFrame(() =>
                       document
                         .getElementById(`${optionsId}-${next}`)
-                        ?.scrollIntoView({ block: "nearest" }),
+                        ?.scrollIntoView({ block: "nearest", inline: "nearest" }),
                     );
                   } else if (event.key === "Escape") {
                     setIsCountryListOpen(false);
