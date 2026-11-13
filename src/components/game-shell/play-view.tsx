@@ -154,7 +154,6 @@ export function GamePlayView({
     isTyping,
   );
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
-  const [isRevealWarningOpen, setIsRevealWarningOpen] = useState(false);
   const [activeOption, setActiveOption] = useState(-1);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -346,7 +345,7 @@ export function GamePlayView({
           replay
             ? "min-h-0 flex-1 lg:flex-row lg:items-start lg:gap-4"
             : isCountryRound
-              ? "min-h-0 flex-1 lg:min-h-80 lg:flex-none lg:flex-row lg:items-start lg:gap-4"
+              ? "min-h-0 flex-1 lg:min-h-80 lg:flex-none lg:flex-row lg:items-stretch lg:gap-4"
               : "min-h-0 flex-1"
         }
       >
@@ -369,7 +368,10 @@ export function GamePlayView({
               }
               onMapClickDuringReveal={
                 isRevealStep && !isBusy
-                  ? () => setIsRevealWarningOpen(true)
+                  ? () =>
+                      toast.info("Reveal a clue first.", {
+                        id: "reveal-clue-first",
+                      })
                   : undefined
               }
               solutionCountry={
@@ -378,24 +380,12 @@ export function GamePlayView({
             />
           </VStack>
         ) : null}
-        <Dialog
-          isOpen={isRevealWarningOpen}
-          onOpenChange={setIsRevealWarningOpen}
-          padding={4}
-          width="24rem"
-        >
-          <DialogHeader
-            onOpenChange={setIsRevealWarningOpen}
-            title="Reveal a clue first"
-          />
-          <Text>Reveal the next clue before guessing a country.</Text>
-        </Dialog>
         <VStack
           gap={0}
           as="section"
           aria-label="Clues and guess"
           height={sheetHeight}
-          className={`relative min-h-0 shrink-0 overflow-y-auto bg-surface ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealMode && guessedEntities.length > 0 ? "border-accent-bg shadow-md shadow-accent-bg/20" : ""}`}
+          className={`relative min-h-0 shrink-0 overflow-y-auto bg-surface ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
@@ -521,6 +511,11 @@ export function GamePlayView({
                         </Text>
                       ) : (
                         <Button
+                          className={
+                            isRevealStep && !isBusy
+                              ? "reveal-clue-cue"
+                              : undefined
+                          }
                           label={`Reveal ${clue.label}`}
                           size="lg"
                           variant="secondary"

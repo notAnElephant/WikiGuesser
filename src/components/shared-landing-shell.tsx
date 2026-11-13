@@ -174,20 +174,7 @@ export function GameLauncher({
 
   return (
     <VStack as="section" gap={5}>
-      <PageHeading
-        title="Pick your game"
-        meta={
-          <HStack align="center" gap={2}>
-            <Icon color="secondary" icon={CalendarDays} size="sm" />
-            <Text color="secondary" type="supporting">
-              Daily resets in{" "}
-              <strong className="font-semibold tabular-nums text-primary">
-                {resetCountdown}
-              </strong>
-            </Text>
-          </HStack>
-        }
-      />
+      <PageHeading title="Pick your game" />
       {claimBanner ? (
         <Text className="rounded-lg bg-success-muted p-3 text-success">
           {claimBanner}
@@ -198,6 +185,7 @@ export function GameLauncher({
         <LauncherBand
           description="Two daily puzzles. One country each."
           isDaily
+          resetCountdown={resetCountdown}
           title="Today"
         >
           {GAME_MODE_OPTIONS.map((mode) => {
@@ -526,6 +514,7 @@ interface LauncherBandProps {
   children: React.ReactNode;
   description: string;
   isDaily?: boolean;
+  resetCountdown?: string;
   title: string;
 }
 
@@ -533,13 +522,14 @@ function LauncherBand({
   children,
   description,
   isDaily = false,
+  resetCountdown,
   title,
 }: LauncherBandProps) {
   const BandIcon = isDaily ? CalendarDays : Gamepad2;
 
   return (
     <VStack as="section" gap={2}>
-      <HStack align="center" gap={2}>
+      <HStack align="center" gap={2} wrap="wrap">
         <Icon color="secondary" icon={BandIcon} size="sm" />
         <h2 className="m-0 font-heading text-xl font-semibold text-primary">
           {title}
@@ -547,6 +537,14 @@ function LauncherBand({
         <Text color="secondary" type="supporting" className="hidden sm:block">
           {description}
         </Text>
+        {resetCountdown ? (
+          <Text color="secondary" type="supporting" className="whitespace-nowrap">
+            Daily resets in{" "}
+            <Text hasTabularNumbers type="inherit" weight="semibold">
+              {resetCountdown}
+            </Text>
+          </Text>
+        ) : null}
       </HStack>
       <Card elevation="none" padding={0}>
         <VStack className="divide-y divide-border" paddingInline={4}>

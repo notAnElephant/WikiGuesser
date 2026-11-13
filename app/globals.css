@@ -8,6 +8,23 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 @custom-variant dark (&:where(.dark, .dark *));
 
+@property --reveal-clue-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0turn;
+}
+
+@keyframes reveal-clue-sweep {
+  85% {
+    opacity: 1;
+  }
+
+  to {
+    --reveal-clue-angle: 2turn;
+    opacity: 0;
+  }
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -46,6 +63,35 @@
 }
 
 @layer utilities {
+  .reveal-clue-cue {
+    position: relative;
+  }
+
+  .reveal-clue-cue::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: var(--border-width);
+    border-radius: inherit;
+    pointer-events: none;
+    background: conic-gradient(
+      from var(--reveal-clue-angle),
+      transparent 72%,
+      var(--color-accent) 94%,
+      transparent
+    );
+    mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+    mask-composite: exclude;
+    animation: reveal-clue-sweep calc(var(--duration-slow) * 4) linear forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-clue-cue::after {
+      animation: none;
+      background: var(--color-accent-muted);
+    }
+  }
+
   .clue-redaction {
     background: var(--color-neutral);
     filter: blur(var(--spacing-1));
