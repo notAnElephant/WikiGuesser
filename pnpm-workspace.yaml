@@ -6,4 +6,6 @@ allowBuilds:
   esbuild: true
   prisma: true
 minimumReleaseAgeExclude:
-  - posthog-js@1.418.12
+  - posthog-js@1.418.12 || 1.448.0
+  - '@posthog/core@1.67.2'
+  - '@posthog/types@1.425.0'
