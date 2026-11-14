@@ -103,7 +103,7 @@ export function GameResultDialog({
       width="48rem"
     >
       <DialogHeader
-        className="select-none"
+        className="select-none focus:outline-none"
         data-autofocus
         onOpenChange={(isOpen) => {
           if (!isOpen) onClose();
