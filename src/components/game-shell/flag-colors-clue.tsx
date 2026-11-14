@@ -10,7 +10,7 @@ interface FlagColorsClueProps {
   revealed?: boolean;
 }
 
-const blurredFlagClass = "h-auto w-full blur-md";
+const blurredFlagClass = "h-auto w-full object-contain blur-md max-lg:max-h-16";
 
 export function FlagColorsClue({ src, revealed = false }: FlagColorsClueProps) {
   const [isExpanded, setIsExpanded] = useState(false);

@@ -42,7 +42,7 @@ import {
   Scan,
   X,
 } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 export type DuelResultMarkerTone = "challenger" | "opponent" | "both";
 
@@ -433,20 +433,25 @@ export function WorldMapDialog({
       );
     };
     updateSize();
-    const animationFrame = window.requestAnimationFrame(updateSize);
+    let animationFrame = 0;
+    const scheduleSize = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(updateSize);
+    };
+    scheduleSize();
 
     const observer = new ResizeObserver(updateSize);
     observer.observe(container);
-    viewport?.addEventListener("resize", updateSize);
-    viewport?.addEventListener("scroll", updateSize);
-    if (viewport) window.addEventListener("scroll", updateSize);
+    viewport?.addEventListener("resize", scheduleSize);
+    viewport?.addEventListener("scroll", scheduleSize);
+    if (viewport) window.addEventListener("scroll", scheduleSize);
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
       observer.disconnect();
-      viewport?.removeEventListener("resize", updateSize);
-      viewport?.removeEventListener("scroll", updateSize);
-      window.removeEventListener("scroll", updateSize);
+      viewport?.removeEventListener("resize", scheduleSize);
+      viewport?.removeEventListener("scroll", scheduleSize);
+      window.removeEventListener("scroll", scheduleSize);
     };
   }, [isMapHidden, trackVisualViewport]);
 
@@ -548,7 +553,7 @@ export function WorldMapDialog({
     select(svg).call(behavior.transform, mapTransformRef.current);
   }, [canInteractWithMap, hasMapSize, mapSize]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const previousCenter = previousMapCenterRef.current;
     previousMapCenterRef.current = mapCenter;
     const previousMapSize = previousMapSizeRef.current;

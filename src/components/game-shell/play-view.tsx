@@ -49,6 +49,7 @@ import {
   type ReactNode,
   useRef,
   useEffect,
+  useLayoutEffect,
   useState,
   useId,
 } from "react";
@@ -148,6 +149,11 @@ export function GamePlayView({
   const frameRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const clueScrollRef = useRef<HTMLDivElement>(null);
+  const previousReveals = useRef<{
+    roundId: string | undefined;
+    keys: Set<string>;
+  } | null>(null);
+  const [latestRevealKey, setLatestRevealKey] = useState<string>();
   const [isTyping, setIsTyping] = useState(false);
   const { isMobile, height, visibleHeight } = usePlayViewport(
     frameRef,
@@ -205,9 +211,47 @@ export function GamePlayView({
   // On a short keyboard viewport, prioritize the clue and guess controls.
   const compactViewport = mobileMap && isTyping && visibleHeight < 500;
   const prioritizeGuess = compactViewport && isRevealMode;
-  const latestClue = currentClues
-    .filter((clue) => clue.isRevealed && clue.key !== "flag-colors")
-    .at(-1);
+  const latestClue =
+    currentClues.find((clue) => clue.isRevealed && clue.key === latestRevealKey) ??
+    currentClues.filter((clue) => clue.isRevealed).at(-1);
+
+  useLayoutEffect(() => {
+    const roundId = round?.roundId;
+    const keys = new Set(
+      currentClues.filter((clue) => clue.isRevealed).map((clue) => clue.key),
+    );
+    const previous = previousReveals.current;
+    previousReveals.current = { roundId, keys };
+    if (!previous || previous.roundId !== roundId) {
+      setLatestRevealKey(undefined);
+      return;
+    }
+    const added = [...keys].filter((key) => !previous.keys.has(key)).at(-1);
+    if (added) setLatestRevealKey(added);
+  }, [currentClues, round?.roundId]);
+
+  useLayoutEffect(() => {
+    if (!mobileMap || !isRevealMode || replay || compactSheet || !latestRevealKey) {
+      return;
+    }
+    const list = clueScrollRef.current;
+    const row = list?.querySelector("[data-latest-reveal]");
+    if (!list || !row) return;
+    const showClue = () => {
+      const bounds = list.getBoundingClientRect();
+      const clue = row.getBoundingClientRect();
+      if (clue.top < bounds.top || clue.height > list.clientHeight) {
+        list.scrollTop += clue.top - bounds.top;
+      } else if (clue.bottom > bounds.bottom) {
+        list.scrollTop += clue.bottom - bounds.bottom;
+      }
+    };
+    showClue();
+    const observer = new ResizeObserver(showClue);
+    observer.observe(row);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [compactSheet, latestRevealKey, mobileMap, isRevealMode, replay]);
   const guessedCountries = guessedEntities.flatMap((attempt) =>
     attempt.mapData ? [attempt.mapData] : [],
   );
@@ -443,7 +487,7 @@ export function GamePlayView({
       paddingBlockEnd={replay && !mobileMap ? 3 : undefined}
       className={
         compactViewport
-          ? "fixed inset-x-0 top-0 z-20 min-h-0 overflow-hidden bg-surface"
+          ? "game-play-compact fixed inset-x-0 z-20 min-h-0 overflow-hidden bg-surface"
           : isCountryRound
             ? "min-h-0 -mx-3 -mt-4 -mb-4 overflow-hidden sm:-mx-4 sm:-mt-5 sm:-mb-5 lg:mx-0 lg:mt-0 lg:mb-0 lg:overflow-visible"
             : "min-w-0"
@@ -676,6 +720,9 @@ export function GamePlayView({
                 return (
                   <ListItem
                     key={clue.key}
+                    data-latest-reveal={
+                      (clue.isRevealed && clue.key === latestRevealKey) || undefined
+                    }
                     data-replay-latest={
                       replay?.latestClueKey === clue.key || undefined
                     }

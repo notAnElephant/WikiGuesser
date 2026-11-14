@@ -22,14 +22,22 @@ export function usePlayViewport(
     const measure = () => {
       // Safari can zoom and open the keyboard in the same focus gesture.
       if (visual && visual.scale !== 1 && !(media.matches && isTyping)) return;
-      const top = ref.current?.getBoundingClientRect().top ?? 0;
+      const frame = ref.current;
+      const visibleHeight = visual?.height ?? window.innerHeight;
+      const compact = media.matches && isTyping && visibleHeight < 500;
+      // The keyboard can pan Safari's visual viewport away from layout y=0.
+      frame?.style.setProperty(
+        "--play-viewport-top",
+        `${visual?.offsetTop ?? 0}px`,
+      );
+      const top = frame?.getBoundingClientRect().top ?? 0;
       const bottom = visual
         ? visual.offsetTop + visual.height
         : window.innerHeight;
       const next = {
         isMobile: media.matches,
-        height: Math.max(0, bottom - top),
-        visibleHeight: visual?.height ?? window.innerHeight,
+        height: compact ? visibleHeight : Math.max(0, bottom - top),
+        visibleHeight,
       };
       setViewport((current) =>
         current.isMobile === next.isMobile &&

@@ -15,13 +15,13 @@
 }
 
 @keyframes game-phase-sweep {
-  85% {
-    opacity: 1;
+  0%, 85% {
+    background-color: transparent;
   }
 
   to {
     --game-phase-angle: 2turn;
-    opacity: 0;
+    background-color: var(--color-accent);
   }
 }
 
@@ -63,6 +63,10 @@
 }
 
 @layer utilities {
+  .game-play-compact {
+    top: var(--play-viewport-top, 0px);
+  }
+
   .game-phase-cue {
     position: relative;
   }
