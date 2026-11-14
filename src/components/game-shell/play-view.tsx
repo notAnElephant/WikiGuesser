@@ -307,7 +307,7 @@ export function GamePlayView({
                     tabIndex={-1}
                     type="button"
                     className="min-h-11 shrink-0 whitespace-nowrap rounded-full bg-muted px-3 py-1 text-sm text-primary hover:bg-accent-muted aria-selected:bg-accent-muted"
-                    onPointerDown={(event) => event.preventDefault()}
+                    onMouseDown={(event) => event.preventDefault()}
                     onClick={() => selectCountry(country)}
                   >
                     {country}
@@ -423,7 +423,7 @@ export function GamePlayView({
               className="shrink-0"
               isDisabled={!canSubmitGuess}
               isLoading={isBusy}
-              onPointerDown={(event) => event.preventDefault()}
+              onMouseDown={(event) => event.preventDefault()}
             />
           </HStack>
           {validationMessage && !suggestionsOpen ? (
