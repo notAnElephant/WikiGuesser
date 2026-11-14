@@ -38,7 +38,8 @@ const serwist = new Serwist({
     },
     {
       matcher: ({ sameOrigin, url }) =>
-        sameOrigin && url.pathname.startsWith("/api/"),
+        sameOrigin &&
+        (url.pathname.startsWith("/api/") || url.pathname.startsWith("/admin/")),
       handler: new NetworkOnly(),
     },
     {

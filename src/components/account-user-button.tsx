@@ -47,6 +47,13 @@ export function AccountUserButton({
             open="daily-answers"
           />
         ) : null}
+        {isAdmin ? (
+          <UserButton.Link
+            label="Feedback inbox"
+            labelIcon={adminIcon}
+            href="/admin/feedback"
+          />
+        ) : null}
       </UserButton.MenuItems>
       {isAdmin ? (
         <UserButton.UserProfilePage
