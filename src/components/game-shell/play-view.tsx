@@ -531,7 +531,7 @@ export function GamePlayView({
       >
         {isCountryRound ? (
           <VStack
-            className={`relative min-h-0 flex-1 lg:h-full lg:rounded-xl ${guessForm ? "game-phase-cue" : ""}`}
+            className={`relative min-h-0 flex-1 rounded-xl max-lg:overflow-hidden lg:h-full ${guessForm ? "game-phase-cue" : ""}`}
             data-game-map=""
           >
             <WorldMapDialog
@@ -569,7 +569,7 @@ export function GamePlayView({
           as="section"
           aria-label="Clues and guess"
           height={sheetHeight}
-          className={`relative shrink-0 overflow-y-auto bg-surface ${prioritizeGuess ? "min-h-1/2" : "min-h-0"} ${isCountryRound ? "max-h-3/5 rounded-t-xl border-t border-border lg:max-h-full lg:w-72 lg:rounded-xl lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealStep ? "game-phase-cue" : ""} ${compactViewport ? "max-h-full" : ""}`}
+          className={`relative shrink-0 overflow-y-auto bg-surface ${prioritizeGuess ? "min-h-1/2" : "min-h-0"} ${isCountryRound ? "max-h-3/5 rounded-xl border-t border-border lg:max-h-full lg:w-72 lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealStep ? "game-phase-cue" : ""} ${compactViewport ? "max-h-full" : ""}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
