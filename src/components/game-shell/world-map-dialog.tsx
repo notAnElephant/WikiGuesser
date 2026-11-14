@@ -550,6 +550,18 @@ export function WorldMapDialog({
       return;
     }
 
+    // The animation target was calculated in the previous projection too.
+    if (animationTargetRef.current) {
+      animationTargetRef.current = getResizedMapTransform({
+        currentTransform: animationTargetRef.current,
+        mapSize,
+        previousMapSize,
+        previousProjection,
+        projection,
+      });
+      animationVelocityRef.current = { x: 0, y: 0, scale: 0 };
+    }
+
     select(svg).call(behavior.transform, nextTransform);
   }, [mapSize, projection]);
 
@@ -593,8 +605,6 @@ export function WorldMapDialog({
     }
 
     animationVelocityRef.current = { x: 0, y: 0, scale: 0 };
-    const centerX = mapSize.width / 2;
-    const centerY = mapSize.height / 2;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -620,6 +630,9 @@ export function WorldMapDialog({
         Math.min((timestamp - previousTime) / 1000, 0.05),
       );
       previousTime = timestamp;
+      const { width, height } = svg.viewBox.baseVal;
+      const centerX = width / 2;
+      const centerY = height / 2;
       const transform = mapTransformRef.current;
       const center = transform.invert([centerX, centerY]);
       const targetCenter = target.invert([centerX, centerY]);
