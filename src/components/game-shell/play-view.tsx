@@ -539,6 +539,7 @@ export function GamePlayView({
               focusedGuess={replay?.focusedGuess}
               guessedCountries={guessedCountries}
               embedded
+              trackVisualViewport={mobileMap}
               isExpanded={isMapExpanded}
               onExpandedChange={setIsMapExpanded}
               onCountryGuess={
@@ -721,7 +722,9 @@ export function GamePlayView({
                         <Button
                           label={`Reveal ${clue.label}`}
                           size="lg"
-                          variant="secondary"
+                          variant={
+                            isRevealStep && !isBusy ? "primary" : "secondary"
+                          }
                           icon={<Eye />}
                           isDisabled={isBusy || !isRevealMode}
                           className={isRevealStep ? undefined : "opacity-50"}

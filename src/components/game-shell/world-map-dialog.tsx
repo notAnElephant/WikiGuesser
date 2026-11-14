@@ -53,6 +53,7 @@ export type DuelResultGuessedCountry = GuessedCountryMapData & {
 interface WorldMapDialogProps {
   /** Fill the play surface instead of using the legacy floating map drawer. */
   embedded?: boolean;
+  trackVisualViewport?: boolean;
   countryOptions?: readonly string[];
   drawerState?: "hidden" | "medium" | "expanded";
   duelResult?: boolean;
@@ -119,6 +120,8 @@ interface ResizeTransformOptions {
   previousMapSize: MapSize;
   previousProjection: GeoProjection;
   projection: GeoProjection;
+  center?: [number, number];
+  previousCenter?: [number, number];
 }
 
 export function getResizedMapTransform({
@@ -127,11 +130,10 @@ export function getResizedMapTransform({
   previousMapSize,
   previousProjection,
   projection,
+  center = [mapSize.width / 2, mapSize.height / 2],
+  previousCenter = [previousMapSize.width / 2, previousMapSize.height / 2],
 }: ResizeTransformOptions): ZoomTransform | null {
-  const previousMapCenter = currentTransform.invert([
-    previousMapSize.width / 2,
-    previousMapSize.height / 2,
-  ]);
+  const previousMapCenter = currentTransform.invert(previousCenter);
   const geographicCenter = previousProjection.invert?.(previousMapCenter);
 
   if (!geographicCenter) {
@@ -145,15 +147,15 @@ export function getResizedMapTransform({
   }
 
   const nextScale = Math.min(
-    20,
+    MAX_MAP_SCALE,
     Math.max(
-      1,
+      MIN_MAP_SCALE,
       currentTransform.k * (previousProjection.scale() / projection.scale()),
     ),
   );
 
   return zoomIdentity
-    .translate(mapSize.width / 2, mapSize.height / 2)
+    .translate(...center)
     .scale(nextScale)
     .translate(-nextMapCenter[0], -nextMapCenter[1]);
 }
@@ -201,6 +203,7 @@ function DirectionArrow({ direction }: { direction: GuessDirection }) {
 
 export function WorldMapDialog({
   embedded = false,
+  trackVisualViewport = false,
   countryOptions = [],
   focusedGuess,
   guessedCountries,
@@ -242,8 +245,10 @@ export function WorldMapDialog({
   const animationTargetRef = useRef<ZoomTransform | null>(null);
   const animationVelocityRef = useRef({ x: 0, y: 0, scale: 0 });
   const focusedGuessedCountryCountRef = useRef(0);
+  const previousMapCenterRef = useRef<[number, number] | undefined>(undefined);
   const previousMapSizeRef = useRef<MapSize | null>(null);
   const previousProjectionRef = useRef<GeoProjection | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number] | undefined>();
   const [mapSize, setMapSize] = useState<MapSize>({ width: 0, height: 0 });
   const [mapTransform, setMapTransform] = useState<ZoomTransform>(zoomIdentity);
   const [suppressTouchHighlight, setSuppressTouchHighlight] = useState(false);
@@ -396,24 +401,54 @@ export function WorldMapDialog({
       return;
     }
 
+    const viewport = trackVisualViewport ? window.visualViewport : null;
     const updateSize = () => {
-      const bounds = container.getBoundingClientRect();
+      const { width, height, left, top, right, bottom } =
+        container.getBoundingClientRect();
+      if (width <= 0 || height <= 0) return;
 
-      if (bounds.width > 0 && bounds.height > 0) {
-        setMapSize({ width: bounds.width, height: bounds.height });
+      if (viewport) {
+        const visibleLeft = Math.max(left, viewport.offsetLeft);
+        const visibleRight = Math.min(
+          right,
+          viewport.offsetLeft + viewport.width,
+        );
+        const visibleTop = Math.max(top, viewport.offsetTop);
+        const visibleBottom = Math.min(
+          bottom,
+          viewport.offsetTop + viewport.height,
+        );
+        // Keep the last visible center if the keyboard temporarily covers the map.
+        if (visibleRight <= visibleLeft || visibleBottom <= visibleTop) return;
+        const x = (visibleLeft + visibleRight) / 2 - left;
+        const y = (visibleTop + visibleBottom) / 2 - top;
+        setMapCenter((center) =>
+          center?.[0] === x && center[1] === y ? center : [x, y],
+        );
+      } else {
+        setMapCenter(undefined);
       }
+      setMapSize((size) =>
+        size.width === width && size.height === height ? size : { width, height },
+      );
     };
     updateSize();
     const animationFrame = window.requestAnimationFrame(updateSize);
 
     const observer = new ResizeObserver(updateSize);
     observer.observe(container);
+    viewport?.addEventListener("resize", updateSize);
+    viewport?.addEventListener("scroll", updateSize);
+    if (viewport) window.addEventListener("scroll", updateSize);
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
       observer.disconnect();
+      viewport?.removeEventListener("resize", updateSize);
+      viewport?.removeEventListener("scroll", updateSize);
+      window.removeEventListener("scroll", updateSize);
     };
-  }, [isMapHidden]);
+  }, [isMapHidden, trackVisualViewport]);
 
   const hasMapSize = mapSize.width > 0 && mapSize.height > 0;
 
@@ -514,6 +549,8 @@ export function WorldMapDialog({
   }, [canInteractWithMap, hasMapSize, mapSize]);
 
   useEffect(() => {
+    const previousCenter = previousMapCenterRef.current;
+    previousMapCenterRef.current = mapCenter;
     const previousMapSize = previousMapSizeRef.current;
     const previousProjection = previousProjectionRef.current;
     previousMapSizeRef.current = mapSize;
@@ -540,6 +577,8 @@ export function WorldMapDialog({
 
     const nextTransform = getResizedMapTransform({
       currentTransform: mapTransformRef.current,
+      center: mapCenter,
+      previousCenter,
       mapSize,
       previousMapSize,
       previousProjection,
@@ -554,6 +593,8 @@ export function WorldMapDialog({
     if (animationTargetRef.current) {
       animationTargetRef.current = getResizedMapTransform({
         currentTransform: animationTargetRef.current,
+        center: mapCenter,
+        previousCenter,
         mapSize,
         previousMapSize,
         previousProjection,
@@ -563,7 +604,7 @@ export function WorldMapDialog({
     }
 
     select(svg).call(behavior.transform, nextTransform);
-  }, [mapSize, projection]);
+  }, [mapCenter, mapSize, projection]);
 
   function changeZoom(factor: number) {
     const currentTransform =
