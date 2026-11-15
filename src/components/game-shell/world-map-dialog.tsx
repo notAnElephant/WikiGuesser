@@ -113,6 +113,8 @@ const DIRECTION_LABEL: Record<GuessDirection, string> = {
 // where the map canvas itself is smaller than on desktop.
 const MIN_MAP_SCALE = 1;
 const MAX_MAP_SCALE = 100;
+const MAP_ZOOM_STEP = 1.45;
+const MIN_SMALL_COUNTRY_TARGET_SCALE = MIN_MAP_SCALE * MAP_ZOOM_STEP ** 2;
 
 interface ResizeTransformOptions {
   currentTransform: ZoomTransform;
@@ -309,6 +311,8 @@ export function WorldMapDialog({
     [path, projection],
   );
   const smallCountryTargets = countryTargets.flatMap((target) => {
+    if (mapTransform.k < MIN_SMALL_COUNTRY_TARGET_SCALE) return [];
+
     const name = target.country.properties.normalizedName;
     if (
       !playableCountryByMapName.has(name) &&
@@ -1462,7 +1466,7 @@ export function WorldMapDialog({
                 elevation="high"
                 icon={<Plus aria-hidden="true" />}
                 label="Zoom in"
-                onClick={() => changeZoom(1.45)}
+                onClick={() => changeZoom(MAP_ZOOM_STEP)}
                 size="lg"
                 tooltip="Zoom in"
                 variant="secondary"
@@ -1471,7 +1475,7 @@ export function WorldMapDialog({
                 elevation="high"
                 icon={<Minus aria-hidden="true" />}
                 label="Zoom out"
-                onClick={() => changeZoom(1 / 1.45)}
+                onClick={() => changeZoom(1 / MAP_ZOOM_STEP)}
                 size="lg"
                 tooltip="Zoom out"
                 variant="secondary"
