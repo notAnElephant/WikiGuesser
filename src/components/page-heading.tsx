@@ -25,8 +25,10 @@ export function PageHeading({
           <Button
             href="/"
             icon={<ArrowLeft aria-hidden="true" />}
+            isIconOnly
             label="Back home"
-            variant="ghost"
+            tooltip="Back home"
+            variant="secondary"
           />
         </HStack>
       ) : null}

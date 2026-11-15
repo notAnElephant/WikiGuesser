@@ -829,7 +829,9 @@ export function GamePlayView({
               {showHomeButton ? (
                 <Button
                   label={homeButtonLabel}
-                  icon={<House />}
+                  icon={<House aria-hidden="true" />}
+                  isIconOnly
+                  tooltip={homeButtonLabel}
                   onClick={clearForCategoryChoice}
                   variant="secondary"
                 />

@@ -257,11 +257,14 @@ export function ChallengeResults({
     <VStack gap={3} as="section" className="mx-auto w-full max-w-2xl">
       {overview}
       {selected ? (
-        <Button
-          label="Back to results"
-          variant="ghost"
-          onClick={() => open(null)}
-        />
+        <HStack>
+          <IconButton
+            icon={<ArrowLeft aria-hidden="true" />}
+            label="Back to results"
+            tooltip="Back to results"
+            onClick={() => open(null)}
+          />
+        </HStack>
       ) : null}
       {Array.isArray(data) && data.length > 0 ? (
         <List header={title} hasDividers>

@@ -110,7 +110,7 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
 
   return (
     <VStack gap={5}>
-      <PageHeading title="Create a duel" />
+      <PageHeading hasBackLink title="Create a duel" />
       <Text color="secondary">
         Pick the mode and number of rounds, then share an invite to compete with
         a friend.
@@ -217,7 +217,6 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
           </p>
         ) : null}
       </section>
-      <Button href="/" label="Back to games" variant="ghost" />
     </VStack>
   );
 }

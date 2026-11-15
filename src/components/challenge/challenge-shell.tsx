@@ -240,7 +240,7 @@ export function ChallengeShell({ code }: { code: string }) {
         endpoint={`${endpoint}/results`}
         overview={
           <>
-            <PageHeading title="A country challenge for you" />
+            <PageHeading hasBackLink title="A country challenge for you" />
             <Text>
               You chose this answer. Send the challenge to your friends.
             </Text>
@@ -249,7 +249,6 @@ export function ChallengeShell({ code }: { code: string }) {
               attempt
             </Text>
             <ShareChallenge url={shareUrl} />
-            <Button href="/" label="Back to games" variant="ghost" />
           </>
         }
       />
@@ -258,7 +257,7 @@ export function ChallengeShell({ code }: { code: string }) {
   if (!challenge || !progress) {
     return (
       <VStack className="mx-auto w-full max-w-2xl" gap={5}>
-        <PageHeading title="A country challenge for you" />
+        <PageHeading hasBackLink title="A country challenge for you" />
         {challenge ? (
           <>
             <Text>A friend picked a mystery country. Can you guess it?</Text>
@@ -292,7 +291,6 @@ export function ChallengeShell({ code }: { code: string }) {
           />
         )}
         {message ? <Text role="alert">{message}</Text> : null}
-        <Button href="/" label="Back to games" variant="ghost" />
       </VStack>
     );
   }

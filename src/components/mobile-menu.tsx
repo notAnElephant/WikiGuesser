@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { Show } from "@clerk/nextjs";
 import { Button } from "@astryxdesign/core/Button";
 import { Divider } from "@astryxdesign/core/Divider";
+import { HStack } from "@astryxdesign/core/HStack";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { MobileNav } from "@astryxdesign/core/MobileNav";
 import { SideNavItem, SideNavSection } from "@astryxdesign/core/SideNav";
 import { VStack } from "@astryxdesign/core/VStack";
 import {
+  ArrowLeft,
   ChartNoAxesCombined,
   LogIn,
   Menu,
@@ -72,13 +74,15 @@ export function MobileMenu({ isAdmin = false }: { isAdmin?: boolean }) {
       >
         {view === "feedback" ? (
           <VStack gap={4}>
+            <HStack>
+              <IconButton
+                icon={<ArrowLeft aria-hidden="true" />}
+                label="Back to menu"
+                tooltip="Back to menu"
+                onClick={() => setView("menu")}
+              />
+            </HStack>
             <FeedbackForm context={{ source: "global" }} onSubmitted={close} />
-            <Button
-              label="Back to menu"
-              variant="ghost"
-              width="100%"
-              onClick={() => setView("menu")}
-            />
           </VStack>
         ) : (
           <VStack gap={4}>

@@ -76,7 +76,7 @@ export function ChallengeCreator({
 
   return (
     <VStack gap={5}>
-      <PageHeading title="Create a challenge" />
+      <PageHeading hasBackLink title="Create a challenge" />
       <Text color="secondary">
         Pick the answer and send the puzzle to your friends. Everyone gets their
         own attempt.
@@ -196,7 +196,6 @@ export function ChallengeCreator({
           {error}
         </Text>
       ) : null}
-      <Button href="/" label="Back to games" variant="ghost" />
     </VStack>
   );
 }
