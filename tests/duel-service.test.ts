@@ -4,6 +4,8 @@ import { demoSnapshot } from "@/src/lib/content/demo-snapshot";
 import {
   buildDuelView,
   createDuel,
+  giveUpDuelRound,
+  startDuelRound,
   guessDuelRound,
   revealDuelClue,
   getDuel,
@@ -222,6 +224,57 @@ describe("duel service", () => {
     );
     expect(result.playerRole).toBe("challenger");
     expect(result.status).toBe("active");
+  });
+
+  it("lets the creator finish before acceptance and keeps the opponent's round fresh", async () => {
+    const invited = duel({
+      status: "INVITED",
+      opponentId: null,
+      opponent: null,
+    });
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "challenger" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(invited);
+    repository.getDuelByInviteCode.mockResolvedValue(invited);
+    repository.getOrCreateDuelAttempt.mockImplementationOnce(async () => {
+      invited.rounds[0].attempts.push(attempt("challenger"));
+      return true;
+    });
+
+    expect(buildDuelView(invited, "challenger").currentRound?.status).toBe(
+      "available",
+    );
+    expect((await startDuelRound("abc123", 1, "clerk")).currentRound?.status).toBe(
+      "in-progress",
+    );
+
+    repository.updateDuelAttempt.mockImplementationOnce(
+      async (_id, _profile, _version, update) => {
+        Object.assign(invited.rounds[0].attempts[0], update);
+      },
+    );
+    const finished = await giveUpDuelRound("abc123", 1, 7, "clerk");
+    expect(finished).toMatchObject({
+      status: "pending",
+      currentRound: null,
+      ownProgress: { completed: 1 },
+    });
+
+    const guest = buildDuelView(invited, "opponent");
+    expect(guest).toMatchObject({ canAccept: true, currentRound: null });
+    expect(guest.rounds[0]).toMatchObject({ answer: null, attempts: [] });
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "opponent" });
+    await expect(startDuelRound("abc123", 1, "clerk")).rejects.toThrow(
+      "not a participant",
+    );
+
+    const accepted = buildDuelView(
+      { ...invited, status: "ACTIVE", opponentId: "opponent" },
+      "opponent",
+    );
+    expect(accepted.currentRound).toMatchObject({
+      status: "available",
+      answer: null,
+    });
   });
 
   it("passes the optimistic version when revealing a clue", async () => {

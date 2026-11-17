@@ -1,5 +1,6 @@
 "use client";
 
+import { DuelInviteLink } from "./duel-invite-link";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack } from "@astryxdesign/core/HStack";
@@ -26,7 +27,6 @@ import type {
 import {
   Check,
   Clock3,
-  Copy,
   Flag,
   LoaderCircle,
   LogIn,
@@ -160,7 +160,6 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guess, setGuess] = useState("");
-  const [copied, setCopied] = useState(false);
 
   const loadDuel = useCallback(async () => {
     try {
@@ -287,16 +286,12 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
   const shareUrl =
     duel?.shareUrl ??
     (typeof window !== "undefined" ? window.location.href : "");
-  const currentRound =
-    duel?.currentRound ??
-    duel?.rounds.find(
-      (round) => round.status === "in-progress" || round.status === "available",
-    );
+  const currentRound = duel?.currentRound ?? undefined;
   const completedRounds =
     duel?.rounds.filter((round) => round.status === "completed").length ?? 0;
   const opponentName = playerLabel(
     duel?.playerRole === "challenger" ? duel?.opponent : duel?.challenger,
-    "Waiting for opponent",
+    "Opponent",
   );
   const winner = useMemo(() => {
     if (!duel?.scores) return null;
@@ -309,13 +304,6 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
       ? "you"
       : "opponent";
   }, [duel]);
-
-  async function copyInvite() {
-    if (!shareUrl) return;
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  }
 
   async function createRematch() {
     setIsBusy(true);
@@ -390,12 +378,11 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
           onAccept={() => void mutate("accept")}
         />
       ) : null}
-      {duel.status === "pending" && !duel.canAccept ? (
-        <WaitingState
-          duel={duel}
-          copied={copied}
-          onCopy={() => void copyInvite()}
-        />
+      {duel.status === "pending" && duel.playerRole === "challenger" ? (
+        <section className="mx-auto mb-5 grid max-w-3xl gap-2">
+          <Text color="secondary">Invite your opponent</Text>
+          <DuelInviteLink url={shareUrl} />
+        </section>
       ) : null}
       {duel.status === "expired" ? (
         <TerminalState
@@ -416,7 +403,8 @@ export function DuelShell({ countryOptions, inviteCode }: DuelShellProps) {
           }
         />
       ) : null}
-      {duel.status === "active" ? (
+      {duel.status === "active" ||
+      (duel.status === "pending" && duel.playerRole === "challenger") ? (
         <ActiveDuel
           duel={duel}
           currentRound={currentRound}
@@ -556,54 +544,6 @@ function InviteState({
   );
 }
 
-function WaitingState({
-  duel,
-  copied,
-  onCopy,
-}: {
-  duel: DuelResponse;
-  copied: boolean;
-  onCopy: () => void;
-}) {
-  return (
-    <Card className="mx-auto max-w-3xl p-6 sm:p-10" elevation="low" padding={0}>
-      <div className="flex size-12 items-center justify-center rounded-2xl bg-warning-muted text-warning">
-        <Users className="size-6" />
-      </div>
-      <p className="mt-7 text-xs font-bold uppercase tracking-wider text-warning">
-        Challenge created
-      </p>
-      <h1 className="mt-2 font-heading text-4xl font-semibold leading-none sm:text-5xl">
-        Your opponent is one link away.
-      </h1>
-      <p className="mt-4 max-w-xl text-base leading-7 text-secondary">
-        Share the invite and this room will unlock as soon as they accept.
-      </p>
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-secondary">
-          <Share2 className="size-4 shrink-0 text-accent" />
-          <span className="truncate">
-            {duel.shareUrl ?? `wikiguesser.com/duel/${duel.inviteCode}`}
-          </span>
-        </div>
-        <IconButton
-          icon={
-            copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />
-          }
-          label={copied ? "Invite link copied" : "Copy invite link"}
-          onClick={onCopy}
-          tooltip={copied ? "Invite link copied" : "Copy invite link"}
-          variant="secondary"
-        />
-      </div>
-      <div className="mt-8 flex items-center gap-2 text-sm text-secondary">
-        <span className="inline-flex size-2 rounded-full bg-warning" /> Waiting
-        for opponent to join
-      </div>
-    </Card>
-  );
-}
-
 function ActiveDuel({
   duel,
   currentRound,
@@ -637,7 +577,11 @@ function ActiveDuel({
     return (
       <TerminalState
         title="Your rounds are complete"
-        description={`Waiting for ${opponentName} to finish.`}
+        description={
+          duel.opponent
+            ? `Waiting for ${opponentName} to finish.`
+            : "Share the invite so your opponent can play their rounds."
+        }
         icon={<Sparkles />}
       />
     );

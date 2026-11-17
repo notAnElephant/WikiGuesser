@@ -2,17 +2,16 @@
 
 import { Button } from "@astryxdesign/core/Button";
 import { Icon } from "@astryxdesign/core/Icon";
-import { IconButton } from "@astryxdesign/core/IconButton";
 import {
   SegmentedControl,
   SegmentedControlItem,
 } from "@astryxdesign/core/SegmentedControl";
 import { VStack } from "@astryxdesign/core/VStack";
 import { Text } from "@astryxdesign/core/Text";
-import { TextInput } from "@astryxdesign/core/TextInput";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Link2, Share2, Swords } from "lucide-react";
+import { Play, Swords } from "lucide-react";
 import { useState } from "react";
+import { DuelInviteLink } from "./duel-invite-link";
 import { PageHeading } from "@/src/components/page-heading";
 
 import type {
@@ -46,7 +45,6 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   async function createDuel() {
     if (!isSignedIn) {
@@ -88,24 +86,6 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
     } finally {
       setIsCreating(false);
     }
-  }
-
-  async function copyInvite() {
-    if (!inviteUrl) return;
-    await navigator.clipboard.writeText(inviteUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  }
-
-  async function shareInvite() {
-    if (!inviteUrl) return;
-    if (navigator.share)
-      await navigator.share({
-        title: "WikiGuesser duel",
-        text: "Challenge me to a WikiGuesser duel.",
-        url: inviteUrl,
-      });
-    else await copyInvite();
   }
 
   return (
@@ -159,41 +139,13 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
             <p className="m-0 text-sm font-semibold text-primary">
               Your duel is ready. Send this link to your opponent.
             </p>
-            <section className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
-              <TextInput
-                isLabelHidden
-                isReadOnly
-                label="Duel invite link"
-                value={inviteUrl}
-                width="100%"
-              />
-              <IconButton
-                icon={
-                  copied ? (
-                    <Check aria-hidden="true" />
-                  ) : (
-                    <Copy aria-hidden="true" />
-                  )
-                }
-                label={copied ? "Invite link copied" : "Copy invite link"}
-                onClick={() => void copyInvite()}
-                tooltip={copied ? "Invite link copied" : "Copy invite link"}
-                variant="secondary"
-              />
-              <IconButton
-                icon={<Share2 aria-hidden="true" />}
-                label="Share invite"
-                tooltip="Share invite"
-                onClick={() => void shareInvite()}
-                variant="primary"
-              />
-            </section>
+            <DuelInviteLink url={inviteUrl} />
             <a
               href={inviteUrl}
               className="inline-flex w-fit items-center gap-1 text-sm font-semibold text-accent"
             >
-              <Icon color="accent" icon={Link2} size="sm" />
-              Open duel
+              <Icon color="accent" icon={Play} size="sm" />
+              Play your rounds
             </a>
           </section>
         ) : (

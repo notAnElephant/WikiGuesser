@@ -109,6 +109,13 @@ function participantId(duel: DuelWithDetails, profileId: string | null) {
   return null;
 }
 
+function canPlayDuel(duel: DuelWithDetails, profileId: string) {
+  return (
+    duel.status === "ACTIVE" ||
+    (duel.status === "INVITED" && duel.challengerId === profileId)
+  );
+}
+
 function attemptFor(
   round: DuelWithDetails["rounds"][number],
   profileId: string | null,
@@ -298,7 +305,7 @@ export function buildDuelView(
     },
     rounds,
     currentRound:
-      duel.status === "ACTIVE" && firstIncomplete
+      ownId && canPlayDuel(duel, ownId) && firstIncomplete
         ? (rounds.find(
             (round) => round.position === firstIncomplete.position,
           ) ?? null)
@@ -460,10 +467,10 @@ async function participantRound(
     ensureDuelUserProfile(clerkUserId),
   ]);
   if (!duel) throw new Error("That duel invitation does not exist.");
-  if (duel.status !== "ACTIVE") throw new Error("That duel is not active.");
   if (!participantId(duel, profile.id)) {
     throw new Error("You are not a participant in this duel.");
   }
+  if (!canPlayDuel(duel, profile.id)) throw new Error("That duel is not active.");
   const round = duel.rounds.find(
     (candidate) => candidate.position === position,
   );
