@@ -24,6 +24,7 @@ import type {
 import { Button } from "@astryxdesign/core/Button";
 import { HStack } from "@astryxdesign/core/HStack";
 import { IconButton } from "@astryxdesign/core/IconButton";
+import { Spinner } from "@astryxdesign/core/Spinner";
 import { VStack } from "@astryxdesign/core/VStack";
 import { geoContains, geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import { select } from "d3-selection";
@@ -60,6 +61,7 @@ interface WorldMapDialogProps {
   focusedGuess?: GuessedCountryMapData | null;
   guessedCountries: readonly DuelResultGuessedCountry[];
   isActive?: boolean;
+  isBusy?: boolean;
   isCountryPicker?: boolean;
   isExpanded: boolean;
   onDrawerStateChange?: (drawerState: "hidden" | "medium" | "expanded") => void;
@@ -210,6 +212,7 @@ export function WorldMapDialog({
   focusedGuess,
   guessedCountries,
   isActive = false,
+  isBusy = false,
   isCountryPicker = false,
   isExpanded,
   drawerState,
@@ -1038,6 +1041,7 @@ export function WorldMapDialog({
       <VStack
         aria-describedby={helpId}
         aria-label="World map"
+        aria-busy={isBusy}
         aria-modal={isMapExpanded ? true : undefined}
         className={`pointer-events-auto w-full overflow-hidden bg-body ${embedded && !isMapExpanded ? "min-h-0 flex-1 lg:rounded-xl lg:border lg:border-border" : "grid grid-rows-[minmax(0,1fr)_auto] border border-border shadow-md"} transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:shadow-md ${
           embedded && !isMapExpanded
@@ -1069,6 +1073,15 @@ export function WorldMapDialog({
           ref={mapContainerRef}
           role="application"
         >
+          {isBusy ? (
+            <VStack
+              className="absolute inset-0 z-20 bg-surface/60"
+              align="center"
+              justify="center"
+            >
+              <Spinner label="Loading…" size="lg" />
+            </VStack>
+          ) : null}
           {presentation === "game" && !embedded ? (
             <>
               <button

@@ -583,6 +583,7 @@ export function GamePlayView({
               focusedGuess={replay?.focusedGuess}
               guessedCountries={guessedCountries}
               embedded
+              isBusy={isBusy}
               trackVisualViewport={mobileMap}
               isExpanded={isMapExpanded}
               onExpandedChange={setIsMapExpanded}
