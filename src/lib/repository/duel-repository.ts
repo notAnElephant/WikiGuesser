@@ -217,7 +217,7 @@ export async function updateDuelAttempt(
   input: UpdateDuelAttemptInput,
 ): Promise<DuelAttempt> {
   const prisma = getPrismaClient();
-  const updated = await prisma.duelAttempt.updateMany({
+  const updated = await prisma.duelAttempt.updateManyAndReturn({
     where: { id: attemptId, userProfileId, version: expectedVersion },
     data: {
       ...input,
@@ -225,11 +225,11 @@ export async function updateDuelAttempt(
     },
   });
 
-  if (updated.count !== 1) {
+  if (updated.length !== 1) {
     throw new Error("That duel attempt changed; reload and try again.");
   }
 
-  return prisma.duelAttempt.findUniqueOrThrow({ where: { id: attemptId } });
+  return updated[0]!;
 }
 
 export async function markExpiredDuels(now = new Date()): Promise<number> {

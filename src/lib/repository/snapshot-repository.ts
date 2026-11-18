@@ -41,7 +41,7 @@ function toNormalizedEntity(record: SnapshotEntity): NormalizedEntity {
  * bounds staleness for processes that persist elsewhere (e.g. the ingest
  * script) without adding a version query to the hot path.
  */
-const SNAPSHOT_CACHE_TTL_MS = 30_000;
+const SNAPSHOT_CACHE_TTL_MS = 5 * 60_000;
 
 let latestSnapshotCache: {
   expiresAt: number;

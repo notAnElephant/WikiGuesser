@@ -205,7 +205,9 @@ function roundView(
   return {
     position: round.position,
     attemptId: ownAttempt?.id ?? null,
-    cluesRevealed: ownAttempt ? asStrings(ownAttempt.revealedClueKeys).length : 0,
+    cluesRevealed: ownAttempt
+      ? asStrings(ownAttempt.revealedClueKeys).length
+      : 0,
     isCorrect: ownAttempt?.isCorrect ?? false,
     version: ownAttempt?.version ?? 0,
     status: completed
@@ -470,7 +472,8 @@ async function participantRound(
   if (!participantId(duel, profile.id)) {
     throw new Error("You are not a participant in this duel.");
   }
-  if (!canPlayDuel(duel, profile.id)) throw new Error("That duel is not active.");
+  if (!canPlayDuel(duel, profile.id))
+    throw new Error("That duel is not active.");
   const round = duel.rounds.find(
     (candidate) => candidate.position === position,
   );
@@ -505,7 +508,10 @@ export async function startDuelRound(
     revealedClueKeys: duel.mode === "classic" && clues[0] ? [clues[0].key] : [],
     canGuess: duel.mode === "classic",
   });
-  return { ...(await refreshView(inviteCode, profile.id, origin)), attemptStarted };
+  return {
+    ...(await refreshView(inviteCode, profile.id, origin)),
+    attemptStarted,
+  };
 }
 
 export async function revealDuelClue(
@@ -601,50 +607,83 @@ export async function guessDuelRound(
   ];
   const clues = effectiveClues(round, duel.mode as GameMode);
 
+  let updatedAttempt: DuelAttempt;
   if (isCorrect) {
-    await updateDuelAttempt(attempt.id, profile.id, input.version, {
-      guesses: nextGuesses as unknown as Prisma.InputJsonValue,
-      score:
-        input.method === "map"
-          ? Math.floor(scoreForRevealCount(revealed.length) / 2)
-          : scoreForRevealCount(revealed.length),
-      isCorrect: true,
-      completedAt: new Date(),
-      canGuess: false,
-    });
+    updatedAttempt = await updateDuelAttempt(
+      attempt.id,
+      profile.id,
+      input.version,
+      {
+        guesses: nextGuesses as unknown as Prisma.InputJsonValue,
+        score:
+          input.method === "map"
+            ? Math.floor(scoreForRevealCount(revealed.length) / 2)
+            : scoreForRevealCount(revealed.length),
+        isCorrect: true,
+        completedAt: new Date(),
+        canGuess: false,
+      },
+    );
   } else if (duel.mode === "classic") {
     const nextClue = clues.find((clue) => !revealed.includes(clue.key));
     if (nextClue) {
-      await updateDuelAttempt(attempt.id, profile.id, input.version, {
-        guesses: nextGuesses as unknown as Prisma.InputJsonValue,
-        revealedClueKeys: [...revealed, nextClue.key],
-      });
+      updatedAttempt = await updateDuelAttempt(
+        attempt.id,
+        profile.id,
+        input.version,
+        {
+          guesses: nextGuesses as unknown as Prisma.InputJsonValue,
+          revealedClueKeys: [...revealed, nextClue.key],
+        },
+      );
     } else {
-      await updateDuelAttempt(attempt.id, profile.id, input.version, {
+      updatedAttempt = await updateDuelAttempt(
+        attempt.id,
+        profile.id,
+        input.version,
+        {
+          guesses: nextGuesses as unknown as Prisma.InputJsonValue,
+          score: 0,
+          isCorrect: false,
+          completedAt: new Date(),
+          canGuess: false,
+        },
+      );
+    }
+  } else if (revealed.length < clues.length) {
+    updatedAttempt = await updateDuelAttempt(
+      attempt.id,
+      profile.id,
+      input.version,
+      {
+        guesses: nextGuesses as unknown as Prisma.InputJsonValue,
+        canGuess: false,
+      },
+    );
+  } else {
+    updatedAttempt = await updateDuelAttempt(
+      attempt.id,
+      profile.id,
+      input.version,
+      {
         guesses: nextGuesses as unknown as Prisma.InputJsonValue,
         score: 0,
         isCorrect: false,
         completedAt: new Date(),
         canGuess: false,
-      });
-    }
-  } else if (revealed.length < clues.length) {
-    await updateDuelAttempt(attempt.id, profile.id, input.version, {
-      guesses: nextGuesses as unknown as Prisma.InputJsonValue,
-      canGuess: false,
-    });
-  } else {
-    await updateDuelAttempt(attempt.id, profile.id, input.version, {
-      guesses: nextGuesses as unknown as Prisma.InputJsonValue,
-      score: 0,
-      isCorrect: false,
-      completedAt: new Date(),
-      canGuess: false,
-    });
+      },
+    );
   }
 
-  await completeDuelIfReady(duel.id);
-  return refreshView(inviteCode, profile.id, origin);
+  if (updatedAttempt.completedAt || updatedAttempt.givenUp) {
+    await completeDuelIfReady(duel.id);
+    return refreshView(inviteCode, profile.id, origin);
+  }
+
+  round.attempts = round.attempts.map((current) =>
+    current.id === updatedAttempt.id ? updatedAttempt : current,
+  );
+  return buildDuelView(duel, profile.id, origin);
 }
 
 export async function giveUpDuelRound(

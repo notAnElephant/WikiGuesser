@@ -326,7 +326,7 @@ describe("duel service", () => {
     repository.getOrRefreshDuelByInviteCode.mockResolvedValue(current);
     repository.getDuelByInviteCode.mockResolvedValue(current);
     repository.updateDuelAttempt.mockResolvedValue(
-      attempt("challenger", { version: 8 }),
+      attempt("challenger", { version: 8, completedAt: date, isCorrect: true }),
     );
     await guessDuelRound("abc123", 1, { guess: "France", version: 7 }, "clerk");
     expect(repository.updateDuelAttempt).toHaveBeenCalledWith(
@@ -335,6 +335,39 @@ describe("duel service", () => {
       7,
       expect.objectContaining({ isCorrect: true }),
     );
+    expect(repository.completeDuelIfReady).toHaveBeenCalledWith("duel-1");
+    expect(repository.getDuelByInviteCode).toHaveBeenCalledWith("abc123");
+  });
+
+  it("returns updated progress for an ordinary miss without refreshing or checking completion", async () => {
+    const current = duel({
+      rounds: [{ ...duel().rounds[0], attempts: [attempt("challenger")] }],
+    });
+    repository.ensureDuelUserProfile.mockResolvedValue({ id: "challenger" });
+    repository.getOrRefreshDuelByInviteCode.mockResolvedValue(current);
+    const updated = attempt("challenger", {
+      version: 8,
+      guesses: [{ name: "Germany", mapData: null }],
+      canGuess: false,
+    });
+    repository.updateDuelAttempt.mockResolvedValue(updated);
+
+    const result = await guessDuelRound(
+      "abc123",
+      1,
+      { guess: "Germany", version: 7 },
+      "clerk",
+    );
+
+    expect(result.rounds[0]).toMatchObject({
+      version: 8,
+      guesses: [{ name: "Germany", mapData: null }],
+      guess: "Germany",
+      canGuess: false,
+      status: "in-progress",
+    });
+    expect(repository.getDuelByInviteCode).not.toHaveBeenCalled();
+    expect(repository.completeDuelIfReady).not.toHaveBeenCalled();
   });
 
   it("awards standard score for a map guess", async () => {
