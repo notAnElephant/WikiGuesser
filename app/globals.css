@@ -64,7 +64,7 @@
 
 @layer utilities {
   .game-play-compact {
-    top: var(--play-viewport-top, 0px);
+    top: calc(var(--play-viewport-top, 0px) + var(--play-map-top, 0px));
   }
 
   .game-phase-cue {

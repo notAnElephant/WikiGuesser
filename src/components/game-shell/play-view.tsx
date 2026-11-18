@@ -147,6 +147,7 @@ export function GamePlayView({
 }: GamePlayViewProps) {
   const toast = useAppToast();
   const frameRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const clueScrollRef = useRef<HTMLDivElement>(null);
   const previousReveals = useRef<{
@@ -407,6 +408,14 @@ export function GamePlayView({
                 value={guess}
                 placeholder={isCountryRound ? "Search country" : "Type answer"}
                 onFocus={() => {
+                  if (mobileMap && mapRef.current) {
+                    const top = mapRef.current.getBoundingClientRect().top;
+                    const viewportTop = window.visualViewport?.offsetTop ?? 0;
+                    frameRef.current?.style.setProperty(
+                      "--play-map-top",
+                      `${Math.max(0, top - viewportTop)}px`,
+                    );
+                  }
                   setIsTyping(true);
                   setIsCountryListOpen(hasCountrySearch);
                 }}
@@ -483,7 +492,13 @@ export function GamePlayView({
     <VStack
       gap={0}
       ref={frameRef}
-      height={mobileMap || replay ? height : undefined}
+      height={
+        compactViewport
+          ? `max(0px, calc(${height}px - var(--play-map-top, 0px)))`
+          : mobileMap || replay
+            ? height
+            : undefined
+      }
       paddingBlockEnd={replay && !mobileMap ? 3 : undefined}
       className={
         compactViewport
@@ -577,6 +592,7 @@ export function GamePlayView({
           <VStack
             className={`relative min-h-0 flex-1 rounded-xl max-lg:overflow-hidden lg:h-full ${guessForm ? "game-phase-cue" : ""}`}
             data-game-map=""
+            ref={mapRef}
           >
             <WorldMapDialog
               countryOptions={availableCountryOptions}
@@ -584,7 +600,7 @@ export function GamePlayView({
               guessedCountries={guessedCountries}
               embedded
               isBusy={isBusy}
-              trackVisualViewport={mobileMap}
+              anchorTopOnResize={mobileMap}
               isExpanded={isMapExpanded}
               onExpandedChange={setIsMapExpanded}
               onCountryGuess={

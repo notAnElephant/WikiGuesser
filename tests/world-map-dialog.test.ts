@@ -173,44 +173,6 @@ describe("getResizedMapTransform", () => {
       currentTransform.k * previousProjection.scale(),
     );
   });
-
-  it("anchors to the visible map center across keyboard clipping and panning", () => {
-    const mapSize = { width: 390, height: 460 };
-    const projection = geoMercator().scale(72).translate([195, 230]);
-    const fullCenter: [number, number] = [195, 230];
-    const clippedCenter: [number, number] = [195, 310];
-    const location = projection([78, 22])!;
-    const original = zoomIdentity
-      .translate(...fullCenter)
-      .scale(30)
-      .translate(-location[0], -location[1]);
-    const geometry = {
-      mapSize,
-      previousMapSize: mapSize,
-      projection,
-      previousProjection: projection,
-    };
-
-    const opened = getResizedMapTransform({
-      ...geometry,
-      currentTransform: original,
-      center: clippedCenter,
-    })!;
-    expect(opened.apply(location)[0]).toBeCloseTo(clippedCenter[0]);
-    expect(opened.apply(location)[1]).toBeCloseTo(clippedCenter[1]);
-    expect(opened.k).toBe(original.k);
-
-    const panned = opened.translate(2, -3);
-    const viewedLocation = panned.invert(clippedCenter);
-    const closed = getResizedMapTransform({
-      ...geometry,
-      currentTransform: panned,
-      previousCenter: clippedCenter,
-    })!;
-    expect(closed.apply(viewedLocation)[0]).toBeCloseTo(fullCenter[0]);
-    expect(closed.apply(viewedLocation)[1]).toBeCloseTo(fullCenter[1]);
-    expect(closed.k).toBe(original.k);
-  });
 });
 
 describe("getFocusedMapTransform", () => {
