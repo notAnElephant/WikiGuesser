@@ -24,19 +24,16 @@ export function usePlayViewport(
       if (visual && visual.scale !== 1 && !(media.matches && isTyping)) return;
       const frame = ref.current;
       const visibleHeight = visual?.height ?? window.innerHeight;
-      const compact = media.matches && isTyping && visibleHeight < 500;
       // The keyboard can pan Safari's visual viewport away from layout y=0.
       frame?.style.setProperty(
         "--play-viewport-top",
         `${visual?.offsetTop ?? 0}px`,
       );
       const top = frame?.getBoundingClientRect().top ?? 0;
-      const bottom = visual
-        ? visual.offsetTop + visual.height
-        : window.innerHeight;
+      const bottom = visibleHeight + (media.matches ? 0 : visual?.offsetTop ?? 0);
       const next = {
         isMobile: media.matches,
-        height: compact ? visibleHeight : Math.max(0, bottom - top),
+        height: Math.max(0, bottom - top),
         visibleHeight,
       };
       setViewport((current) =>

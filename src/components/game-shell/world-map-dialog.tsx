@@ -54,7 +54,7 @@ export type DuelResultGuessedCountry = GuessedCountryMapData & {
 interface WorldMapDialogProps {
   /** Fill the play surface instead of using the legacy floating map drawer. */
   embedded?: boolean;
-  anchorTopOnResize?: boolean;
+  layeredMap?: boolean;
   countryOptions?: readonly string[];
   drawerState?: "hidden" | "medium" | "expanded";
   duelResult?: boolean;
@@ -206,7 +206,7 @@ function DirectionArrow({ direction }: { direction: GuessDirection }) {
 
 export function WorldMapDialog({
   embedded = false,
-  anchorTopOnResize = false,
+  layeredMap = false,
   countryOptions = [],
   focusedGuess,
   guessedCountries,
@@ -230,6 +230,7 @@ export function WorldMapDialog({
       : "medium";
   const isMapExpanded = effectiveDrawerState === "expanded";
   const isMapHidden = effectiveDrawerState === "hidden";
+  const hasLayeredCanvas = layeredMap && !isMapExpanded;
   const canInteractWithMap =
     embedded || presentation === "result" || Boolean(onCountryGuess);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -284,14 +285,20 @@ export function WorldMapDialog({
       return null;
     }
 
-    return geoMercator().fitExtent(
+    const projection = geoMercator().fitExtent(
       [
         [18, 18],
         [projectionSize.width - 18, projectionSize.height - 18],
       ],
       COUNTRY_DATA,
     );
-  }, [projectionSize]);
+    if (hasLayeredCanvas) {
+      const [x, y] = projection.translate();
+      const [, top] = geoPath(projection).bounds(COUNTRY_DATA)[0];
+      projection.translate([x, y - top + 18]);
+    }
+    return projection;
+  }, [hasLayeredCanvas, projectionSize]);
   const path = useMemo(
     () => (projection ? geoPath(projection) : null),
     [projection],
@@ -413,18 +420,19 @@ export function WorldMapDialog({
       setMapSize((size) =>
         size.width === width && size.height === height ? size : { width, height },
       );
-      // On mobile, height changes crop the existing map from the bottom.
+      // Fit the world once per width. The layered SVG uses CSS pixels directly.
+      const canvasHeight = hasLayeredCanvas ? width : height;
       setProjectionSize((size) =>
-        size.width === width && (anchorTopOnResize || size.height === height)
+        size.width === width && size.height === canvasHeight
           ? size
-          : { width, height },
+          : { width, height: canvasHeight },
       );
     };
     updateSize();
     const observer = new ResizeObserver(updateSize);
     observer.observe(container);
     return () => observer.disconnect();
-  }, [isMapHidden, anchorTopOnResize]);
+  }, [hasLayeredCanvas, isMapHidden]);
 
   const hasMapSize = mapSize.width > 0 && mapSize.height > 0;
 
@@ -433,8 +441,9 @@ export function WorldMapDialog({
   // replacement crashes in its touchend handler.
   useEffect(() => {
     const svg = svgRef.current;
+    const container = mapContainerRef.current;
 
-    if (!svg || !canInteractWithMap || !hasMapSize) {
+    if (!svg || !container || !canInteractWithMap || !hasMapSize) {
       return;
     }
 
@@ -458,15 +467,11 @@ export function WorldMapDialog({
           measurement?.cancel();
           zoomUpdates = 0;
           const zoomStart = event.transform.k;
-          const { width, height } = svg.viewBox.baseVal;
+          const { width, height } = container.getBoundingClientRect();
           const inputType = event.sourceEvent.type;
           measurement = measureMapInteraction((metrics) => {
-            if (
-              zoomUpdates < 2 ||
-              width !== svg.viewBox.baseVal.width ||
-              height !== svg.viewBox.baseVal.height
-            )
-              return;
+            const size = container.getBoundingClientRect();
+            if (zoomUpdates < 2 || width !== size.width || height !== size.height) return;
             captureAnalyticsEvent("map_interaction_performance", {
               ...metrics,
               measurement_version: 1,
@@ -645,7 +650,7 @@ export function WorldMapDialog({
         Math.min((timestamp - previousTime) / 1000, 0.05),
       );
       previousTime = timestamp;
-      const { width, height } = svg.viewBox.baseVal;
+      const { width, height } = hasLayeredCanvas ? mapSize : svg.viewBox.baseVal;
       const centerX = width / 2;
       const centerY = height / 2;
       const transform = mapTransformRef.current;
@@ -854,7 +859,7 @@ export function WorldMapDialog({
     }
 
     if (
-      anchorTopOnResize ||
+      layeredMap ||
       presentation !== "game" ||
       focusedGuess !== undefined ||
       guessedCountries.length <= focusedGuessedCountryCountRef.current
@@ -868,7 +873,7 @@ export function WorldMapDialog({
       focusedGuessedCountryCountRef.current = guessedCountries.length;
     }
   }, [
-    anchorTopOnResize,
+    layeredMap,
     focusedGuess,
     guessedCountries,
     mapSize,
@@ -1013,7 +1018,7 @@ export function WorldMapDialog({
         aria-label="World map"
         aria-busy={isBusy}
         aria-modal={isMapExpanded ? true : undefined}
-        className={`pointer-events-auto w-full overflow-hidden bg-body ${embedded && !isMapExpanded ? "min-h-0 flex-1 lg:rounded-xl lg:border lg:border-border" : "grid grid-rows-[minmax(0,1fr)_auto] border border-border shadow-md"} transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:shadow-md ${
+        className={`pointer-events-auto w-full ${hasLayeredCanvas ? "" : "overflow-hidden"} bg-body ${embedded && !isMapExpanded ? "min-h-0 flex-1 lg:rounded-xl lg:border lg:border-border" : "grid grid-rows-[minmax(0,1fr)_auto] border border-border shadow-md"} transition-[height,width,border-radius,transform] ${isDrawerDragging ? "duration-0" : "duration-300"} dark:shadow-md ${
           embedded && !isMapExpanded
             ? ""
             : presentation === "result"
@@ -1039,7 +1044,7 @@ export function WorldMapDialog({
                 ? "Interactive duel result map. Each player's guesses use a different color, shared guesses are striped, and the correct answer is highlighted."
                 : "Interactive unlabeled world map. Guessed countries are red and display their names and direction arrows."
           }
-          className="map-world-canvas relative min-h-0 flex-1 overflow-hidden"
+          className={`map-world-canvas relative min-h-0 flex-1 ${hasLayeredCanvas ? "" : "overflow-hidden"}`}
           ref={mapContainerRef}
           role="application"
         >
@@ -1114,19 +1119,21 @@ export function WorldMapDialog({
           ) : null}
           <svg
             aria-label="Country outlines and small-country markers"
-            className={`size-full touch-none select-none ${canInteractWithMap ? "" : "pointer-events-none"} ${onCountryGuess ? "map-world-guessing" : ""}`}
+            className={`${hasLayeredCanvas ? "absolute inset-x-0 top-0 h-lvh w-full bg-body" : "size-full"} touch-none select-none ${canInteractWithMap ? "" : "pointer-events-none"} ${onCountryGuess ? "map-world-guessing" : ""}`}
             data-suppress-touch-highlight={suppressTouchHighlight || undefined}
             onClick={onMapClickDuringReveal}
             onMouseDownCapture={(event) => {
               // Let the country click land before blurring the input resizes the map.
-              if (anchorTopOnResize && onCountryGuess) event.preventDefault();
+              if (layeredMap && onCountryGuess) event.preventDefault();
             }}
             onTouchStartCapture={(event) => {
               // Keep pinch hover suppressed after release until the next single touch.
               setSuppressTouchHighlight(event.touches.length > 1);
             }}
             ref={svgRef}
-            viewBox={`0 0 ${mapSize.width || 1} ${mapSize.height || 1}`}
+            viewBox={
+              hasLayeredCanvas ? undefined : `0 0 ${mapSize.width || 1} ${mapSize.height || 1}`
+            }
           >
             <g
               transform={`translate(${mapTransform.x} ${mapTransform.y}) scale(${mapTransform.k})`}

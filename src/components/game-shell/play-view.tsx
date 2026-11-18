@@ -147,7 +147,6 @@ export function GamePlayView({
 }: GamePlayViewProps) {
   const toast = useAppToast();
   const frameRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const clueScrollRef = useRef<HTMLDivElement>(null);
   const previousReveals = useRef<{
@@ -368,7 +367,7 @@ export function GamePlayView({
                 No matching countries. Try another name.
               </Text>
             )
-          ) : compactSheet ? (
+          ) : compactSheet && !compactViewport ? (
             <VStack aria-hidden="true" className="h-11 shrink-0" />
           ) : null}
           <HStack gap={2} align="center">
@@ -408,14 +407,6 @@ export function GamePlayView({
                 value={guess}
                 placeholder={isCountryRound ? "Search country" : "Type answer"}
                 onFocus={() => {
-                  if (mobileMap && mapRef.current) {
-                    const top = mapRef.current.getBoundingClientRect().top;
-                    const viewportTop = window.visualViewport?.offsetTop ?? 0;
-                    frameRef.current?.style.setProperty(
-                      "--play-map-top",
-                      `${Math.max(0, top - viewportTop)}px`,
-                    );
-                  }
                   setIsTyping(true);
                   setIsCountryListOpen(hasCountrySearch);
                 }}
@@ -492,20 +483,12 @@ export function GamePlayView({
     <VStack
       gap={0}
       ref={frameRef}
-      height={
-        compactViewport
-          ? `max(0px, calc(${height}px - var(--play-map-top, 0px)))`
-          : mobileMap || replay
-            ? height
-            : undefined
-      }
+      height={mobileMap || replay ? height : undefined}
       paddingBlockEnd={replay && !mobileMap ? 3 : undefined}
       className={
-        compactViewport
-          ? "game-play-compact fixed inset-x-0 z-20 min-h-0 overflow-hidden bg-surface"
-          : isCountryRound
-            ? "min-h-0 -mx-3 -mt-4 -mb-4 overflow-hidden sm:-mx-4 sm:-mt-5 sm:-mb-5 lg:mx-0 lg:mt-0 lg:mb-0 lg:overflow-visible"
-            : "min-w-0"
+        isCountryRound
+          ? `min-h-0 -mx-3 -mt-4 -mb-4 sm:-mx-4 sm:-mt-5 sm:-mb-5 lg:mx-0 lg:mt-0 lg:mb-0 ${mobileMap ? "" : "overflow-hidden lg:overflow-visible"}`
+          : "min-w-0"
       }
       data-game-play=""
       data-mobile-map={mobileMap || undefined}
@@ -516,7 +499,7 @@ export function GamePlayView({
         align="center"
         paddingInline={4}
         paddingBlock={1}
-        className={compactViewport ? "hidden" : "shrink-0 lg:px-0"}
+        className="shrink-0 lg:px-0"
       >
         <VStack gap={0} className="min-w-0">
           <Text color="secondary" type="supporting" className="hidden lg:block">
@@ -549,7 +532,7 @@ export function GamePlayView({
       </HStack>
       {header && (!replay || mobileMap) ? (
         <VStack
-          className={compactViewport ? "hidden" : "shrink-0"}
+          className="shrink-0"
           paddingInline={4}
         >
           {header}
@@ -581,18 +564,19 @@ export function GamePlayView({
             : undefined
         }
         className={
-          replay
-            ? "min-h-0 flex-1 lg:flex-row lg:items-start lg:gap-4"
-            : isCountryRound
-              ? "min-h-0 flex-1 lg:min-h-80 lg:flex-none lg:flex-row lg:items-stretch lg:gap-4"
-              : "min-h-0 flex-1"
+          mobileMap
+            ? "game-map-stage relative min-h-0 flex-1 overflow-hidden"
+            : replay
+              ? "min-h-0 flex-1 lg:flex-row lg:items-start lg:gap-4"
+              : isCountryRound
+                ? "min-h-0 flex-1 lg:min-h-80 lg:flex-none lg:flex-row lg:items-stretch lg:gap-4"
+                : "min-h-0 flex-1"
         }
       >
         {isCountryRound ? (
           <VStack
-            className={`relative min-h-0 flex-1 rounded-xl max-lg:overflow-hidden lg:h-full ${guessForm ? "game-phase-cue" : ""}`}
+            className={`relative min-h-0 flex-1 rounded-xl lg:h-full ${guessForm ? "game-phase-cue" : ""}`}
             data-game-map=""
-            ref={mapRef}
           >
             <WorldMapDialog
               countryOptions={availableCountryOptions}
@@ -600,7 +584,7 @@ export function GamePlayView({
               guessedCountries={guessedCountries}
               embedded
               isBusy={isBusy}
-              anchorTopOnResize={mobileMap}
+              layeredMap={mobileMap}
               isExpanded={isMapExpanded}
               onExpandedChange={setIsMapExpanded}
               onCountryGuess={
@@ -630,7 +614,7 @@ export function GamePlayView({
           as="section"
           aria-label="Clues and guess"
           height={sheetHeight}
-          className={`relative shrink-0 overflow-y-auto bg-surface ${prioritizeGuess ? "min-h-1/2" : "min-h-0"} ${isCountryRound ? "max-h-3/5 rounded-xl border-t border-border lg:max-h-full lg:w-72 lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealStep ? "game-phase-cue" : ""} ${compactViewport ? "max-h-full" : ""}`}
+          className={`relative shrink-0 overflow-y-auto bg-surface min-h-0 ${mobileMap ? "z-30" : ""} ${isCountryRound ? "max-h-3/5 rounded-xl border-t border-border lg:max-h-full lg:w-72 lg:border lg:border-border" : "max-h-full w-full rounded-xl border border-border"} ${isRevealStep ? "game-phase-cue" : ""} ${compactViewport ? "max-h-full" : ""}`}
           data-clue-sheet=""
           data-compact={compactSheet || undefined}
         >
