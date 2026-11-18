@@ -155,11 +155,7 @@ export function GamePlayView({
   } | null>(null);
   const [latestRevealKey, setLatestRevealKey] = useState<string>();
   const [isTyping, setIsTyping] = useState(false);
-  const { isMobile, height, visibleHeight } = usePlayViewport(
-    frameRef,
-    isCountryRound,
-    isTyping,
-  );
+  const { isMobile, isShort } = usePlayViewport(frameRef, isCountryRound);
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
   const [activeOption, setActiveOption] = useState(-1);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -209,7 +205,7 @@ export function GamePlayView({
           : "auto"
     : undefined;
   // On a short keyboard viewport, prioritize the clue and guess controls.
-  const compactViewport = mobileMap && isTyping && visibleHeight < 500;
+  const compactViewport = mobileMap && isTyping && isShort;
   const prioritizeGuess = compactViewport && isRevealMode;
   const latestClue =
     currentClues.find((clue) => clue.isRevealed && clue.key === latestRevealKey) ??
@@ -483,7 +479,7 @@ export function GamePlayView({
     <VStack
       gap={0}
       ref={frameRef}
-      height={mobileMap || replay ? height : undefined}
+      height={mobileMap || replay ? "var(--play-viewport-height)" : undefined}
       paddingBlockEnd={replay && !mobileMap ? 3 : undefined}
       className={
         isCountryRound

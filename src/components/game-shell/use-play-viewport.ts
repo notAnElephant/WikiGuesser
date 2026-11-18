@@ -6,12 +6,10 @@ import { useLayoutEffect, useState, type RefObject } from "react";
 export function usePlayViewport(
   ref: RefObject<HTMLElement | null>,
   enabled: boolean,
-  isTyping: boolean,
 ) {
   const [viewport, setViewport] = useState({
     isMobile: false,
-    height: 0,
-    visibleHeight: 0,
+    isShort: false,
   });
 
   useLayoutEffect(() => {
@@ -20,26 +18,33 @@ export function usePlayViewport(
     const visual = window.visualViewport;
     let frame = 0;
     const measure = () => {
+      const element = ref.current;
+      if (!element) return;
       // Safari can zoom and open the keyboard in the same focus gesture.
-      if (visual && visual.scale !== 1 && !(media.matches && isTyping)) return;
-      const frame = ref.current;
+      if (
+        visual &&
+        visual.scale !== 1 &&
+        !(media.matches && element.querySelector("input:focus"))
+      ) {
+        return;
+      }
       const visibleHeight = visual?.height ?? window.innerHeight;
-      // The keyboard can pan Safari's visual viewport away from layout y=0.
-      frame?.style.setProperty(
-        "--play-viewport-top",
-        `${visual?.offsetTop ?? 0}px`,
+      const offset = visual?.offsetTop ?? 0;
+      const top = element.getBoundingClientRect().top;
+      const bottom = visibleHeight + (media.matches ? 0 : offset);
+      // Move the panel in the same frame as the keyboard resize.
+      element.style.setProperty("--play-viewport-top", `${offset}px`);
+      element.style.setProperty(
+        "--play-viewport-height",
+        `${Math.max(0, bottom - top)}px`,
       );
-      const top = frame?.getBoundingClientRect().top ?? 0;
-      const bottom = visibleHeight + (media.matches ? 0 : visual?.offsetTop ?? 0);
       const next = {
         isMobile: media.matches,
-        height: Math.max(0, bottom - top),
-        visibleHeight,
+        isShort: visibleHeight < 500,
       };
       setViewport((current) =>
         current.isMobile === next.isMobile &&
-        current.height === next.height &&
-        current.visibleHeight === next.visibleHeight
+        current.isShort === next.isShort
           ? current
           : next,
       );
@@ -51,19 +56,19 @@ export function usePlayViewport(
     measure();
     const observer = new ResizeObserver(schedule);
     if (ref.current) observer.observe(ref.current);
-    media.addEventListener("change", schedule);
-    window.addEventListener("resize", schedule);
-    visual?.addEventListener("resize", schedule);
-    visual?.addEventListener("scroll", schedule);
+    media.addEventListener("change", measure);
+    window.addEventListener("resize", measure);
+    visual?.addEventListener("resize", measure);
+    visual?.addEventListener("scroll", measure);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
-      media.removeEventListener("change", schedule);
-      window.removeEventListener("resize", schedule);
-      visual?.removeEventListener("resize", schedule);
-      visual?.removeEventListener("scroll", schedule);
+      media.removeEventListener("change", measure);
+      window.removeEventListener("resize", measure);
+      visual?.removeEventListener("resize", measure);
+      visual?.removeEventListener("scroll", measure);
     };
-  }, [enabled, ref, isTyping]);
+  }, [enabled, ref]);
 
   return viewport;
 }
