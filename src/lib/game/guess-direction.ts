@@ -1,4 +1,5 @@
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
+import { getPacificRegionAnchor } from "./pacific-regions";
 import type {
   GuessedCountryMapData,
   GuessDirection,
@@ -12,6 +13,9 @@ interface Coordinate {
 }
 
 function getCoordinate(entity: NormalizedEntity): Coordinate | null {
+  const regionAnchor = getPacificRegionAnchor(entity.canonicalAnswer);
+  if (regionAnchor) return regionAnchor;
+
   const latitude = entity.metadata.centroidLatitude;
   const longitude = entity.metadata.centroidLongitude;
 

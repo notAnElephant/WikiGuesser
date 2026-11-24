@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   getGuessedCountryMapData,
   getGuessDirection,
+  getSolutionCountryMapData,
 } from "@/src/lib/game/guess-direction";
+import { getPacificRegionAnchor } from "@/src/lib/game/pacific-regions";
 import type { NormalizedEntity } from "@/src/lib/types";
 
 function country(
@@ -62,6 +64,20 @@ describe("getGuessDirection", () => {
 
   it("returns null when the guessed country has no coordinates", () => {
     expect(getGuessDirection("Missing", goal, [goal])).toBeNull();
+  });
+
+  it("uses the Pacific region anchors for both the bearing and map coordinates", () => {
+    const tonga = country("Tonga", 30, -130);
+    const samoa = country("Samoa", -50, -130);
+    const entities = [tonga, samoa];
+
+    expect(getGuessedCountryMapData("Tonga", samoa, entities)).toMatchObject({
+      ...getPacificRegionAnchor("Tonga"),
+      direction: "north",
+    });
+    expect(getSolutionCountryMapData(samoa)).toMatchObject(
+      getPacificRegionAnchor("Samoa")!,
+    );
   });
 
   it("returns only the guessed country's safe map overlay data", () => {

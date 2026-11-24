@@ -1,4 +1,4 @@
-import { geoArea, geoMercator } from "d3-geo";
+import { geoArea, geoContains, geoMercator, geoStream } from "d3-geo";
 import type { Feature, Geometry } from "geojson";
 import { zoomIdentity } from "d3-zoom";
 import { describe, expect, it } from "vitest";
@@ -6,14 +6,19 @@ import { describe, expect, it } from "vitest";
 import {
   getFocusedMapTransform,
   getLastGuessedCountry,
+  getNearestWorldX,
   getResizedMapTransform,
+  getVisibleWorldCopies,
 } from "@/src/components/game-shell/world-map-dialog";
 import {
+  COUNTRY_DATA,
+  getAntimeridianCountryBorder,
   getCountriesWithoutMapCoverage,
   getMapCountryNames,
   getPlayableCountriesByMapName,
   hasMapGeometry,
 } from "@/src/lib/game/world-map-data";
+import { PACIFIC_REGIONS } from "@/src/lib/game/pacific-regions";
 import type { NormalizedEntity } from "@/src/lib/types";
 import microstateMap from "@/src/lib/game/microstate-map.json";
 import { gzipSync } from "node:zlib";
@@ -133,6 +138,48 @@ describe("world map coverage", () => {
   });
 });
 
+describe("Pacific map regions", () => {
+  const regions = PACIFIC_REGIONS.features;
+  const playableRegions = regions.filter(({ properties }) => properties.anchor);
+
+  it("encloses the land and arrow anchor of each playable Pacific country", () => {
+    expect(playableRegions).toHaveLength(11);
+    for (const region of playableRegions) {
+      const { anchor, countryId } = region.properties;
+      expect(
+        regions.filter((candidate) => geoContains(candidate, anchor!)),
+      ).toEqual([region]);
+      const country = COUNTRY_DATA.features.find(({ id }) => id === countryId);
+      const geometry = country?.geometry;
+      if (geometry?.type !== "Polygon" && geometry?.type !== "MultiPolygon")
+        throw new Error(`Expected island polygons for ${countryId}`);
+      const polygons =
+        geometry.type === "Polygon"
+          ? [geometry.coordinates]
+          : geometry.coordinates;
+      for (const [shoreline] of polygons) {
+        for (const [longitude, latitude] of shoreline) {
+          expect(geoContains(region, [longitude, latitude])).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("connects Kiribati across the seam and keeps Tutuila in American Samoa", () => {
+    const kiribati = regions.find(
+      (region) => region.properties.name === "Kiribati",
+    )!;
+    expect(kiribati.geometry.coordinates).toHaveLength(1);
+    expect(geoContains(kiribati, [179.9, 0])).toBe(true);
+    expect(geoContains(kiribati, [-179.9, 0])).toBe(true);
+    expect(
+      regions
+        .filter((region) => geoContains(region, [-170.7, -14.3]))
+        .map((region) => region.properties.name),
+    ).toEqual(["American Samoa"]);
+  });
+});
+
 describe("getResizedMapTransform", () => {
   it("keeps the same geographic point centered through a map resize", () => {
     const geographicCenter: [number, number] = [19.82, 41.33];
@@ -172,6 +219,88 @@ describe("getResizedMapTransform", () => {
     expect(resizedTransform!.k * projection.scale()).toBeCloseTo(
       currentTransform.k * previousProjection.scale(),
     );
+  });
+
+  it("preserves the horizontal world copy through a resize", () => {
+    const previousMapSize = { width: 390, height: 240 };
+    const mapSize = { width: 390, height: 760 };
+    const previousProjection = geoMercator().scale(60);
+    const projection = geoMercator().scale(90);
+    const location: [number, number] = [-157.4, 1.9];
+    const previousPoint = previousProjection(location)!;
+    const previousWorldX =
+      previousPoint[0] + 4 * Math.PI * previousProjection.scale();
+    const currentTransform = zoomIdentity
+      .translate(previousMapSize.width / 2, previousMapSize.height / 2)
+      .scale(6)
+      .translate(-previousWorldX, -previousPoint[1]);
+    const resized = getResizedMapTransform({
+      currentTransform,
+      mapSize,
+      previousMapSize,
+      previousProjection,
+      projection,
+    })!;
+    const point = projection(location)!;
+    expect(
+      resized.applyX(point[0] + 4 * Math.PI * projection.scale()),
+    ).toBeCloseTo(mapSize.width / 2);
+    expect(resized.applyY(point[1])).toBeCloseTo(mapSize.height / 2);
+  });
+});
+
+describe("horizontal map wrapping", () => {
+  it.each(["Russia", "Fiji"])(
+    "keeps the coastline of %s without drawing down the seam",
+    (name) => {
+      const geometry = COUNTRY_DATA.features.find(
+        (country) => country.properties.name === name,
+      )!.geometry;
+      const projection = geoMercator().scale(1).translate([0, 0]);
+      const seamEdges = (shape: Geometry) => {
+        let previous: [number, number] | undefined;
+        let count = 0;
+        geoStream(
+          shape,
+          projection.stream({
+            point(x, y) {
+              if (
+                previous &&
+                Math.abs(Math.abs(x) - Math.PI) < 1e-8 &&
+                Math.abs(x - previous[0]) < 1e-8 &&
+                // Ignore the subpixel nudge d3 applies at exact clipping points.
+                Math.abs(y - previous[1]) > 0.00001
+              )
+                count++;
+              previous = [x, y];
+            },
+            lineStart() {
+              previous = undefined;
+            },
+            lineEnd() {},
+            polygonStart() {},
+            polygonEnd() {},
+            sphere() {},
+          }),
+        );
+        return count;
+      };
+      expect(seamEdges(geometry)).toBeGreaterThan(0);
+      const border = getAntimeridianCountryBorder(geometry)!;
+      expect(border.coordinates.length).toBeGreaterThan(0);
+      expect(seamEdges(border)).toBe(0);
+    },
+  );
+
+  it("draws the two adjacent copies at either seam and one within a world", () => {
+    expect(getVisibleWorldCopies(-20, 40, 0, 360)).toEqual([-1, 0]);
+    expect(getVisibleWorldCopies(330, 390, 0, 360)).toEqual([0, 1]);
+    expect(getVisibleWorldCopies(770, 810, 0, 360)).toEqual([2]);
+  });
+
+  it("finds the closest equivalent longitude in either direction", () => {
+    expect(getNearestWorldX(350, 10, 360)).toBe(-10);
+    expect(getNearestWorldX(15, 710, 360)).toBe(735);
   });
 });
 

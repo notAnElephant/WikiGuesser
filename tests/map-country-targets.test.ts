@@ -13,9 +13,9 @@ describe("small-country map targets", () => {
   const projection = geoMercator().scale(100);
   const path = geoPath(projection);
 
-  it("anchors Tuvalu's marker on actual land and keeps it visible at world scale", () => {
+  it("anchors Monaco's marker on actual land and keeps it visible at world scale", () => {
     const country = COUNTRY_DATA.features.find(
-      (country) => country.properties.name === "Tuvalu",
+      (country) => country.properties.name === "Monaco",
     )!;
     const target = getCountryTargetGeometry(country, path, projection)!;
     expect(geoContains(country, projection.invert!(target.point)!)).toBe(true);

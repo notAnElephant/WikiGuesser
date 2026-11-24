@@ -1,7 +1,12 @@
 import { normalizeGuess } from "@/src/lib/game/answer-matching";
 import type { NormalizedEntity } from "@/src/lib/types";
 import { feature } from "topojson-client";
-import type { FeatureCollection, Geometry } from "geojson";
+import type {
+  FeatureCollection,
+  Geometry,
+  MultiLineString,
+  Position,
+} from "geojson";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import worldTopology from "world-atlas/countries-50m.json";
 import microstateMap from "./microstate-map.json";
@@ -78,6 +83,46 @@ function buildCountryData(): FeatureCollection<Geometry, MapCountryProperties> {
 }
 
 export const COUNTRY_DATA = buildCountryData();
+
+export function getAntimeridianCountryBorder(
+  geometry: Geometry,
+): MultiLineString | null {
+  if (geometry.type !== "Polygon" && geometry.type !== "MultiPolygon")
+    return null;
+  const rings =
+    geometry.type === "Polygon"
+      ? geometry.coordinates
+      : geometry.coordinates.flat();
+  const isSeamEdge = (a: Position, b: Position) =>
+    Math.abs(a[0]) === 180 && a[0] === b[0];
+  const needsSeparateBorder = rings.some((ring) =>
+    ring.some(
+      (point, i) =>
+        i > 0 &&
+        (Math.abs(ring[i - 1][0] - point[0]) > 180 ||
+          isSeamEdge(ring[i - 1], point)),
+    ),
+  );
+  if (!needsSeparateBorder) return null;
+
+  // A line can cross the antimeridian without acquiring the polygon's closing edge.
+  const coordinates = rings.flatMap((ring) => {
+    const lines: Position[][] = [];
+    let line = [ring[0]];
+    for (let i = 1; i < ring.length; i++) {
+      const point = ring[i];
+      if (isSeamEdge(ring[i - 1], point)) {
+        if (line.length > 1) lines.push(line);
+        line = [point];
+      } else {
+        line.push(point);
+      }
+    }
+    if (line.length > 1) lines.push(line);
+    return lines;
+  });
+  return { type: "MultiLineString", coordinates };
+}
 
 const MAP_COUNTRY_NAMES = new Set(
   COUNTRY_DATA.features.map((country) => country.properties.normalizedName),

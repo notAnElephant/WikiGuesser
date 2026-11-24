@@ -270,6 +270,31 @@
     stroke-dasharray: var(--spacing-1) var(--spacing-1);
   }
 
+  .map-island-group {
+    fill: var(--color-background-muted);
+    fill-opacity: 0.4;
+    stroke: var(--color-border-emphasized);
+    stroke-width: var(--border-width);
+    stroke-dasharray: var(--spacing-1);
+  }
+
+  .map-island-group[role="button"] {
+    cursor: pointer;
+    pointer-events: fill;
+  }
+
+  .map-island-group--context {
+    fill: none;
+    stroke: var(--color-border);
+  }
+
+  .map-world-guessing:not([data-suppress-touch-highlight])
+    .map-island-group[role="button"]:hover,
+  .map-island-group:focus-visible {
+    stroke: var(--color-text-secondary);
+    stroke-width: var(--focus-outline-width);
+  }
+
   .map-country--guessed {
     cursor: pointer;
     fill: var(--color-error-muted);
@@ -319,6 +344,15 @@
     fill: var(--color-success-muted);
     stroke: var(--color-success);
     stroke-width: var(--focus-outline-width);
+  }
+
+  .map-country--seam-fill {
+    stroke: none;
+  }
+
+  .map-country--seam-border {
+    fill: none;
+    pointer-events: none;
   }
 
   .map-solution-marker {

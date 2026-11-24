@@ -7,9 +7,14 @@ import {
 import { measureMapInteraction } from "@/src/lib/map-performance";
 import {
   COUNTRY_DATA,
+  getAntimeridianCountryBorder,
   getMapCountryNames,
   getPlayableCountriesByMapName,
 } from "@/src/lib/game/world-map-data";
+import {
+  PACIFIC_REGIONS,
+  PACIFIC_REGIONS_SOURCE,
+} from "@/src/lib/game/pacific-regions";
 import {
   COUNTRY_TOUCH_TARGET_SIZE,
   getCountryMarkerOpacity,
@@ -26,7 +31,13 @@ import { HStack } from "@astryxdesign/core/HStack";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Spinner } from "@astryxdesign/core/Spinner";
 import { VStack } from "@astryxdesign/core/VStack";
-import { geoContains, geoMercator, geoPath, type GeoProjection } from "d3-geo";
+import {
+  geoContains,
+  geoMercator,
+  geoPath,
+  geoTransform,
+  type GeoProjection,
+} from "d3-geo";
 import { select } from "d3-selection";
 import {
   zoom,
@@ -43,7 +54,15 @@ import {
   Scan,
   X,
 } from "lucide-react";
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  type ComponentProps,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 export type DuelResultMarkerTone = "challenger" | "opponent" | "both";
 
@@ -117,6 +136,41 @@ const MIN_MAP_SCALE = 1;
 const MAX_MAP_SCALE = 100;
 const MAP_ZOOM_STEP = 1.45;
 const MIN_SMALL_COUNTRY_TARGET_SCALE = MIN_MAP_SCALE * MAP_ZOOM_STEP ** 2;
+const ISLAND_GROUP_COUNTRY_IDS = new Set(
+  PACIFIC_REGIONS.features.flatMap(({ properties }) =>
+    properties.anchor ? [properties.countryId] : [],
+  ),
+);
+const MAP_COUNTRIES_BY_ID = new Map(
+  COUNTRY_DATA.features.map((country) => [country.id, country.properties]),
+);
+const ANTIMERIDIAN_BORDERS = COUNTRY_DATA.features.map(({ geometry }) =>
+  getAntimeridianCountryBorder(geometry),
+);
+
+function CountryShape({
+  border,
+  className,
+  ...props
+}: ComponentProps<"path"> & { border: string | null }) {
+  return (
+    <>
+      <path
+        {...props}
+        className={border ? `${className} map-country--seam-fill` : className}
+        vectorEffect="non-scaling-stroke"
+      />
+      {border ? (
+        <path
+          aria-hidden="true"
+          className={`${className} map-country--seam-border`}
+          d={border}
+          vectorEffect="non-scaling-stroke"
+        />
+      ) : null}
+    </>
+  );
+}
 
 interface ResizeTransformOptions {
   currentTransform: ZoomTransform;
@@ -124,6 +178,28 @@ interface ResizeTransformOptions {
   previousMapSize: MapSize;
   previousProjection: GeoProjection;
   projection: GeoProjection;
+}
+
+export function getNearestWorldX(
+  x: number,
+  reference: number,
+  worldWidth: number,
+) {
+  return worldWidth > 0
+    ? x + Math.round((reference - x) / worldWidth) * worldWidth
+    : x;
+}
+
+export function getVisibleWorldCopies(
+  left: number,
+  right: number,
+  worldLeft: number,
+  worldWidth: number,
+) {
+  if (worldWidth <= 0) return [0];
+  const first = Math.floor((left - worldLeft) / worldWidth);
+  const last = Math.ceil((right - worldLeft) / worldWidth) - 1;
+  return Array.from({ length: last - first + 1 }, (_, index) => first + index);
 }
 
 export function getResizedMapTransform({
@@ -137,7 +213,15 @@ export function getResizedMapTransform({
     previousMapSize.width / 2,
     previousMapSize.height / 2,
   ]);
-  const geographicCenter = previousProjection.invert?.(previousMapCenter);
+  const [previousOrigin] = previousProjection.translate();
+  const geographicCenter = previousProjection.invert?.([
+    getNearestWorldX(
+      previousMapCenter[0],
+      previousOrigin,
+      2 * Math.PI * previousProjection.scale(),
+    ),
+    previousMapCenter[1],
+  ]);
 
   if (!geographicCenter) {
     return null;
@@ -156,11 +240,22 @@ export function getResizedMapTransform({
       currentTransform.k * (previousProjection.scale() / projection.scale()),
     ),
   );
+  const expectedCenterX =
+    projection.translate()[0] +
+    (previousMapCenter[0] - previousOrigin) *
+      (projection.scale() / previousProjection.scale());
 
   return zoomIdentity
     .translate(mapSize.width / 2, mapSize.height / 2)
     .scale(nextScale)
-    .translate(-nextMapCenter[0], -nextMapCenter[1]);
+    .translate(
+      -getNearestWorldX(
+        nextMapCenter[0],
+        expectedCenterX,
+        2 * Math.PI * projection.scale(),
+      ),
+      -nextMapCenter[1],
+    );
 }
 
 export function getFocusedMapTransform({
@@ -250,6 +345,9 @@ export function WorldMapDialog({
   const animationTargetRef = useRef<ZoomTransform | null>(null);
   const animationVelocityRef = useRef({ x: 0, y: 0, scale: 0 });
   const focusedGuessedCountryCountRef = useRef(0);
+  const islandMapGuessRef = useRef<{ name: string; guessCount: number } | null>(
+    null,
+  );
   const previousMapSizeRef = useRef<MapSize | null>(null);
   const previousProjectionRef = useRef<GeoProjection | null>(null);
   const [mapSize, setMapSize] = useState<MapSize>({ width: 0, height: 0 });
@@ -303,15 +401,82 @@ export function WorldMapDialog({
     () => (projection ? geoPath(projection) : null),
     [projection],
   );
+  const worldWidth = projection ? 2 * Math.PI * projection.scale() : 0;
+  const worldOrigin = projection?.translate()[0] ?? 0;
+  const worldCopies = getVisibleWorldCopies(
+    mapTransform.invertX(0),
+    mapTransform.invertX(mapSize.width),
+    worldOrigin - worldWidth / 2,
+    worldWidth,
+  );
+  const pacificCopies = getVisibleWorldCopies(
+    mapTransform.invertX(0),
+    mapTransform.invertX(mapSize.width),
+    worldOrigin,
+    worldWidth,
+  );
   // Geometry changes on resize; pan and zoom only change the group's transform.
   const countryPaths = useMemo(
-    () => COUNTRY_DATA.features.map((country) => path?.(country) ?? null),
+    () =>
+      COUNTRY_DATA.features.map((country, index) => {
+        if (!path) return null;
+        const border = ANTIMERIDIAN_BORDERS[index];
+        return {
+          outline: path(country),
+          bounds: path.bounds(country),
+          border: border ? path(border) : null,
+        };
+      }),
     [path],
+  );
+  function isMapBoundsVisible(
+    [[left, top], [right, bottom]]: [[number, number], [number, number]],
+    copy: number,
+  ) {
+    const offset = copy * worldWidth;
+    return (
+      mapTransform.applyX(left + offset) <= mapSize.width &&
+      mapTransform.applyX(right + offset) >= 0 &&
+      mapTransform.applyY(top) <= mapSize.height &&
+      mapTransform.applyY(bottom) >= 0
+    );
+  }
+  const pacificRegionPaths = useMemo(() => {
+    if (!projection) return [];
+    // Draw the Pacific as one piece, including regions crossing 180°.
+    const pacificCenter = worldOrigin + worldWidth / 2;
+    const regionPath = geoPath(
+      geoTransform({
+        point(longitude, latitude) {
+          const point = projection([longitude, latitude]);
+          if (point)
+            this.stream.point(
+              getNearestWorldX(point[0], pacificCenter, worldWidth),
+              point[1],
+            );
+        },
+      }),
+    );
+    return PACIFIC_REGIONS.features.map(({ geometry, properties }) => ({
+      ...properties,
+      mapName: MAP_COUNTRIES_BY_ID.get(properties.countryId)?.normalizedName,
+      outline: regionPath(geometry),
+      bounds: regionPath.bounds(geometry),
+    }));
+  }, [projection, worldOrigin, worldWidth]);
+  const showPacificRegions = pacificRegionPaths.some(
+    ({ anchor, mapName }) =>
+      anchor &&
+      mapName &&
+      (playableCountryByMapName.has(mapName) ||
+        guessedCountryByName.has(mapName) ||
+        solutionNames.has(mapName)),
   );
   const countryTargets = useMemo(
     () =>
       path && projection
         ? COUNTRY_DATA.features.flatMap((country) => {
+            if (ISLAND_GROUP_COUNTRY_IDS.has(String(country.id))) return [];
             const target = getCountryTargetGeometry(country, path, projection);
             return target ? [{ ...target, country }] : [];
           })
@@ -329,17 +494,27 @@ export function WorldMapDialog({
     )
       return [];
     const size = target.size * mapTransform.k;
-    const point = mapTransform.apply(target.point);
+    const y = mapTransform.applyY(target.point[1]);
     const radius = COUNTRY_TOUCH_TARGET_SIZE / 2;
     if (
       size >= COUNTRY_TOUCH_TARGET_SIZE ||
-      point[0] < -radius ||
-      point[0] > mapSize.width + radius ||
-      point[1] < -radius ||
-      point[1] > mapSize.height + radius
+      y < -radius ||
+      y > mapSize.height + radius
     )
       return [];
-    return [{ ...target, point, opacity: getCountryMarkerOpacity(size) }];
+    return worldCopies.flatMap((copy) => {
+      const x = mapTransform.applyX(target.point[0] + copy * worldWidth);
+      return x >= -radius && x <= mapSize.width + radius
+        ? [
+            {
+              ...target,
+              copy,
+              point: [x, y] as [number, number],
+              opacity: getCountryMarkerOpacity(size),
+            },
+          ]
+        : [];
+    });
   });
 
   function selectSmallCountry(
@@ -360,7 +535,11 @@ export function WorldMapDialog({
       const playable = playableCountryByMapName.get(name);
       if (playable && !guessedCountryByName.has(name)) candidates.add(playable);
     }
-    const location = projection.invert?.(mapTransform.invert(point));
+    const [x, y] = mapTransform.invert(point);
+    const location = projection.invert?.([
+      getNearestWorldX(x, worldOrigin, worldWidth),
+      y,
+    ]);
     const hitsMarker = overlappingTargets.some(
       (target) =>
         target.opacity > 0 &&
@@ -418,7 +597,9 @@ export function WorldMapDialog({
       if (width <= 0 || height <= 0) return;
 
       setMapSize((size) =>
-        size.width === width && size.height === height ? size : { width, height },
+        size.width === width && size.height === height
+          ? size
+          : { width, height },
       );
       // Fit the world once per width. The layered SVG uses CSS pixels directly.
       const canvasHeight = hasLayeredCanvas ? width : height;
@@ -471,7 +652,12 @@ export function WorldMapDialog({
           const inputType = event.sourceEvent.type;
           measurement = measureMapInteraction((metrics) => {
             const size = container.getBoundingClientRect();
-            if (zoomUpdates < 2 || width !== size.width || height !== size.height) return;
+            if (
+              zoomUpdates < 2 ||
+              width !== size.width ||
+              height !== size.height
+            )
+              return;
             captureAnalyticsEvent("map_interaction_performance", {
               ...metrics,
               measurement_version: 1,
@@ -526,8 +712,8 @@ export function WorldMapDialog({
       [mapSize.width, mapSize.height],
     ];
     behavior.extent(mapExtent).translateExtent([
-      [0, 0],
-      [mapSize.width, Math.max(mapSize.height, projectionSize.height)],
+      [-Infinity, 0],
+      [Infinity, Math.max(mapSize.height, projectionSize.height)],
     ]);
     select(svg).call(behavior.transform, mapTransformRef.current);
   }, [canInteractWithMap, hasMapSize, mapSize, projectionSize.height]);
@@ -619,7 +805,16 @@ export function WorldMapDialog({
     }
 
     const selection = select(svg);
-    animationTargetRef.current = targetTransform;
+    const targetCenterX = targetTransform.invertX(mapSize.width / 2);
+    const nearbyCenterX = getNearestWorldX(
+      targetCenterX,
+      mapTransformRef.current.invertX(mapSize.width / 2),
+      worldWidth,
+    );
+    animationTargetRef.current = targetTransform.translate(
+      targetCenterX - nearbyCenterX,
+      0,
+    );
     if (animationFrameRef.current !== null) {
       return;
     }
@@ -630,7 +825,7 @@ export function WorldMapDialog({
     ).matches;
 
     if (reduceMotion) {
-      selection.call(behavior.transform, targetTransform);
+      selection.call(behavior.transform, animationTargetRef.current);
       animationTargetRef.current = null;
       return;
     }
@@ -650,7 +845,9 @@ export function WorldMapDialog({
         Math.min((timestamp - previousTime) / 1000, 0.05),
       );
       previousTime = timestamp;
-      const { width, height } = hasLayeredCanvas ? mapSize : svg.viewBox.baseVal;
+      const { width, height } = hasLayeredCanvas
+        ? mapSize
+        : svg.viewBox.baseVal;
       const centerX = width / 2;
       const centerY = height / 2;
       const transform = mapTransformRef.current;
@@ -736,6 +933,21 @@ export function WorldMapDialog({
       return false;
     }
 
+    return focusBounds(
+      [
+        [left, top],
+        [right, bottom],
+      ],
+      maximumScale,
+      viewportCoverage,
+    );
+  }
+
+  function focusBounds(
+    [[left, top], [right, bottom]]: [[number, number], [number, number]],
+    maximumScale: number,
+    viewportCoverage: number,
+  ): boolean {
     const boundsWidth = Math.max(1, right - left);
     const boundsHeight = Math.max(1, bottom - top);
     const scale = Math.min(
@@ -759,12 +971,22 @@ export function WorldMapDialog({
     return true;
   }
 
-  function focusLocation(location: MapLocation) {
+  function focusLocation(
+    location: MapLocation & { mapNames?: readonly string[] },
+  ) {
     const svg = svgRef.current;
     const behavior = zoomBehaviorRef.current;
 
     if (!svg || !behavior || !projection) {
       return;
+    }
+
+    if (location.mapNames) {
+      const region = findPacificRegion(location.mapNames);
+      if (region) {
+        focusBounds(region.bounds, 7, 0.56);
+        return;
+      }
     }
 
     const transform = getFocusedMapTransform({
@@ -778,38 +1000,37 @@ export function WorldMapDialog({
     }
   }
 
-  function focusLocations(
-    locations: readonly MapLocation[],
-    maximumScale: number,
-    viewportCoverage: number,
-  ): boolean {
+  function fitGuessedCountries(): boolean {
     const behavior = zoomBehaviorRef.current;
 
-    if (!behavior || !projection || locations.length === 0) {
+    if (!behavior || !projection || guessedCountries.length === 0) {
       return false;
     }
 
-    const points = locations
-      .map((location) => projection([location.longitude, location.latitude]))
+    const points = guessedCountries
+      .map(getProjectedMarkerPoint)
       .filter((point): point is [number, number] => point !== null);
 
     if (points.length === 0) {
       return false;
     }
 
-    const left = Math.min(...points.map(([x]) => x));
+    const nearbyXs = points.map(([x]) =>
+      getNearestWorldX(x, points[0][0], worldWidth),
+    );
+    const left = Math.min(...nearbyXs);
     const top = Math.min(...points.map(([, y]) => y));
-    const right = Math.max(...points.map(([x]) => x));
+    const right = Math.max(...nearbyXs);
     const bottom = Math.max(...points.map(([, y]) => y));
     const boundsWidth = Math.max(32, right - left);
     const boundsHeight = Math.max(32, bottom - top);
     const scale = Math.min(
-      maximumScale,
+      10,
       Math.max(
         1,
         Math.min(
-          (mapSize.width * viewportCoverage) / boundsWidth,
-          (mapSize.height * viewportCoverage) / boundsHeight,
+          (mapSize.width * 0.72) / boundsWidth,
+          (mapSize.height * 0.72) / boundsHeight,
         ),
       ),
     );
@@ -822,11 +1043,32 @@ export function WorldMapDialog({
     return true;
   }
 
-  function fitGuessedCountries(): boolean {
-    return focusLocations(guessedCountries, 10, 0.72);
+  function findPacificRegion(mapNames: readonly string[]) {
+    const names = getMapCountryNames(mapNames);
+    return pacificRegionPaths.find(
+      ({ mapName, anchor }) => anchor && mapName && names.has(mapName),
+    );
+  }
+
+  function getProjectedMarkerPoint(location: MapLocation) {
+    return projection?.([location.longitude, location.latitude]) ?? null;
+  }
+
+  function getMarkerPosition(location: MapLocation) {
+    const point = getProjectedMarkerPoint(location);
+    if (!point) return null;
+    point[0] = getNearestWorldX(
+      point[0],
+      mapTransform.invertX(mapSize.width / 2),
+      worldWidth,
+    );
+    return mapTransform.apply(point);
   }
 
   function focusCountry(country: GuessedCountryMapData): boolean {
+    const region = findPacificRegion(country.mapNames);
+    if (region) return focusBounds(region.bounds, 7, 0.56);
+
     const didFocusCountry = focusCountries(
       getMapCountryNames(country.mapNames),
       7,
@@ -868,6 +1110,17 @@ export function WorldMapDialog({
     }
 
     const lastGuessedCountry = getLastGuessedCountry(guessedCountries);
+    const mapGuess = islandMapGuessRef.current;
+    islandMapGuessRef.current = null;
+    if (
+      mapGuess &&
+      mapGuess.guessCount + 1 === guessedCountries.length &&
+      lastGuessedCountry &&
+      getMapCountryNames(lastGuessedCountry.mapNames).has(mapGuess.name)
+    ) {
+      focusedGuessedCountryCountRef.current = guessedCountries.length;
+      return;
+    }
 
     if (lastGuessedCountry && focusCountry(lastGuessedCountry)) {
       focusedGuessedCountryCountRef.current = guessedCountries.length;
@@ -1119,7 +1372,7 @@ export function WorldMapDialog({
           ) : null}
           <svg
             aria-label="Country outlines and small-country markers"
-            className={`${hasLayeredCanvas ? "absolute inset-x-0 top-0 h-lvh w-full bg-body" : "size-full"} touch-none select-none ${canInteractWithMap ? "" : "pointer-events-none"} ${onCountryGuess ? "map-world-guessing" : ""}`}
+            className={`${hasLayeredCanvas ? "absolute inset-x-0 top-0 h-lvh w-full bg-muted" : "size-full"} touch-none select-none ${canInteractWithMap ? "" : "pointer-events-none"} ${onCountryGuess ? "map-world-guessing" : ""}`}
             data-suppress-touch-highlight={suppressTouchHighlight || undefined}
             onClick={onMapClickDuringReveal}
             onMouseDownCapture={(event) => {
@@ -1132,103 +1385,120 @@ export function WorldMapDialog({
             }}
             ref={svgRef}
             viewBox={
-              hasLayeredCanvas ? undefined : `0 0 ${mapSize.width || 1} ${mapSize.height || 1}`
+              hasLayeredCanvas
+                ? undefined
+                : `0 0 ${mapSize.width || 1} ${mapSize.height || 1}`
             }
           >
-            <g
-              transform={`translate(${mapTransform.x} ${mapTransform.y}) scale(${mapTransform.k})`}
-            >
-              {path
-                ? COUNTRY_DATA.features.map((country, index) => {
-                    const name = country.properties.normalizedName;
-                    const countryPath = countryPaths[index];
-                    const guessedCountry = guessedCountryByName.get(name);
-                    const playableCountry = playableCountryByMapName.get(name);
-                    const isSolution = solutionNames.has(name);
-                    const isUnavailable =
-                      Boolean(onCountryGuess) &&
-                      !playableCountry &&
-                      !guessedCountry;
+            {worldCopies.map((copy) => (
+              <g
+                data-map-world-copy={copy}
+                key={copy}
+                transform={`translate(${mapTransform.applyX(copy * worldWidth)} ${mapTransform.y}) scale(${mapTransform.k})`}
+              >
+                {path
+                  ? COUNTRY_DATA.features.map((country, index) => {
+                      const name = country.properties.normalizedName;
+                      const countryPath = countryPaths[index];
+                      if (
+                        !countryPath?.outline ||
+                        !isMapBoundsVisible(countryPath.bounds, copy)
+                      )
+                        return null;
+                      const guessedCountry = guessedCountryByName.get(name);
+                      const playableCountry =
+                        playableCountryByMapName.get(name);
+                      const isSolution = solutionNames.has(name);
+                      const isUnavailable =
+                        Boolean(onCountryGuess) &&
+                        !playableCountry &&
+                        !guessedCountry;
 
-                    return countryPath ? (
-                      <path
-                        className={
-                          isSolution
-                            ? duelResult
-                              ? "map-country map-country--solution-duel"
-                              : "map-country map-country--solution"
-                            : guessedCountry
-                              ? guessedCountry.markerTone
-                                ? `map-country map-country--guessed-${guessedCountry.markerTone}`
-                                : "map-country map-country--guessed"
-                              : isUnavailable
-                                ? "map-country map-country--unavailable"
-                                : onCountryGuess && playableCountry
-                                  ? "map-country map-country--playable"
-                                  : "map-country"
-                        }
-                        d={countryPath}
-                        key={`${country.id ?? name}-${index}`}
-                        onClick={
-                          guessedCountry
-                            ? () => focusCountry(guessedCountry)
-                            : onCountryGuess && playableCountry
-                              ? () => onCountryGuess(playableCountry)
-                              : undefined
-                        }
-                        vectorEffect="non-scaling-stroke"
-                      >
-                        {isCountryPicker && playableCountry ? (
-                          <title>{playableCountry}</title>
-                        ) : isUnavailable && !isCountryPicker ? (
-                          <title>{`${country.properties.name} is unavailable to guess`}</title>
-                        ) : null}
-                      </path>
-                    ) : null;
-                  })
-                : null}
-              {/*
+                      return (
+                        <CountryShape
+                          border={countryPath.border}
+                          className={
+                            isSolution
+                              ? duelResult
+                                ? "map-country map-country--solution-duel"
+                                : "map-country map-country--solution"
+                              : guessedCountry
+                                ? guessedCountry.markerTone
+                                  ? `map-country map-country--guessed-${guessedCountry.markerTone}`
+                                  : "map-country map-country--guessed"
+                                : isUnavailable
+                                  ? "map-country map-country--unavailable"
+                                  : onCountryGuess && playableCountry
+                                    ? "map-country map-country--playable"
+                                    : "map-country"
+                          }
+                          d={countryPath.outline}
+                          key={`${country.id ?? name}-${index}`}
+                          onClick={
+                            guessedCountry
+                              ? () => focusCountry(guessedCountry)
+                              : onCountryGuess && playableCountry
+                                ? () => onCountryGuess(playableCountry)
+                                : undefined
+                          }
+                        >
+                          {isCountryPicker && playableCountry ? (
+                            <title>{playableCountry}</title>
+                          ) : isUnavailable && !isCountryPicker ? (
+                            <title>{`${country.properties.name} is unavailable to guess`}</title>
+                          ) : null}
+                        </CountryShape>
+                      );
+                    })
+                  : null}
+                {/*
                 Render highlighted countries a second time, after the base map.
                 SVG paints later paths on top of earlier ones; without this
                 overlay, a later-rendered neighbour can cover a highlighted
                 country's shared border with its default stroke.
               */}
-              {path
-                ? COUNTRY_DATA.features.map((country, index) => {
-                    const name = country.properties.normalizedName;
-                    const countryPath = countryPaths[index];
-                    const guessedCountry = guessedCountryByName.get(name);
-                    const isSolution = solutionNames.has(name);
+                {path
+                  ? COUNTRY_DATA.features.map((country, index) => {
+                      const name = country.properties.normalizedName;
+                      const countryPath = countryPaths[index];
+                      if (
+                        !countryPath?.outline ||
+                        !isMapBoundsVisible(countryPath.bounds, copy)
+                      )
+                        return null;
+                      const guessedCountry = guessedCountryByName.get(name);
+                      const isSolution = solutionNames.has(name);
 
-                    if (!countryPath || (!guessedCountry && !isSolution)) {
-                      return null;
-                    }
+                      if (!guessedCountry && !isSolution) {
+                        return null;
+                      }
 
-                    return (
-                      <path
-                        className={
-                          isSolution
-                            ? duelResult
-                              ? "map-country map-country--solution-duel"
-                              : "map-country map-country--solution"
-                            : guessedCountry!.markerTone
-                              ? `map-country map-country--guessed-${guessedCountry!.markerTone}`
-                              : "map-country map-country--guessed"
-                        }
-                        d={countryPath}
-                        key={`highlight-${country.id ?? name}-${index}`}
-                        onClick={
-                          guessedCountry
-                            ? () => focusCountry(guessedCountry)
-                            : undefined
-                        }
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    );
-                  })
-                : null}
-            </g>
-            {smallCountryTargets.map(({ country, point, opacity }) => {
+                      return (
+                        <CountryShape
+                          border={countryPath.border}
+                          className={
+                            isSolution
+                              ? duelResult
+                                ? "map-country map-country--solution-duel"
+                                : "map-country map-country--solution"
+                              : guessedCountry!.markerTone
+                                ? `map-country map-country--guessed-${guessedCountry!.markerTone}`
+                                : "map-country map-country--guessed"
+                          }
+                          d={countryPath.outline}
+                          key={`highlight-${country.id ?? name}-${index}`}
+                          onClick={
+                            guessedCountry
+                              ? () => focusCountry(guessedCountry)
+                              : undefined
+                          }
+                        />
+                      );
+                    })
+                  : null}
+              </g>
+            ))}
+            {smallCountryTargets.map(({ country, copy, point, opacity }) => {
               const name = country.properties.normalizedName;
               const guessedCountry = guessedCountryByName.get(name);
               const playableCountry = playableCountryByMapName.get(name);
@@ -1261,7 +1531,7 @@ export function WorldMapDialog({
                   }
                   className="group outline-none"
                   data-map-country-target={name}
-                  key={`target-${country.id ?? name}-${name}`}
+                  key={`target-${country.id ?? name}-${name}-${copy}`}
                   onClick={
                     isInteractive
                       ? (event) => {
@@ -1331,6 +1601,104 @@ export function WorldMapDialog({
                 </g>
               );
             })}
+            {showPacificRegions &&
+              pacificCopies.map((copy) => (
+                <g
+                  key={copy}
+                  transform={`translate(${mapTransform.applyX(copy * worldWidth)} ${mapTransform.y}) scale(${mapTransform.k})`}
+                >
+                  {pacificRegionPaths.map(
+                    ({ countryId, mapName, anchor, outline, bounds }) => {
+                      if (!outline || !isMapBoundsVisible(bounds, copy))
+                        return null;
+                      if (!anchor)
+                        return (
+                          <path
+                            aria-hidden="true"
+                            className="map-island-group map-island-group--context pointer-events-none"
+                            d={outline}
+                            key={countryId}
+                            vectorEffect="non-scaling-stroke"
+                          />
+                        );
+                      if (!mapName) return null;
+                      const guessedCountry = guessedCountryByName.get(mapName);
+                      const playableCountry =
+                        playableCountryByMapName.get(mapName);
+                      const isSolution = solutionNames.has(mapName);
+                      if (!playableCountry && !guessedCountry && !isSolution)
+                        return null;
+
+                      const label =
+                        guessedCountry?.name ??
+                        (isSolution
+                          ? solutionCountry?.name
+                          : isCountryPicker
+                            ? playableCountry
+                            : undefined);
+                      const isInteractive = Boolean(
+                        guessedCountry ||
+                        isSolution ||
+                        (playableCountry &&
+                          (onCountryGuess || onMapClickDuringReveal)),
+                      );
+                      const activate = () => {
+                        if (guessedCountry || isSolution)
+                          focusBounds(bounds, 7, 0.56);
+                        else if (playableCountry && onCountryGuess) {
+                          islandMapGuessRef.current = {
+                            name: mapName,
+                            guessCount: guessedCountries.length,
+                          };
+                          onCountryGuess(playableCountry);
+                        }
+                      };
+
+                      return (
+                        <path
+                          aria-label={
+                            isInteractive
+                              ? (label ?? "Select island group")
+                              : undefined
+                          }
+                          className={`map-island-group ${
+                            isSolution
+                              ? duelResult
+                                ? "map-country--solution-duel"
+                                : "map-country--solution"
+                              : guessedCountry
+                                ? `map-country--guessed${guessedCountry.markerTone ? `-${guessedCountry.markerTone}` : ""}`
+                                : ""
+                          }`}
+                          d={outline}
+                          data-map-island-group={mapName}
+                          key={countryId}
+                          onClick={isInteractive ? activate : undefined}
+                          onKeyDown={
+                            isInteractive
+                              ? (event) => {
+                                  if (
+                                    event.key !== "Enter" &&
+                                    event.key !== " "
+                                  )
+                                    return;
+                                  event.preventDefault();
+                                  activate();
+                                  onMapClickDuringReveal?.();
+                                }
+                              : undefined
+                          }
+                          role={isInteractive ? "button" : undefined}
+                          tabIndex={isInteractive ? 0 : undefined}
+                          vectorEffect="non-scaling-stroke"
+                        >
+                          {label ? <title>{label}</title> : null}
+                        </path>
+                      );
+                    },
+                  )}
+                </g>
+              ))}
             <defs>
               <pattern
                 height={8}
@@ -1359,13 +1727,9 @@ export function WorldMapDialog({
 
           {presentation === "game" && projection
             ? guessedCountries.map((country) => {
-                const point = projection([country.longitude, country.latitude]);
-
-                if (!point) {
-                  return null;
-                }
-
-                const [left, top] = mapTransform.apply(point);
+                const position = getMarkerPosition(country);
+                if (!position) return null;
+                const [left, top] = position;
 
                 return (
                   <button
@@ -1393,13 +1757,9 @@ export function WorldMapDialog({
 
           {presentation === "result" && projection
             ? guessedCountries.map((country) => {
-                const point = projection([country.longitude, country.latitude]);
-
-                if (!point) {
-                  return null;
-                }
-
-                const [left, top] = mapTransform.apply(point);
+                const position = getMarkerPosition(country);
+                if (!position) return null;
+                const [left, top] = position;
 
                 return (
                   <button
@@ -1424,16 +1784,9 @@ export function WorldMapDialog({
 
           {projection && solutionCountry
             ? (() => {
-                const point = projection([
-                  solutionCountry.longitude,
-                  solutionCountry.latitude,
-                ]);
-
-                if (!point) {
-                  return null;
-                }
-
-                const [left, top] = mapTransform.apply(point);
+                const position = getMarkerPosition(solutionCountry);
+                if (!position) return null;
+                const [left, top] = position;
 
                 return (
                   <button
@@ -1500,6 +1853,20 @@ export function WorldMapDialog({
 
           <span className="pointer-events-none absolute bottom-3 right-3 z-10 hidden rounded-full bg-card px-2 py-1 text-xs font-medium text-secondary backdrop-blur sm:inline-flex">
             Map data: Natural Earth
+            {showPacificRegions ? (
+              <>
+                {" "}
+                ·{" "}
+                <a
+                  className="pointer-events-auto underline"
+                  href={PACIFIC_REGIONS_SOURCE}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Pacific regions
+                </a>
+              </>
+            ) : null}
           </span>
         </VStack>
 
