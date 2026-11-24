@@ -155,7 +155,10 @@ export function GamePlayView({
   } | null>(null);
   const [latestRevealKey, setLatestRevealKey] = useState<string>();
   const [isTyping, setIsTyping] = useState(false);
-  const { isMobile, isShort } = usePlayViewport(frameRef, isCountryRound);
+  const { isMobile, isShort, keyboardDismissed } = usePlayViewport(
+    frameRef,
+    isCountryRound,
+  );
   const [isCountryListOpen, setIsCountryListOpen] = useState(false);
   const [activeOption, setActiveOption] = useState(-1);
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -187,7 +190,7 @@ export function GamePlayView({
   const hasSuggestions = suggestionsOpen && matchingCountries.length > 0;
   const mobileMap = isMobile && isCountryRound;
   useScrollLock(mobileMap);
-  const compactSheet = mobileMap && isTyping;
+  const compactSheet = mobileMap && isTyping && !keyboardDismissed;
   const shownClues =
     view === "result"
       ? currentClues
@@ -205,7 +208,7 @@ export function GamePlayView({
           : "auto"
     : undefined;
   // On a short keyboard viewport, prioritize the clue and guess controls.
-  const compactViewport = mobileMap && isTyping && isShort;
+  const compactViewport = compactSheet && isShort;
   const prioritizeGuess = compactViewport && isRevealMode;
   const latestClue =
     currentClues.find((clue) => clue.isRevealed && clue.key === latestRevealKey) ??
@@ -554,6 +557,7 @@ export function GamePlayView({
       ) : null}
       <VStack
         gap={0}
+        data-keyboard-dismissed={keyboardDismissed || undefined}
         height={
           isCountryRound && !mobileMap && !replay
             ? "calc(100dvh - var(--spacing-8) * 4)"

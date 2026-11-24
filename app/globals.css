@@ -63,8 +63,13 @@
 }
 
 @layer utilities {
-  .game-map-stage {
+  .game-map-stage:not([data-keyboard-dismissed]):has(input:focus) {
+    position: fixed;
+    inset-inline: 0;
     top: var(--play-viewport-top, 0px);
+    height: var(--play-visible-height, 100dvh);
+    /* Cover the offline game's sticky header (z-40) while typing. */
+    z-index: 50;
   }
 
   .game-phase-cue {
