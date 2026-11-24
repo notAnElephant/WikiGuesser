@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@astryxdesign/core/Button";
-import { Icon } from "@astryxdesign/core/Icon";
 import {
   SegmentedControl,
   SegmentedControlItem,
@@ -101,6 +100,7 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
           <fieldset className="grid min-w-0 gap-2 text-sm font-semibold text-secondary">
             <legend>Game mode</legend>
             <SegmentedControl
+              isDisabled={isCreating || Boolean(inviteUrl)}
               label="Game mode"
               layout="fill"
               onChange={(value) => setMode(value as GameMode)}
@@ -118,6 +118,7 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
           <fieldset className="grid min-w-0 gap-2 text-sm font-semibold text-secondary">
             <legend>Rounds</legend>
             <SegmentedControl
+              isDisabled={isCreating || Boolean(inviteUrl)}
               label="Number of rounds"
               layout="fill"
               onChange={(value) => setRounds(Number(value) as typeof rounds)}
@@ -140,13 +141,14 @@ export function DuelCreator({ categories, isSignedIn }: DuelCreatorProps) {
               Your duel is ready. Send this link to your opponent.
             </p>
             <DuelInviteLink url={inviteUrl} />
-            <a
+            <Button
               href={inviteUrl}
-              className="inline-flex w-fit items-center gap-1 text-sm font-semibold text-accent"
-            >
-              <Icon color="accent" icon={Play} size="sm" />
-              Play your rounds
-            </a>
+              icon={<Play />}
+              label="Play your rounds"
+              size="lg"
+              variant="primary"
+              width="100%"
+            />
           </section>
         ) : (
           <footer className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
