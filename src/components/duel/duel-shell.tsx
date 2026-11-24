@@ -4,10 +4,12 @@ import { DuelInviteLink } from "./duel-invite-link";
 import { Button } from "@astryxdesign/core/Button";
 import { Card } from "@astryxdesign/core/Card";
 import { HStack } from "@astryxdesign/core/HStack";
+import { Heading } from "@astryxdesign/core/Heading";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { List, ListItem } from "@astryxdesign/core/List";
 import { StatusDot } from "@astryxdesign/core/StatusDot";
 import { Text } from "@astryxdesign/core/Text";
+import { VStack } from "@astryxdesign/core/VStack";
 import { CountryFlagPreview } from "@/src/components/game-shell/country-flag-preview";
 import { GamePlayView } from "@/src/components/game-shell/play-view";
 import { useAppToast } from "@/src/components/app-toaster";
@@ -658,6 +660,7 @@ function ActiveDuel({
       currentClues={clues}
       currentMode={duel.settings.mode}
       displayScore={currentRound.score ?? 0}
+      flowLabel="Duel"
       giveUpRound={onGiveUp}
       guess={guess}
       guessedEntities={currentRound.guesses.map((entry) => ({
@@ -678,11 +681,16 @@ function ActiveDuel({
       }}
       handleMapGuess={onMapGuess}
       header={
-        <DuelScoreRail
-          duel={duel}
-          completedRounds={completedRounds}
-          opponentName={opponentName}
-        />
+        <VStack gap={3}>
+          <Heading level={2} justify="center" className="text-accent">
+            Round {currentRound.position} of {duel.settings.rounds}
+          </Heading>
+          <DuelScoreRail
+            duel={duel}
+            completedRounds={completedRounds}
+            opponentName={opponentName}
+          />
+        </VStack>
       }
       isBusy={isBusy}
       isCountryRound={isCountryDuel}
@@ -787,9 +795,6 @@ function ProgressCard({
           total={duel.settings.rounds}
           muted
         />
-      </div>
-      <div className="mt-5 border-t border-border pt-4 text-xs leading-5 text-secondary">
-        Scores stay private until the duel is complete.
       </div>
     </Card>
   );

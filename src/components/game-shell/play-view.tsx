@@ -531,8 +531,9 @@ export function GamePlayView({
       </HStack>
       {header && (!replay || mobileMap) ? (
         <VStack
-          className="shrink-0"
+          className="shrink-0 lg:px-0"
           paddingInline={4}
+          paddingBlockEnd={4}
         >
           {header}
         </VStack>
@@ -794,10 +795,9 @@ export function GamePlayView({
                 );
               })}
             </List>
-            {shownClues.length === 0 ? (
-              <Text color="secondary">First clue coming up</Text>
+            {boardAction ? (
+              <VStack paddingBlockStart={3}>{boardAction}</VStack>
             ) : null}
-            {boardAction}
             {sideFooter ? <VStack paddingBlock={3}>{sideFooter}</VStack> : null}
           </VStack>
           {guessForm ? (
